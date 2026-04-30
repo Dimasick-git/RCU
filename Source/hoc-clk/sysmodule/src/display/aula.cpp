@@ -33,7 +33,7 @@ namespace AulaDisplay {
         DSI(DSI_TRIGGER) = DSI_TRIGGER_HOST;
 
         if (wait)
-            svcSleepThread(wait * 1000);
+            svcSleepThread(wait * 1000); // usleep-equivalant
     }
 
     void SetDisplayColorMode(AulaColorMode mode) {
