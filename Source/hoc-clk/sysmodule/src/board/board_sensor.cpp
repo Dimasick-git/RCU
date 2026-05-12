@@ -33,8 +33,6 @@
 #include "board.hpp"
 #include "../soctherm.hpp"
 #include "bq24193.hpp"
-#include "../aotag.hpp"
-#include "../config.hpp"
 namespace board {
 
     s32 GetTemperatureMilli(HocClkThermalSensor sensor) {
@@ -79,11 +77,7 @@ namespace board {
                 break;
             }
             case HocClkThermalSensor_MEM: {
-                if(board::GetSocType() == HocClkSocType_Mariko && aotag::isInitialized() && aotag::getTemp() > 0) {
-                    millis = (temps.gpu * 0.45f) + (temps.pllx * 0.30f) + (temps.cpu * 0.15f) + (aotag::getTemp() * 0.10f) + 3000;
-                } else {
-                    millis = board::GetSocType() == HocClkSocType_Mariko ? temps.pllx : temps.mem;
-                }
+                millis = board::GetSocType() == HocClkSocType_Mariko ? temps.pllx : temps.mem;
                 break;
             }
             case HocClkThermalSensor_PLLX: {
@@ -92,10 +86,6 @@ namespace board {
             }
             case HocClkThermalSensor_BQ24193: {
                 millis = bq24193::getBQTemp();
-                break;
-            }
-            case HocClkThermalSensor_AO: {
-                millis = aotag::getTemp();
                 break;
             }
             default: {

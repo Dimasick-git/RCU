@@ -140,11 +140,11 @@ void LivingLadderGui::listUI()
         auto& c = livingLadder().config();
         ValueRange range(30, maxFps, 1, " FPS", 1, 0);
         const u32 plusPreset = isAula ? 65u : 75u;
-        std::map<std::uint32_t, std::string> targetLabels = {
-            {30u, "30"},
-            {45u, "45"},
-            {60u, "60"},
-            {plusPreset, isAula ? "60+ cap" : "60+ cap"},
+        std::vector<NamedValue> named = {
+            NamedValue("30",               30),
+            NamedValue("45",               45),
+            NamedValue("60",               60),
+            NamedValue(isAula ? "60+ (до 65)" : "60+ (до 75)", plusPreset),
         };
         tsl::changeTo<ValueChoiceGui>(
             (std::uint32_t)c.targetFps,
@@ -176,8 +176,8 @@ void LivingLadderGui::listUI()
                 saveAndAck();
                 return true;
             },
-            ValueThresholds(), false, targetLabels,
-            std::vector<NamedValue>(), false, false);
+            ValueThresholds(), false, std::map<std::uint32_t, std::string>(),
+            named, false, false);
         return true;
     });
     this->listElement->addItem(this->targetFpsItem);

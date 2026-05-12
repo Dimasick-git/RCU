@@ -37,7 +37,6 @@ tsl::elm::ListItem* ramBWItemCpu = NULL;
 tsl::elm::ListItem* ramBWItemGpu = NULL;
 tsl::elm::ListItem* ramBWItemMax = NULL;
 tsl::elm::ListItem* bqtempitem = NULL;
-tsl::elm::ListItem* aotagTempItem = NULL;
 
 ImageElement* CatImage = NULL;
 HideableCategoryHeader* CatHeader = NULL;
@@ -74,10 +73,6 @@ void AboutGui::listUI()
     if(IsErista()) {
         this->listElement->addItem(eristaPLLXItem);
     }
-
-    aotagTempItem =
-        new tsl::elm::ListItem("AOTAG Temp:");
-    this->listElement->addItem(aotagTempItem);
 
     bqtempitem =
         new tsl::elm::ListItem("BQ24193 Temp:");
@@ -184,25 +179,13 @@ void AboutGui::listUI()
         new tsl::elm::ListItem("Blaise25")
     );
 
-    this->listElement->addItem(
-        new tsl::elm::ListItem("tetetete-ctrl")
-    );
-
-    this->listElement->addItem(
-        new tsl::elm::ListItem("B3711")
-    );
-
-    this->listElement->addItem(
-        new tsl::elm::ListItem("TDRR")
-    );
-
-    this->listElement->addItem(
-        new tsl::elm::ListItem("MasaGratoR")
-    );
-
     // ---- Testers ----
     this->listElement->addItem(
         new tsl::elm::CategoryHeader("Testers")
+    );
+
+    this->listElement->addItem(
+        new tsl::elm::ListItem("Dom")
     );
 
     this->listElement->addItem(
@@ -222,6 +205,10 @@ void AboutGui::listUI()
     );
 
     this->listElement->addItem(
+        new tsl::elm::ListItem("tetetete-ctrl")
+    );
+
+    this->listElement->addItem(
         new tsl::elm::ListItem("Winnerboi77")
     );
 
@@ -235,6 +222,10 @@ void AboutGui::listUI()
 
     this->listElement->addItem(
         new tsl::elm::ListItem("Alvise")
+    );
+
+    this->listElement->addItem(
+        new tsl::elm::ListItem("TDRR")
     );
 
     this->listElement->addItem(
@@ -271,6 +262,10 @@ void AboutGui::listUI()
     );
 
     this->listElement->addItem(
+        new tsl::elm::ListItem("B3711 - EOS")
+    );
+
+    this->listElement->addItem(
         new tsl::elm::ListItem("RetroNX - sys-clk")
     );
 
@@ -279,7 +274,7 @@ void AboutGui::listUI()
     );
 
     this->listElement->addItem(
-        new tsl::elm::ListItem("CtCaer - Hekate, L4T and Proper Timings")
+        new tsl::elm::ListItem("MasaGratoR - Status Monitor")
     );
 
     // Create cat elements but hide them initially
@@ -374,14 +369,6 @@ void AboutGui::refresh()
         eristaPLLXItem->setValue(strings[3]);
     }
 
-    u32 millis = context->temps[HocClkThermalSensor_AO];
-    if(millis > 0) {
-        sprintf(strings[11], "%u.%u °C", millis / 1000U, (millis % 1000U) / 100U);
-    } else {
-        sprintf(strings[11], "N/A");
-    }
-    aotagTempItem->setValue(strings[11]);
-
     sprintf(strings[4], "%u.%u / %u mV", context->voltages[HocClkVoltage_EMCVDD2] / 1000U, (context->voltages[HocClkVoltage_EMCVDD2] % 1000U) / 100U, context->voltages[HocClkVoltage_EMCVDDQ] / 1000);
     ramVoltItem->setValue(strings[4]);
     
@@ -401,16 +388,16 @@ void AboutGui::refresh()
     ramBWItemMax->setValue(strings[9]);
 
     switch(context->temps[HocClkThermalSensor_BQ24193]) {
-        case BQ24193Temp_Normal: 
+        case 0: 
             strcpy(strings[10], "Normal"); 
             break;
-        case BQ24193Temp_Warm: 
+        case 1: 
             strcpy(strings[10], "Warm"); 
             break;
-        case BQ24193Temp_Hot: 
+        case 2: 
             strcpy(strings[10], "Hot"); 
             break;
-        case BQ24193Temp_Overheat: 
+        case 3: 
             strcpy(strings[10], "Overheat"); 
             break;
         default: 

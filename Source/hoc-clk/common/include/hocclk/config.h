@@ -131,31 +131,6 @@ typedef enum {
     KipConfigValue_marikoCpuMaxClock,
     KipConfigValue_eristaCpuBoostClock,
     KipConfigValue_marikoCpuBoostClock,
-    KipConfigValue_marikoCpuVolt_510000,
-    KipConfigValue_marikoCpuVolt_612000,
-    KipConfigValue_marikoCpuVolt_714000,
-    KipConfigValue_marikoCpuVolt_816000,
-    KipConfigValue_marikoCpuVolt_918000,
-    KipConfigValue_marikoCpuVolt_1020000,
-    KipConfigValue_marikoCpuVolt_1122000,
-    KipConfigValue_marikoCpuVolt_1224000,
-    KipConfigValue_marikoCpuVolt_1326000,
-    KipConfigValue_marikoCpuVolt_1428000,
-    KipConfigValue_marikoCpuVolt_1581000,
-    KipConfigValue_marikoCpuVolt_1683000,
-    KipConfigValue_marikoCpuVolt_1785000,
-    KipConfigValue_marikoCpuVolt_1887000,
-    KipConfigValue_marikoCpuVolt_1963500,
-    KipConfigValue_marikoCpuVolt_2091000,
-    KipConfigValue_marikoCpuVolt_2193000,
-    KipConfigValue_marikoCpuVolt_2295000,
-    KipConfigValue_marikoCpuVolt_2397000,
-    KipConfigValue_marikoCpuVolt_2499000,
-    KipConfigValue_marikoCpuVolt_2601000,
-    KipConfigValue_marikoCpuVolt_2703000,
-    KipConfigValue_marikoCpuVolt_2805000,
-    KipConfigValue_marikoCpuVolt_2907000,
-    KipConfigValue_marikoCpuVolt_3009000,
 
     KipConfigValue_eristaGpuUV,
     KipConfigValue_eristaGpuVmin,
@@ -231,42 +206,8 @@ typedef struct {
     uint64_t values[HocClkConfigValue_EnumMax];
 } HocClkConfigValueList;
 
-#define HOCCLK_MARIKO_CPU_TABLE_CUSTOM 4
-#define HOCCLK_MARIKO_CPU_CUSTOM_VOLT_COUNT 25
-
-static inline bool hocclkIsMarikoCpuVoltConfig(HocClkConfigValue val)
-{
-    return val >= KipConfigValue_marikoCpuVolt_510000 &&
-           val <= KipConfigValue_marikoCpuVolt_3009000;
-}
-
-static inline size_t hocclkGetMarikoCpuVoltConfigIndex(HocClkConfigValue val)
-{
-    return (size_t)(val - KipConfigValue_marikoCpuVolt_510000);
-}
-
 static inline const char* hocclkFormatConfigValue(HocClkConfigValue val, bool pretty)
 {
-    static const char* const marikoCpuVoltPretty[HOCCLK_MARIKO_CPU_CUSTOM_VOLT_COUNT] = {
-        "Mariko CPU Volt 510 MHz", "Mariko CPU Volt 612 MHz", "Mariko CPU Volt 714 MHz", "Mariko CPU Volt 816 MHz", "Mariko CPU Volt 918 MHz",
-        "Mariko CPU Volt 1020 MHz", "Mariko CPU Volt 1122 MHz", "Mariko CPU Volt 1224 MHz", "Mariko CPU Volt 1326 MHz", "Mariko CPU Volt 1428 MHz",
-        "Mariko CPU Volt 1581 MHz", "Mariko CPU Volt 1683 MHz", "Mariko CPU Volt 1785 MHz", "Mariko CPU Volt 1887 MHz", "Mariko CPU Volt 1963 MHz",
-        "Mariko CPU Volt 2091 MHz", "Mariko CPU Volt 2193 MHz", "Mariko CPU Volt 2295 MHz", "Mariko CPU Volt 2397 MHz", "Mariko CPU Volt 2499 MHz",
-        "Mariko CPU Volt 2601 MHz", "Mariko CPU Volt 2703 MHz", "Mariko CPU Volt 2805 MHz", "Mariko CPU Volt 2907 MHz", "Mariko CPU Volt 3009 MHz",
-    };
-    static const char* const marikoCpuVoltRaw[HOCCLK_MARIKO_CPU_CUSTOM_VOLT_COUNT] = {
-        "mariko_cpu_volt_510000", "mariko_cpu_volt_612000", "mariko_cpu_volt_714000", "mariko_cpu_volt_816000", "mariko_cpu_volt_918000",
-        "mariko_cpu_volt_1020000", "mariko_cpu_volt_1122000", "mariko_cpu_volt_1224000", "mariko_cpu_volt_1326000", "mariko_cpu_volt_1428000",
-        "mariko_cpu_volt_1581000", "mariko_cpu_volt_1683000", "mariko_cpu_volt_1785000", "mariko_cpu_volt_1887000", "mariko_cpu_volt_1963500",
-        "mariko_cpu_volt_2091000", "mariko_cpu_volt_2193000", "mariko_cpu_volt_2295000", "mariko_cpu_volt_2397000", "mariko_cpu_volt_2499000",
-        "mariko_cpu_volt_2601000", "mariko_cpu_volt_2703000", "mariko_cpu_volt_2805000", "mariko_cpu_volt_2907000", "mariko_cpu_volt_3009000",
-    };
-
-    if (hocclkIsMarikoCpuVoltConfig(val)) {
-        const size_t idx = hocclkGetMarikoCpuVoltConfigIndex(val);
-        return pretty ? marikoCpuVoltPretty[idx] : marikoCpuVoltRaw[idx];
-    }
-
     switch(val)
     {
         case HocClkConfigValue_PollingIntervalMs:
@@ -588,7 +529,7 @@ static inline uint64_t hocclkDefaultConfigValue(HocClkConfigValue val)
         case HocClkConfigValue_DisplayVoltage:
             return 1200ULL; // Auto
         case HocClkConfigValue_AulaDisplayColorPreset:
-            return AulaDisplayColorMode_DoNotOverride;
+            return AulaDisplayColorMode_Basic;
         default:
             return 0ULL;
     }
@@ -596,10 +537,6 @@ static inline uint64_t hocclkDefaultConfigValue(HocClkConfigValue val)
 
 static inline uint64_t hocclkValidConfigValue(HocClkConfigValue val, uint64_t input)
 {
-    if (hocclkIsMarikoCpuVoltConfig(val)) {
-        return input == 0 || (input >= 500 && input <= 1375);
-    }
-
     switch(val)
     {
         case HocClkConfigValue_EristaMaxCpuClock:

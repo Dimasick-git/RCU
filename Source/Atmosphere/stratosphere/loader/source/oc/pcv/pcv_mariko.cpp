@@ -84,7 +84,7 @@ namespace ams::ldr::hoc::pcv::mariko {
         R_UNLESS(entry->step_mv == 5000, ldr::ResultInvalidCpuFreqVddEntry());
         R_UNLESS(entry->max_mv == 1525'000, ldr::ResultInvalidCpuFreqVddEntry());
 
-        if (C.tableConf != DEFAULT_TABLE || C.marikoCpuUVHigh) {
+        if (C.marikoCpuUVHigh) {
             PATCH_OFFSET(ptr, CapCpuClock());
         } else {
             PATCH_OFFSET(ptr, GetDvfsTableLastEntry(C.marikoCpuDvfsTable)->freq);

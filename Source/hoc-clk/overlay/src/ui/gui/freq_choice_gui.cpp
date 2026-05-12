@@ -170,8 +170,7 @@ void FreqChoiceGui::listUI()
 
         if (IsMariko())
         {
-            const bool isCustomTable = this->configList->values[KipConfigValue_tableConf] == HOCCLK_MARIKO_CPU_TABLE_CUSTOM;
-            unsafe_cpu = isCustomTable ? 2398 : (this->configList->values[KipConfigValue_marikoCpuUVHigh] ? 2398 : 1964);
+            unsafe_cpu = this->configList->values[KipConfigValue_marikoCpuUVHigh] ? 2398 : 1964;
             if(this->configList->values[KipConfigValue_marikoGpuUV] == 0) {
                 unsafe_gpu = 1076;
             } else if (this->configList->values[KipConfigValue_marikoGpuUV] == 1) {
@@ -179,7 +178,7 @@ void FreqChoiceGui::listUI()
             } else {
                 unsafe_gpu = 1229;
             }
-            danger_cpu = isCustomTable ? 2805 : (this->configList->values[KipConfigValue_marikoCpuUVHigh] ? 2500 : 2398);
+            danger_cpu = this->configList->values[KipConfigValue_marikoCpuUVHigh] ? 2500 : 2398;
             danger_gpu = 1306;
         }
         else

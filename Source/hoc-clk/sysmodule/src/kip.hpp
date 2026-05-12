@@ -102,8 +102,7 @@ namespace kip {
         u32 t6_tRTW_fine_tune;
         u32 t7_tWTR_fine_tune;
 
-        u32 marikoCpuVoltArrayCustom[25];
-        u32 reserved[35];
+        u32 reserved[60];
     } CustomizeTable;
 
     #pragma pack(pop)
@@ -288,14 +287,6 @@ namespace kip {
         return cust_write_table(p, &t);
     }
 
-    static inline bool cust_set_mariko_cpu_volt(const char* p, int idx, u32 v) {
-        if (idx < 0 || idx >= 25) return false;
-        CustomizeTable t;
-        if (!cust_read_table(p, &t)) return false;
-        t.marikoCpuVoltArrayCustom[idx] = v;
-        return cust_write_table(p, &t);
-    }
-
     static inline u32 cust_get_field(const CustomizeTable* t, u32 offset) {
         if (!t) return 0;
         return *(u32*)((u8*)t + offset);
@@ -376,11 +367,6 @@ namespace kip {
     static inline u32 cust_get_mariko_gpu_volt(const CustomizeTable* t, int idx) {
         if (!t || idx < 0 || idx >= 24) return 0;
         return t->marikoGpuVoltArray[idx];
-    }
-
-    static inline u32 cust_get_mariko_cpu_volt(const CustomizeTable* t, int idx) {
-        if (!t || idx < 0 || idx >= 25) return 0;
-        return t->marikoCpuVoltArrayCustom[idx];
     }
 
     #define DECL_ERISTA_GPU_VOLT_HELPER(freq, idx)                 \

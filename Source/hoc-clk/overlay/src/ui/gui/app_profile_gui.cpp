@@ -90,9 +90,8 @@ void AppProfileGui::openFreqChoiceGui(tsl::elm::ListItem* listItem, HocClkProfil
     std::map<uint32_t, std::string> labels = {};
 
     if (module == HocClkModule_CPU) {
-        const bool isCustomTable = IsMariko() && configList.values[KipConfigValue_tableConf] == HOCCLK_MARIKO_CPU_TABLE_CUSTOM;
         bool isUsingUv = IsMariko() ? configList.values[KipConfigValue_marikoCpuUVHigh] : configList.values[KipConfigValue_eristaCpuUV];
-        labels = IsMariko() ? (isCustomTable ? cpu_freq_label_m_custom : (isUsingUv ? cpu_freq_label_m_uv : cpu_freq_label_m)) : (isUsingUv ? cpu_freq_label_e_uv : cpu_freq_label_e);
+        labels = IsMariko() ? (isUsingUv ? cpu_freq_label_m_uv : cpu_freq_label_m) : (isUsingUv ? cpu_freq_label_e_uv : cpu_freq_label_e);
     } else if (module == HocClkModule_GPU) {
         labels = IsMariko() ? *(marikoUV[configList.values[KipConfigValue_marikoGpuUV]]) : *(eristaUV[configList.values[KipConfigValue_eristaGpuUV]]);
     }

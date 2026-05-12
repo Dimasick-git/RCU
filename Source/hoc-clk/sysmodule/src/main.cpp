@@ -39,7 +39,7 @@
 #include "config.hpp"
 #include "auto_ryazha.hpp"
 
-#define INNER_HEAP_SIZE 0x3A000
+#define INNER_HEAP_SIZE 0x4A000
 
 extern "C"
 {

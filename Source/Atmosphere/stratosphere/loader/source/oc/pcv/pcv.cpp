@@ -100,22 +100,16 @@ namespace ams::ldr::hoc::pcv {
         };
 
         u32 eristaCpuDvfsMaxFreq = static_cast<u32>(GetDvfsTableLastEntry(C.eristaCpuDvfsTable)->freq);
-        auto get_mariko_cpu_table = []() -> volatile cvb_entry_t * {
-            switch (C.tableConf) {
-                case TBREAK_1581:
-                    return const_cast<cvb_entry_t *>(C.marikoCpuDvfsTable1581Tbreak);
-                case TBREAK_1683:
-                    return const_cast<cvb_entry_t *>(C.marikoCpuDvfsTable1683Tbreak);
-                case CUSTOM_TABLE:
-                    return const_cast<cvb_entry_t *>(C.marikoCpuDvfsTableExtreme);
-                case DEFAULT_TABLE:
-                default:
-                    return const_cast<cvb_entry_t *>(C.marikoCpuDvfsTable);
+        u32 marikoCpuDvfsMaxFreq;
+            if (C.marikoCpuUVHigh) {
+                marikoCpuDvfsMaxFreq = static_cast<u32>(
+                    GetDvfsTableLastEntry(C.marikoCpuDvfsTableSLT)->freq
+                );
+            } else {
+                marikoCpuDvfsMaxFreq = static_cast<u32>(
+                    GetDvfsTableLastEntry(C.marikoCpuDvfsTable)->freq
+                );
             }
-        };
-        u32 marikoCpuDvfsMaxFreq = static_cast<u32>(
-            GetDvfsTableLastEntry(get_mariko_cpu_table())->freq
-        );
         u32 eristaGpuDvfsMaxFreq;
         switch (C.eristaGpuUV) {
         case 0:
@@ -148,18 +142,14 @@ namespace ams::ldr::hoc::pcv {
                 break;
         }
 
-        const bool marikoCustomTable = C.tableConf == CUSTOM_TABLE;
-        const u32 marikoCpuMaxVoltLimit = marikoCustomTable ? 1375 : 1200;
-        const u32 marikoCpuMaxFreqLimit = marikoCustomTable ? 3009'000 : 2703'000;
-
         using namespace ams::ldr::hoc::pcv;
         sValidator validators[] = {
             { C.eristaCpuBoostClock,                1020'000, 2397'000,  true, panic::Cpu },
-            { C.marikoCpuBoostClock,                1020'000, marikoCpuMaxFreqLimit,  true, panic::Cpu },
+            { C.marikoCpuBoostClock,                1020'000, 2703'000,  true, panic::Cpu },
             { C.eristaCpuMaxVolt,                       1000,     1260, false, panic::Cpu },
-            { C.marikoCpuMaxVolt,                       1000,     marikoCpuMaxVoltLimit, false, panic::Cpu },
+            { C.marikoCpuMaxVolt,                       1000,     1200, false, panic::Cpu },
             { eristaCpuDvfsMaxFreq,                 1785'000, 2397'000, false, panic::Cpu },
-            { marikoCpuDvfsMaxFreq,                 1785'000, marikoCpuMaxFreqLimit, false, panic::Cpu },
+            { marikoCpuDvfsMaxFreq,                 1785'000, 2703'000, false, panic::Cpu },
             { C.commonEmcMemVolt,                    912'500, 1350'000, false, panic::Emc }, // Official burst vmax for the RAMs is 1500mV
             { GET_MAX_OF_ARR(erista::maxEmcClocks), 1600'000, 2600'000, false, panic::Emc },
             { C.marikoEmcMaxClock,                  1600'000, 3500'000, false, panic::Emc },

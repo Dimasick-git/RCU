@@ -60,7 +60,6 @@ class RamSubmenuGui;
 class RamTimingsSubmenuGui;
 class RamLatenciesSubmenuGui;
 class CpuSubmenuGui;
-class CpuCustomTableSubmenuGui;
 class GpuSubmenuGui;
 class GpuCustomTableSubmenuGui;
 class RamTableEditor;
@@ -745,32 +744,6 @@ protected:
             );
 
         }
-        if(IsAula()) {
-            std::vector<NamedValue> displayClrPreset = {
-                NamedValue("Do Not Override", AulaDisplayColorMode_DoNotOverride),
-                NamedValue("Basic", AulaDisplayColorMode_Basic),
-                NamedValue("Saturated", AulaDisplayColorMode_Saturated),
-                NamedValue("Washed", AulaDisplayColorMode_Washed),
-                NamedValue("Natural", AulaDisplayColorMode_Natural),
-                NamedValue("Vivid", AulaDisplayColorMode_Vivid),
-                NamedValue("Washed", AulaDisplayColorMode_Night0, "Night"),
-                NamedValue("Basic", AulaDisplayColorMode_Night1, "Night"),
-                NamedValue("Natural", AulaDisplayColorMode_Night2, "Night"),
-                NamedValue("Vivid", AulaDisplayColorMode_Night3, "Night"),
-            };
-
-            addConfigButton(
-                HocClkConfigValue_AulaDisplayColorPreset,
-                "Display Color Preset",
-                ValueRange(0, 1, 1, "", 0),
-                "Display Color Preset",
-                &thresholdsDisabled,
-                {},
-                displayClrPreset,
-                false,
-                false
-            );
-        }
     }
 };
 
@@ -862,6 +835,32 @@ protected:
                 {},
                 false
             );
+        } else {
+            std::vector<NamedValue> displayClrPreset = {
+                NamedValue("Базовый", AulaDisplayColorMode_Basic),
+                NamedValue("Перенасыщенный", AulaDisplayColorMode_Saturated),
+                NamedValue("Приглушённый", AulaDisplayColorMode_Washed),
+                NamedValue("Естественный", AulaDisplayColorMode_Natural),
+                NamedValue("Яркий", AulaDisplayColorMode_Vivid),
+                NamedValue("Приглушённый", AulaDisplayColorMode_Night0, "Ночь"),
+                NamedValue("Базовый", AulaDisplayColorMode_Night1, "Ночь"),
+                NamedValue("Естественный", AulaDisplayColorMode_Night2, "Ночь"),
+                NamedValue("Яркий", AulaDisplayColorMode_Night3, "Ночь"),
+            };
+
+            addConfigButton(
+                HocClkConfigValue_AulaDisplayColorPreset,
+                "Цветовой режим OLED",
+                ValueRange(0, 1, 1, "", 0),
+                "Цветовой режим OLED",
+                &thresholdsDisabled,
+                {},
+                displayClrPreset,
+                false,
+                false
+            );
+
+            
         }
     }
 };
@@ -1506,41 +1505,28 @@ protected:
 
         this->listElement->addItem(new tsl::elm::CategoryHeader("Настройки ЦП"));
         if(IsMariko()) {
-            const bool isCustomTable = this->configList->values[KipConfigValue_tableConf] == HOCCLK_MARIKO_CPU_TABLE_CUSTOM;
-            ValueThresholds mCpuClockThresholdsCustom(2397000, 2805000);
-
             addConfigTrackbar(KipConfigValue_marikoCpuUVLow, "CPU Low UV", ValueRange(0, 8, 1));
             addConfigTrackbar(KipConfigValue_marikoCpuUVHigh, "CPU High UV", ValueRange(0, 12, 1));
 
             std::vector<NamedValue> marikoTableConf = {
+                // NamedValue("Auto", 0),
                 NamedValue("Default", 1),
                 NamedValue("1581MHz Tbreak", 2),
                 NamedValue("1683MHz Tbreak", 3),
-                NamedValue("Custom Table", HOCCLK_MARIKO_CPU_TABLE_CUSTOM)
+                NamedValue("Extreme UV Table", 4)
             };
 
             addConfigButton(
                 KipConfigValue_tableConf,
-                "CPU Table",
+                "CPU UV Table",
                 ValueRange(0, 12, 1, "", 0),
-                "CPU Table",
+                "CPU UV Table",
                 &thresholdsDisabled,
                 {},
                 marikoTableConf,
                 false,
                 true
             );
-
-            tsl::elm::ListItem* customTableSubmenu = new tsl::elm::ListItem("CPU Voltage Table");
-            customTableSubmenu->setClickListener([](u64 keys) {
-                if (keys & HidNpadButton_A) {
-                    tsl::changeTo<CpuCustomTableSubmenuGui>();
-                    return true;
-                }
-                return false;
-            });
-            customTableSubmenu->setValue(R_ARROW);
-            this->listElement->addItem(customTableSubmenu);
 
             addConfigButton(
                 KipConfigValue_marikoCpuLowVmin,
@@ -1566,21 +1552,20 @@ protected:
                 true
             );
 
-            if (!isCustomTable) {
-                ValueThresholds mCpuVoltThresholds(1160, 1180);
-                addConfigButton(
-                    KipConfigValue_marikoCpuMaxVolt,
-                    "CPU Max Voltage",
-                    ValueRange(1000, 1200, 5, "mV", 1),
-                    "CPU Max Voltage",
-                    &mCpuVoltThresholds,
-                    {},
-                    {},
-                    false,
-                    true
-                );
-            }
+            ValueThresholds mCpuVoltThresholds(1160, 1180);
+            addConfigButton(
+                KipConfigValue_marikoCpuMaxVolt,
+                "CPU Max Voltage",
+                ValueRange(1000, 1200, 5, "mV", 1),
+                "CPU Max Voltage",
+                &mCpuVoltThresholds,
+                {},
+                {},
+                false,
+                true
+            );
 
+            
             std::vector<NamedValue> maxClkOptions = {
                 NamedValue("1963 MHz", 1963500),
                 NamedValue("2091 MHz", 2091000),
@@ -1591,25 +1576,20 @@ protected:
                 NamedValue("2601 MHz", 2601000),
                 NamedValue("2703 MHz", 2703000),
             };
-            if (isCustomTable) {
-                maxClkOptions.emplace_back("2805 MHz", 2805000);
-                maxClkOptions.emplace_back("2907 MHz", 2907000);
-                maxClkOptions.emplace_back("3009 MHz", 3009000);
-            }
 
             addConfigButton(
                 KipConfigValue_marikoCpuMaxClock,
                 "CPU Max Clock",
                 ValueRange(0, 0, 1, "", 1),
                 "CPU Max Clock",
-                isCustomTable ? &mCpuClockThresholdsCustom : (this->configList->values[KipConfigValue_marikoCpuUVHigh] ? &mCpuClockThresholdsUV : &mCpuClockThresholds),
+                this->configList->values[KipConfigValue_marikoCpuUVHigh] ? &mCpuClockThresholdsUV : &mCpuClockThresholds,
                 {},
                 maxClkOptions,
                 false,
                 true
             );
 
-            std::vector<NamedValue> clkOptions = {
+            std::vector<NamedValue> ClkOptions = {
                 NamedValue("1963 MHz", 1963500),
                 NamedValue("2091 MHz", 2091000),
                 NamedValue("2193 MHz", 2193000),
@@ -1619,20 +1599,15 @@ protected:
                 NamedValue("2601 MHz", 2601000),
                 NamedValue("2703 MHz", 2703000),
             };
-            if (isCustomTable) {
-                clkOptions.emplace_back("2805 MHz", 2805000);
-                clkOptions.emplace_back("2907 MHz", 2907000);
-                clkOptions.emplace_back("3009 MHz", 3009000);
-            }
 
             addConfigButton(
                 KipConfigValue_marikoCpuBoostClock,
                 "CPU Boost Clock",
                 ValueRange(0, 0, 1, "", 1),
                 "CPU Boost Clock",
-                isCustomTable ? &mCpuClockThresholdsCustom : (this->configList->values[KipConfigValue_marikoCpuUVHigh] ? &mCpuClockThresholdsUV : &mCpuClockThresholds),
+                this->configList->values[KipConfigValue_marikoCpuUVHigh] ? &mCpuClockThresholdsUV : &mCpuClockThresholds,
                 {},
-                clkOptions,
+                ClkOptions,
                 false,
                 true
             );
@@ -1709,81 +1684,6 @@ protected:
         }
         addConfigToggle(HocClkConfigValue_OverwriteBoostMode, nullptr);
 
-    }
-};
-
-class CpuCustomTableSubmenuGui : public MiscGui {
-public:
-    CpuCustomTableSubmenuGui() { }
-
-protected:
-    void listUI() override {
-        Result rc = hocclkIpcGetConfigValues(this->configList);
-        if (R_FAILED(rc)) [[unlikely]] {
-            FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc);
-            return;
-        }
-
-        this->listElement->addItem(new tsl::elm::CategoryHeader("CPU Custom Table (mV)"));
-
-        tsl::elm::CustomDrawer* warningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
-            renderer->drawString("\uE150 Used only with CPU Table =", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
-            renderer->drawString("Custom Table. Auto keeps the", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
-            renderer->drawString("base 3009 table value for each", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
-            renderer->drawString("frequency.", false, x + 20, y + 90, 18, tsl::style::color::ColorText);
-        });
-        warningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 110);
-        this->listElement->addItem(warningText);
-
-        if (!IsMariko()) {
-            return;
-        }
-
-        ValueThresholds cpuVoltThresholds(1200, 1325);
-        std::vector<NamedValue> cpuVolts = {
-            NamedValue("Auto", 0),
-        };
-        for (u32 mv = 500; mv <= 1375; mv += 5) {
-            char label[16];
-            std::snprintf(label, sizeof(label), "%umV", mv);
-            cpuVolts.emplace_back(label, mv);
-        }
-
-        struct CpuVoltEntry {
-            HocClkConfigValue key;
-            const char* label;
-        };
-        static const CpuVoltEntry cpuVoltEntries[] = {
-            { KipConfigValue_marikoCpuVolt_510000,  "510.0MHz" },
-            { KipConfigValue_marikoCpuVolt_612000,  "612.0MHz" },
-            { KipConfigValue_marikoCpuVolt_714000,  "714.0MHz" },
-            { KipConfigValue_marikoCpuVolt_816000,  "816.0MHz" },
-            { KipConfigValue_marikoCpuVolt_918000,  "918.0MHz" },
-            { KipConfigValue_marikoCpuVolt_1020000, "1020.0MHz" },
-            { KipConfigValue_marikoCpuVolt_1122000, "1122.0MHz" },
-            { KipConfigValue_marikoCpuVolt_1224000, "1224.0MHz" },
-            { KipConfigValue_marikoCpuVolt_1326000, "1326.0MHz" },
-            { KipConfigValue_marikoCpuVolt_1428000, "1428.0MHz" },
-            { KipConfigValue_marikoCpuVolt_1581000, "1581.0MHz" },
-            { KipConfigValue_marikoCpuVolt_1683000, "1683.0MHz" },
-            { KipConfigValue_marikoCpuVolt_1785000, "1785.0MHz" },
-            { KipConfigValue_marikoCpuVolt_1887000, "1887.0MHz" },
-            { KipConfigValue_marikoCpuVolt_1963500, "1963.5MHz" },
-            { KipConfigValue_marikoCpuVolt_2091000, "2091.0MHz" },
-            { KipConfigValue_marikoCpuVolt_2193000, "2193.0MHz" },
-            { KipConfigValue_marikoCpuVolt_2295000, "2295.0MHz" },
-            { KipConfigValue_marikoCpuVolt_2397000, "2397.0MHz" },
-            { KipConfigValue_marikoCpuVolt_2499000, "2499.0MHz" },
-            { KipConfigValue_marikoCpuVolt_2601000, "2601.0MHz" },
-            { KipConfigValue_marikoCpuVolt_2703000, "2703.0MHz" },
-            { KipConfigValue_marikoCpuVolt_2805000, "2805.0MHz" },
-            { KipConfigValue_marikoCpuVolt_2907000, "2907.0MHz" },
-            { KipConfigValue_marikoCpuVolt_3009000, "3009.0MHz" },
-        };
-
-        for (const auto& entry : cpuVoltEntries) {
-            addConfigButton(entry.key, entry.label, ValueRange(0, 0, 0, "0", 1), "Voltage", &cpuVoltThresholds, {}, cpuVolts, false, true);
-        }
     }
 };
 

@@ -114,10 +114,6 @@ namespace kip {
         CUST_WRITE_FIELD_BATCH(&table, eristaCpuBoostClock, config::GetConfigValue(KipConfigValue_eristaCpuBoostClock));
         CUST_WRITE_FIELD_BATCH(&table, marikoCpuBoostClock, config::GetConfigValue(KipConfigValue_marikoCpuBoostClock));
 
-        for (int i = 0; i < HOCCLK_MARIKO_CPU_CUSTOM_VOLT_COUNT; i++) {
-            table.marikoCpuVoltArrayCustom[i] = config::GetConfigValue((HocClkConfigValue)(KipConfigValue_marikoCpuVolt_510000 + i));
-        }
-
         CUST_WRITE_FIELD_BATCH(&table, eristaGpuUV, config::GetConfigValue(KipConfigValue_eristaGpuUV));
         CUST_WRITE_FIELD_BATCH(&table, eristaGpuVmin, config::GetConfigValue(KipConfigValue_eristaGpuVmin));
 
@@ -257,9 +253,6 @@ namespace kip {
             configValues.values[KipConfigValue_marikoCpuMaxClock] = cust_get_marikoCpuMaxClock(&table);
             configValues.values[KipConfigValue_eristaCpuBoostClock] = cust_get_erista_cpu_boost(&table);
             configValues.values[KipConfigValue_marikoCpuBoostClock] = cust_get_mariko_cpu_boost(&table);
-            for (int i = 0; i < HOCCLK_MARIKO_CPU_CUSTOM_VOLT_COUNT; i++) {
-                configValues.values[KipConfigValue_marikoCpuVolt_510000 + i] = cust_get_mariko_cpu_volt(&table, i);
-            }
 
             configValues.values[KipConfigValue_eristaGpuUV] = cust_get_erista_gpu_uv(&table);
             configValues.values[KipConfigValue_eristaGpuVmin] = cust_get_erista_gpu_vmin(&table);

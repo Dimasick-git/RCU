@@ -33,7 +33,7 @@ enum TableConfig: u32 {
     DEFAULT_TABLE = 1,
     TBREAK_1581 = 2,
     TBREAK_1683 = 3,
-    CUSTOM_TABLE = 4,
+    EXTREME_TABLE = 4,
 };
 
 enum StepMode: u32 {
@@ -150,8 +150,7 @@ typedef struct CustomizeTable {
     u32 fineTune_t6_tRTW;
     u32 fineTune_t7_tWTR;
 
-    u32 marikoCpuVoltArrayCustom[25];
-    u32 reserved[35];
+    u32 reserved[60];
 
     CustomizeCpuDvfsTable eristaCpuDvfsTable;
     CustomizeCpuDvfsTable eristaCpuDvfsTableSLT;

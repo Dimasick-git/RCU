@@ -52,7 +52,7 @@ namespace ams::ldr::hoc::pcv {
                     customize_table = const_cast<cvb_entry_t *>(C.marikoCpuDvfsTable1581Tbreak);
                     break;
                 }
-                case CUSTOM_TABLE: {
+                case EXTREME_TABLE: {
                     customize_table = const_cast<cvb_entry_t *>(C.marikoCpuDvfsTableExtreme);
                     break;
                 }
@@ -89,15 +89,7 @@ namespace ams::ldr::hoc::pcv {
 
         std::memcpy(cpu_cvb_table_head, static_cast<void *>(customize_table), customize_table_size);
 
-        if (isMariko && C.tableConf == CUSTOM_TABLE) {
-            cvb_entry_t *entry = static_cast<cvb_entry_t *>(cpu_cvb_table_head);
-            for (size_t i = 0; i < customize_entry_count; ++i) {
-                if (C.marikoCpuVoltArrayCustom[i] != 0) {
-                    PATCH_OFFSET(&(entry->cvb_dfll_param.c0), (C.marikoCpuVoltArrayCustom[i] * 1000));
-                }
-                ++entry;
-            }
-        } else if (cpu_max_volt) {
+        if (cpu_max_volt) {
             cvb_entry_t *entry = static_cast<cvb_entry_t *>(cpu_cvb_table_head);
             for (size_t i = 0; i < customize_entry_count; i++) {
                 if (entry->freq >= cpu_freq_threshold) {
