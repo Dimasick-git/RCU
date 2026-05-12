@@ -1,4 +1,3 @@
-
 <div align="center">
 
 <img src="assets/logo.png" alt="logo" width="768"/>
@@ -73,7 +72,7 @@ It enables advanced CPU, GPU, and RAM tuning with user-friendly configuration to
 
 ## Building from Source
 
-Refer to COMPILATION.md
+Refer to COMPILING.md
 
 ---
 ## Clock table
