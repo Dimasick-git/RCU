@@ -22,9 +22,9 @@ CONFIG_DIR	:=	horizon-oc
 BUILD		:=	build
 OUTDIR		:=	out
 RESOURCES	:=	res
-SOURCES		:=	src src/nx/ipc ../common/src src/board src/display
+SOURCES		:=	src src/hos src/i2c src/ipc src/board src/display src/tsensor src/mgr src/file src/soc src/mapping src/pwr src/util ../common/src
 DATA		:=	data
-INCLUDES	:=	../common/include
+INCLUDES	:=	../common/include src/hos src/soc src/i2c src/util src/pwr src/ipc
 EXEFS_SRC	:=	exefs_src
 LIBNAMES	:=	minIni nxExt
 
