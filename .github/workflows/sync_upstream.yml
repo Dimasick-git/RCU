@@ -1,0 +1,41 @@
+name: Sync with Upstream
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Запуск каждый день в полночь
+  workflow_dispatch: # Возможность ручного запуска
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout RCU
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN }}
+
+      - name: Set up Git
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+
+      - name: Add Upstream
+        run: |
+          git remote add upstream https://github.com/Horizon-OC/Horizon-OC.git
+          git fetch upstream
+
+      - name: Merge Upstream
+        run: |
+          # Пытаемся объединить изменения из upstream/main в текущую ветку
+          # Используем стратегию 'recursive' с предпочтением наших изменений в случае конфликтов в специфичных файлах,
+          # но для автоматизации лучше просто попробовать обычный merge.
+          if git merge upstream/main --no-edit; then
+            echo "Successfully merged upstream changes."
+            git push origin main
+          else
+            echo "Conflict detected during merge. Creating a Pull Request or failing."
+            # В случае конфликта можно либо отменить merge, либо оставить как есть для ручного разбора.
+            git merge --abort
+            exit 1
+          fi
