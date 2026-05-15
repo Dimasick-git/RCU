@@ -55,6 +55,7 @@ typedef enum
     HocClkModule_GPU,
     HocClkModule_MEM,
     HocClkModule_Governor,
+    HocClkModule_Display,
     HocClkModule_EnumMax,
 } HocClkModule;
 typedef enum
