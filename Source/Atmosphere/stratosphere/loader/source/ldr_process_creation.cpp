@@ -121,12 +121,13 @@ namespace ams::ldr {
         /* Global NSO header cache. */
         NsoHeader g_nso_headers[Nso_Count];
 
+        /* Pcv/Ptm check cache */
+        bool g_is_pcv;
+        bool g_is_ptm;
+
         /* Global Zstd decompression context. */
         constexpr size_t ZstdDctxWorkspaceSize = 0x176E8;
         alignas(8) u8 g_zstd_dctx_workspace[ZstdDctxWorkspaceSize];
-
-        bool g_is_pcv;
-        bool g_is_ptm;
 
         Result ValidateProgramVersion(ncm::ProgramId program_id, u32 version) {
             /* No version verification is done before 8.1.0. */
@@ -727,6 +728,7 @@ namespace ams::ldr {
                 /* Apply IPS patches. */
                 LocateAndApplyIpsPatchesToModule(nso_header->module_id, map_address, nso_size);
 
+                /* Apply PCV and PTM patches */
                 if (g_is_pcv) {
                     hoc::pcv::Patch(map_address, nso_size);
                 }

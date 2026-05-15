@@ -30,16 +30,16 @@
 
 #include <switch.h>
 
-#include "errors.hpp"
-#include "file_utils.hpp"
+#include "file/errors.hpp"
+#include "file/file_utils.hpp"
 #include "board/board.hpp"
-#include "process_management.hpp"
-#include "clock_manager.hpp"
-#include "ipc_service.hpp"
-#include "config.hpp"
+#include "hos/process_management.hpp"
+#include "mgr/clock_manager.hpp"
+#include "ipc/ipc_service.hpp"
 #include "auto_ryazha.hpp"
+#include "file/config.hpp"
 
-#define INNER_HEAP_SIZE 0x4A000
+#define INNER_HEAP_SIZE 0x40000
 
 extern "C"
 {
@@ -136,6 +136,7 @@ int main(int argc, char** argv)
         return 1;
     }
     config::Initialize();
+    config::Refresh(); // Get config from file
 
     board::Initialize();
     processManagement::Initialize();
@@ -146,12 +147,15 @@ int main(int argc, char** argv)
     ipcService::Initialize();
     autoRyazha::Initialize();
 
-    fileUtils::LogLine("Ready");
 
     clockManager::SetRunning(true);
     config::SetEnabled(true);
     ipcService::SetRunning(true);
     autoRyazha::Start();
+    // TemperaturePoint *table;
+    // ReadConfigFile(&table);
+    // InitFanController(table);
+    // StartFanControllerThread();
 
     while (clockManager::Running())
     {
@@ -159,14 +163,13 @@ int main(int argc, char** argv)
         clockManager::WaitForNextTick();
     }
 
-    autoRyazha::Exit();
     ipcService::SetRunning(false);
     ipcService::Exit();
     clockManager::Exit();
     processManagement::Exit();
     board::Exit();
     config::Exit();
-    fileUtils::LogLine("Exit");
+    fileUtils::LogLine("Exiting hoc-clk");
     svcSleepThread(1000000ULL);
     fileUtils::Exit();
 

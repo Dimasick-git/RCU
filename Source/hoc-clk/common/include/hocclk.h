@@ -48,8 +48,7 @@ extern "C" {
 #include "hocclk/apm.h"
 #include "hocclk/config.h"
 #include "hocclk/errors.h"
-#include "hocclk/psm_ext.h"
-#include "hocclk/auto_ryazha.h"
+#include "hocclk/result.hpp"
 
 #ifdef __cplusplus
 }

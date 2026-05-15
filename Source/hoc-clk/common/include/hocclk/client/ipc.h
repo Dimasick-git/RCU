@@ -31,7 +31,6 @@
 #include "../config.h"
 #include "../board.h"
 #include "../ipc.h"
-#include "../auto_ryazha.h"
 
 bool hocclkIpcRunning();
 Result hocclkIpcInitialize(void);
@@ -51,9 +50,6 @@ Result hocclkIpcSetConfigValues(HocClkConfigValueList* configValues);
 Result hocclkIpcGetFreqList(HocClkModule module, u32* list, u32 maxCount, u32* outCount);
 Result hocClkIpcSetKipData();
 Result hocClkIpcGetKipData();
-
-Result hocclkIpcGetLadderConfig(HocClkLadderConfig* out_cfg);
-Result hocclkIpcSetLadderConfig(const HocClkLadderConfig* cfg);
 
 static inline Result hocclkIpcRemoveOverride(HocClkModule module)
 {
