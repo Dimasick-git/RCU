@@ -34,7 +34,7 @@
 #include <tmp451.h>
 #include <ipc_server.h>
 #include <lockable_mutex.h>
-#include "../display/display_refresh_rate.hpp"
+#include "../board/display_refresh_rate.hpp"
 #include "board.hpp"
 #include "board_name.hpp"
 #include "../file/errors.hpp"

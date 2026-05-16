@@ -36,7 +36,7 @@
 #include <pwm.h>
 #include <registers.h>
 #include <battery.h>
-#include "../display/display_refresh_rate.hpp"
+#include "../board/display_refresh_rate.hpp"
 #include <notification.h>
 
 #include "board.hpp"

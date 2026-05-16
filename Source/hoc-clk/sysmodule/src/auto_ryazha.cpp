@@ -34,7 +34,7 @@
 #include "errors.hpp"
 #include "file_utils.hpp"
 #include "board/board.hpp"
-#include "board/display_refresh_rate.hpp"
+#include "../board/display_refresh_rate.hpp"
 
 namespace autoRyazha {
 

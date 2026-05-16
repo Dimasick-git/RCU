@@ -34,7 +34,7 @@
 #include "../file/kip.hpp"
 #include <i2c.h>
 #include "../i2c/i2cDrv.h"
-#include "../display/display_refresh_rate.hpp"
+#include "../board/display_refresh_rate.hpp"
 #include <cstdio>
 #include <crc32.h>
 #include "../file/config.hpp"
