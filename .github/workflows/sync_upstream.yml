@@ -30,7 +30,7 @@ jobs:
           # Пытаемся объединить изменения из upstream/main в текущую ветку
           # Используем стратегию 'recursive' с предпочтением наших изменений в случае конфликтов в специфичных файлах,
           # но для автоматизации лучше просто попробовать обычный merge.
-          if git merge upstream/main --no-edit; then
+          if git merge upstream/main --no-edit --allow-unrelated-histories; then
             echo "Successfully merged upstream changes."
             git push origin main
           else
