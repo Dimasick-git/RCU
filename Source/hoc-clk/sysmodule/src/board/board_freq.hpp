@@ -28,7 +28,7 @@
 #include <switch.h>
 #include <hocclk.h>
 #include <nxExt.h>
-#include "../errors.hpp"
+#include "../file/errors.hpp"
 
 namespace board {
 
