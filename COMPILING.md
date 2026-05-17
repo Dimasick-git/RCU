@@ -15,6 +15,7 @@
 - `ryazha-clk` sysmodule в `dist/atmosphere/contents/<TITLE_ID>/`
 - overlay в:
   - `dist/switch/.overlays/ryazha-clk.ovl`
+  - `dist/switch/overlays/ryazha-clk.ovl` (для интеграций, где hidden-пути фильтруются)
 
 ## Важно
 - Для сборки лоадера нужна подготовленная папка `build/stratosphere/loader`.
