@@ -10,7 +10,14 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 REPO = os.getenv("GITHUB_REPOSITORY")
 RUN_ID = os.getenv("FAILED_RUN_ID")
 REF = os.getenv("GITHUB_REF_NAME")
-MODEL = "openrouter/free"
+
+# List of models to try in order (Fallback mechanism)
+MODELS = [
+    "google/gemini-2.0-flash-exp:free",
+    "mistralai/mistral-7b-instruct:free",
+    "google/gemma-7b-it:free",
+    "openrouter/auto"
+]
 
 def run_command(command, cwd=None):
     result = subprocess.run(command, shell=True, capture_output=True, text=True, cwd=cwd)
@@ -36,7 +43,7 @@ def get_failed_logs():
     except Exception as e:
         return f"Error fetching logs: {str(e)}"
 
-def ask_ai(prompt, system_prompt):
+def ask_ai(model, prompt, system_prompt):
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
@@ -45,7 +52,7 @@ def ask_ai(prompt, system_prompt):
         "X-Title": "Autonomous AI Fixer"
     }
     payload = {
-        "model": MODEL,
+        "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
@@ -54,18 +61,17 @@ def ask_ai(prompt, system_prompt):
     }
     
     try:
+        print(f"🤖 Trying model: {model}...")
         response = requests.post(url, headers=headers, data=json.dumps(payload))
         data = response.json()
         
         if "choices" not in data:
-            print(f"API Error Response: {json.dumps(data, indent=2)}")
-            if "error" in data:
-                print(f"Error Message: {data['error'].get('message')}")
+            print(f"⚠️ Model {model} failed. API Error Response: {json.dumps(data, indent=2)}")
             return None
             
         return data["choices"][0]["message"]["content"]
     except Exception as e:
-        print(f"Request failed: {str(e)}")
+        print(f"❌ Request failed for {model}: {str(e)}")
         return None
 
 def main():
@@ -89,11 +95,17 @@ def main():
     
     user_prompt = f"Analyze these failed logs and provide a fix by returning the FULL corrected file content:\n\n{logs}"
     
-    print("🧠 Asking AI for a solution...")
-    ai_content = ask_ai(user_prompt, system_prompt)
+    ai_content = None
+    for model in MODELS:
+        ai_content = ask_ai(model, user_prompt, system_prompt)
+        if ai_content:
+            print(f"✅ Model {model} successfully provided a solution.")
+            break
+        else:
+            print(f"🔄 Switching to next model...")
     
     if not ai_content:
-        print("❌ AI failed to provide a response.")
+        print("❌ All AI models failed to provide a response.")
         return
 
     try:
