@@ -10,6 +10,7 @@
 #pragma once
 
 #include <hocclk.h>
+#include <hocclk/auto_ryazha.h>
 #include <switch.h>
 
 namespace autoRyazha {
