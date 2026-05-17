@@ -1,13 +1,19 @@
 #include <switch.h>
 
-int main(int argc, char **argv) {
-    /* Initialize the service manager */
-    smInitialize();
+extern "C" void __libnx_init(void);
 
-    /* TODO: Add sysmodule initialization code here */
+extern "C" void __libnx_init(void)
+{
+    // Initialize services if needed
+}
 
-    /* Main loop or service registration would go here */
-
-    smExit();
+int main(int argc, char **argv)
+{
+    // Main sysmodule loop or initialization
+    // Keep the sysmodule running
+    while (true) {
+        svcSleepThread(1000000000ULL); // Sleep for 1 second
+    }
+    
     return 0;
 }
