@@ -11,14 +11,20 @@ REPO = os.getenv("GITHUB_REPOSITORY")
 RUN_ID = os.getenv("FAILED_RUN_ID")
 REF = os.getenv("GITHUB_REF_NAME")
 
-# Focus on SMART and FREE models to avoid credit issues
+# 2026 CUTTING EDGE FREE MODELS LIST
+# Focused on high-intelligence, large context, and coding capabilities.
 MODELS = [
-    "google/gemini-2.0-flash-exp:free",
-    "meta-llama/llama-3.1-70b-instruct:free",
-    "qwen/qwen-2-72b-instruct:free",
-    "mistralai/mistral-7b-instruct:free",
-    "google/gemma-7b-it:free",
-    "openrouter/free" # Fallback to any available free model
+    "openrouter/owl-alpha",                   # High-performance agentic model (free)
+    "nvidia/nemotron-3-super-120b-a12b:free", # Massive 120B MoE model (free)
+    "poolside/laguna-m.1:free",               # Specialized coding agent model (free)
+    "openai/gpt-oss-120b:free",               # OpenAI's open-weight reasoning model (free)
+    "z-ai/glm-4.5-air:free",                  # GLM 4.5 Air variant (free)
+    "deepseek/deepseek-v4-flash:free",        # DeepSeek's latest fast & smart model (free)
+    "meta-llama/llama-3.3-70b-instruct:free", # The latest Llama 3.3 (free)
+    "google/gemini-2.0-flash-exp:free",       # Gemini 2.0 Flash (free)
+    "qwen/qwen-2.5-72b-instruct:free",        # Qwen 2.5 72B (free)
+    "google/gemma-2-27b-it:free",             # Gemma 2 27B (free)
+    "openrouter/free"                         # Global fallback to any free model
 ]
 
 def run_command(command, cwd=None):
