@@ -61,7 +61,8 @@ jobs:
         run: git clone https://github.com/switchbrew/libnx.git
 
       - name: Clone Atmosphere
-        run: git clone --depth=1 --single-branch https://github.com/Atmosphere-NX/Atmosphere.git atmosphere -b $(cat ams_ver.txt)
+        shell: bash
+        run: git clone --depth=1 --single-branch https://github.com/Atmosphere-NX/Atmosphere.git atmosphere -b $(cat ams_ver.txt | tr -d '\r\n')
 
       - name: Prepare build folder
         run: |
