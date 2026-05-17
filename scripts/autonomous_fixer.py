@@ -11,30 +11,14 @@ REPO = os.getenv("GITHUB_REPOSITORY")
 RUN_ID = os.getenv("FAILED_RUN_ID")
 REF = os.getenv("GITHUB_REF_NAME")
 
-# Comprehensive list of models to try in order (Fallback mechanism)
-# Mix of state-of-the-art paid models and reliable free models
+# Focus on SMART and FREE models to avoid credit issues
 MODELS = [
-    # --- Top Tier (Paid/Premium) ---
-    "anthropic/claude-3.5-sonnet",
-    "openai/gpt-4o",
-    "meta-llama/llama-3.1-405b-instruct",
-    "google/gemini-pro-1.5",
-    "deepseek/deepseek-chat",
-    
-    # --- High Performance (Fast & Smart) ---
-    "anthropic/claude-3-haiku",
-    "openai/gpt-4o-mini",
-    "google/gemini-flash-1.5",
-    
-    # --- Reliable Free Models ---
     "google/gemini-2.0-flash-exp:free",
+    "meta-llama/llama-3.1-70b-instruct:free",
+    "qwen/qwen-2-72b-instruct:free",
     "mistralai/mistral-7b-instruct:free",
     "google/gemma-7b-it:free",
-    "qwen/qwen-2-72b-instruct:free",
-    "meta-llama/llama-3.1-70b-instruct:free",
-    
-    # --- Final Fallback ---
-    "openrouter/auto"
+    "openrouter/free" # Fallback to any available free model
 ]
 
 def run_command(command, cwd=None):
@@ -93,6 +77,25 @@ def ask_ai(model, prompt, system_prompt):
         print(f"❌ Request failed for {model}: {str(e)}")
         return None
 
+def sanitize_path(path):
+    """
+    Sanitizes the path provided by AI to prevent PermissionError and ensure it stays within the repo.
+    Removes absolute paths like /__w/RCU/RCU/ and makes them relative.
+    """
+    # Remove common CI absolute path prefixes
+    prefixes_to_remove = ["/__w/RCU/RCU/", "/home/runner/work/RCU/RCU/"]
+    for prefix in prefixes_to_remove:
+        if path.startswith(prefix):
+            path = path.replace(prefix, "", 1)
+    
+    # Remove leading slashes to ensure it's relative
+    path = path.lstrip("/")
+    
+    # Remove any ../ to prevent directory traversal
+    path = os.path.normpath(path).replace("../", "")
+    
+    return path
+
 def main():
     if not OPENROUTER_API_KEY:
         print("❌ OPENROUTER_API_KEY is not set in GitHub Secrets!")
@@ -110,6 +113,7 @@ def main():
     1. DO NOT break "Ryazha-Авто" or "VRR" components.
     2. Provide a clear fix.
     3. Return ONLY a JSON object: {"explanation": "why it failed", "patch": "FULL content of the file", "target_file": "path/to/file"}
+    4. IMPORTANT: target_file MUST be a relative path from the repository root (e.g., "Source/main.cpp").
     """
     
     user_prompt = f"Analyze these failed logs and provide a fix by returning the FULL corrected file content:\n\n{logs}"
@@ -135,28 +139,35 @@ def main():
     
     explanation = ai_response.get("explanation")
     content = ai_response.get("patch")
-    target_file = ai_response.get("target_file")
+    raw_target_file = ai_response.get("target_file")
     
-    if content and target_file:
-        print(f"🛠 Applying fix to {target_file}: {explanation}")
+    if content and raw_target_file:
+        target_file = sanitize_path(raw_target_file)
+        print(f"🛠 Applying fix to {target_file} (originally: {raw_target_file}): {explanation}")
         
-        os.makedirs(os.path.dirname(target_file), exist_ok=True)
-        with open(target_file, "w") as f:
-            f.write(content)
+        try:
+            dir_name = os.path.dirname(target_file)
+            if dir_name:
+                os.makedirs(dir_name, exist_ok=True)
             
-        run_command(f'git config --global user.name "AI Autonomous Fixer"')
-        run_command(f'git config --global user.email "ai-fixer@manus.im"')
-        run_command(f"git add {target_file}")
-        run_command(f'git commit -m "AI Autonomous Fix: {explanation}"')
-        
-        remote_url = f"https://x-access-token:{GITHUB_TOKEN}@github.com/{REPO}.git"
-        run_command(f"git remote set-url origin {remote_url}")
-        stdout, stderr, code = run_command(f"git push origin {REF}")
-        
-        if code == 0:
-            print("✅ Successfully pushed fix to branch!")
-        else:
-            print(f"❌ Failed to push: {stderr}")
+            with open(target_file, "w") as f:
+                f.write(content)
+                
+            run_command(f'git config --global user.name "AI Autonomous Fixer"')
+            run_command(f'git config --global user.email "ai-fixer@manus.im"')
+            run_command(f"git add {target_file}")
+            run_command(f'git commit -m "AI Autonomous Fix: {explanation}"')
+            
+            remote_url = f"https://x-access-token:{GITHUB_TOKEN}@github.com/{REPO}.git"
+            run_command(f"git remote set-url origin {remote_url}")
+            stdout, stderr, code = run_command(f"git push origin {REF}")
+            
+            if code == 0:
+                print("✅ Successfully pushed fix to branch!")
+            else:
+                print(f"❌ Failed to push: {stderr}")
+        except Exception as e:
+            print(f"❌ Error applying fix: {str(e)}")
     else:
         print("⚠️ AI provided an explanation but no file changes.")
         print(f"Explanation: {explanation}")
