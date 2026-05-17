@@ -1,10 +1,14 @@
 #include <switch.h>
 
-extern "C" {
-    void DllMain(void);
-}
-
 int main(int argc, char **argv) {
-    DllMain();
+    // Initialize the sysmodule
+    consoleInit(NULL);
+    
+    // Main loop
+    while (appletMainLoop()) {
+        consoleUpdate(NULL);
+    }
+    
+    consoleExit(NULL);
     return 0;
 }
