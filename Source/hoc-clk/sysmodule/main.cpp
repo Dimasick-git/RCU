@@ -1,24 +1,20 @@
 #include <switch.h>
+#include <string.h>
 
-extern "C" {
-    void __libnx_init(void);
-    void __libnx_exit(void);
+// Service implementation
+void* serviceHandler(void* arg) {
+    // Service handling logic
+    return NULL;
 }
 
-void __libnx_init(void) {
-    // Initialize services if needed
-}
-
-void __libnx_exit(void) {
-    // Cleanup services if needed
-}
-
-int main(int argc, char **argv) {
-    // Main sysmodule loop
-    // This sysmodule doesn't need to do anything in main
-    // as it's handled by the overlay
+int main(int argc, char* argv[]) {
+    // Initialize services
+    consoleDebugInit(debugDevice_SVC);
+    
+    // Main service loop
     while (true) {
-        svcSleepThread(1000000000ULL);
+        svcSleepThread(1000000000ULL); // 1 second
     }
+    
     return 0;
 }
