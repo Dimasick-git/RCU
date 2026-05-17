@@ -9,7 +9,7 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 REPO = os.getenv("GITHUB_REPOSITORY")
 RUN_ID = os.getenv("FAILED_RUN_ID")
-MODEL = "anthropic/claude-3.5-sonnet" # One of the smartest models available on OpenRouter
+MODEL = "openrouter/free" # Using openrouter/free to select a free model automatically
 
 def run_command(command, cwd=None):
     result = subprocess.run(command, shell=True, capture_output=True, text=True, cwd=cwd)
