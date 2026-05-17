@@ -69,7 +69,7 @@ namespace board {
     #define FUSE_RESERVED_ODMX(x) (0x1C8 + 4 * (x))
     #define FUSE_OFFSET 0x800
     void FetchHardwareInfos() {
-        ReadFuses(fuseData, fuseVirtAddr);
+        ReadFuses(fuseData);
         SetGpuBracket(fuseData.gpuSpeedo, speedoBracket);
 
         u32 hidrev = *(u32*)(apbVirtAddr + APB_MISC_GP_HIDREV);
