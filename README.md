@@ -74,7 +74,7 @@ Refer to COMPILING.md for detailed build instructions.
 * 844, 768, 691, 614, 537, 460, 384, 307, 230, 153, 76.
 
 ## Credits
-* **Souldbminer** - ryazha-clk and loader development
+* **Souldbminer** - hoc-clk and loader development
 * **Lightos** - Loader patches development, ryazha-clk development, guides
 * **SciresM** - Atmosphere CFW
 * **CTCaer** - L4T, Hekate, proper RAM timings
