@@ -1,7 +1,3 @@
-#---------------------------------------------------------------------------------
-.SUFFIXES:
-#---------------------------------------------------------------------------------
-
 ifeq ($(strip $(DEVKITPRO)),)
 $(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
 endif
@@ -15,70 +11,57 @@ include $(DEVKITPRO)/libnx/switch_rules
 # SOURCES is a list of directories containing source code
 # DATA is a list of directories containing data files
 # INCLUDES is a list of directories containing header files
-# EXEFS_SRC is the optional input directory containing data copied into exefs, if anything this normally should only contain "main.npdm".
+# ROMFS is the directory containing RomFS data (Optional)
 #---------------------------------------------------------------------------------
-TARGET		:=	hoc-clk
-CONFIG_DIR	:=	ryazha-clk
+TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-OUTDIR		:=	out
-RESOURCES	:=	res
-SOURCES:=src src/hos src/i2c src/ipc src/board src/display src/tsensor src/mgr src/file src/soc src/mapping src/pwr src/util ../common/src
+SOURCES		:=	src src/i2c src/hid src/usb
 DATA		:=	data
-INCLUDES:=../common/include src src/hos src/soc src/i2c src/util src/pwr src/ipc src/board src/display src/tsensor src/mgr src/file src/mapping
-EXEFS_SRC	:=	exefs_src
-LIBNAMES	:=	minIni nxExt
-
-#---------------------------------------------------------------------------------
-# version control constants
-#---------------------------------------------------------------------------------
-APP_VERSION	:= 3.0.0
-TARGET_VERSION	:= $(APP_VERSION)
+INCLUDES	:=	include src src/i2c src/hid src/usb
+ROMFS		:=	romfs
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-DEFINES	:=	-DDISABLE_IPC -DTARGET="\"$(TARGET)\"" -DTARGET_VERSION="\"$(TARGET_VERSION)\"" -DCONFIG_DIR="\"$(CONFIG_DIR)\""
+ARCH		:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 
-ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
+CFLAGS		:=	-g -Wall -O2 -ffunction-sections \
+				$(ARCH)
 
-CFLAGS	:=	-g -Wall -Os \
-            -ffast-math -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables -fno-unwind-tables \
-            $(ARCH) $(DEFINES)
+CFLAGS		+=	$(INCLUDE) -D__SWITCH__ -D__RTLD_6XX__
 
-CFLAGS	+=	$(INCLUDE) -D__SWITCH__
+CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++20
 
-CXXFLAGS    := $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++23
+ASFLAGS		:=	-g $(ARCH)
+LDFLAGS		= 	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-ASFLAGS	:=	-g $(ARCH)
-LDFLAGS    =    -specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map) -Wl,-wrap,__cxa_throw -Wl,-wrap,_Unwind_Resume -Wl,-wrap,__gxx_personality_v0
-
-LIBS	:= $(foreach lib,$(LIBNAMES),-l$(lib)) -lnx
+LIBS		:= 	-lnx
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(LIBNX) $(foreach lib,$(LIBNAMES),$(TOPDIR)/lib/$(lib))
+LIBDIRS	:= $(LIBNX)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
 # rules for different file extensions
 #---------------------------------------------------------------------------------
 ifneq ($(BUILD),$(notdir $(CURDIR)))
-#---------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(OUTDIR)/$(TARGET)
+#---------------------------------------------------------------------------------
+export OUTPUT	:=	$(CURDIR)/$(TARGET)
 export TOPDIR	:=	$(CURDIR)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-			$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+				$(foreach dir,$(DATA),$(CURDIR)/$(dir))
 
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.bin)))
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -94,74 +77,60 @@ else
 endif
 #---------------------------------------------------------------------------------
 
-export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
-			$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
+export OFILES_SRC	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES		:=	$(OFILES_BIN) $(OFILES_SRC)
+export HFILES_BIN	:=	$(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			-I$(CURDIR)/$(BUILD)
+				$(foreach dir,$(LIBDIRS),-I$(dir)/include)
 
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+export LIBPATHS	:= $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
-export BUILD_EXEFS_SRC := $(TOPDIR)/$(EXEFS_SRC)
-
-export APP_JSON := $(TOPDIR)/perms.json
-
-.PHONY: $(BUILD) clean clean-libs clean-build all libs
+.PHONY: $(BUILD) clean all
 
 #---------------------------------------------------------------------------------
-all: $(BUILD)
-
-libs:
-	@$(foreach lib,$(LIBNAMES),$(MAKE) --no-print-directory -C $(TOPDIR)/lib/$(lib) && ) true
-
-$(LIBNAMES):
-	@echo $@
-
-$(BUILD): libs
+$(BUILD):
+#---------------------------------------------------------------------------------
 	@[ -d $@ ] || mkdir -p $@
-	@[ -d $(OUTDIR) ] || mkdir -p $(OUTDIR)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
-clean-libs:
-	@echo clean libs $(LIBNAMES) ...
-	@$(foreach lib,$(LIBNAMES),$(MAKE) -C $(TOPDIR)/lib/$(lib) clean && ) true
+all: $(BUILD)
+#---------------------------------------------------------------------------------
 
-clean-build:
-	@echo clean build ...
-	@rm -fr $(BUILD) $(TARGET).kip $(TARGET).nsp $(TARGET).npdm $(TARGET).nso $(TARGET).elf $(OUTDIR)
-
-clean: clean-libs clean-build
-
+#---------------------------------------------------------------------------------
+clean:
+#---------------------------------------------------------------------------------
+	@rm -fr $(BUILD) $(TARGET).nso $(TARGET).npdm $(TARGET).elf
 
 #---------------------------------------------------------------------------------
 else
-.PHONY:	all $(LIBFILES)
+.PHONY: all
 
-LIBFILES	:= $(foreach lib,$(LIBNAMES),$(TOPDIR)/lib/$(lib)/lib/lib$(lib).a)
-DEPENDS		:=	$(OFILES:.o=.d)
+DEPENDS	:= $(OFILES:.o=.d)
 
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
+all: $(OUTPUT).nso $(OUTPUT).npdm
 
-all: $(OUTPUT).nsp
+$(OUTPUT).nso: $(OUTPUT).elf $(OUTPUT).npdm
 
-$(OUTPUT).nsp: $(OUTPUT).nso $(OUTPUT).npdm
+$(OUTPUT).elf: $(OFILES)
 
-$(OUTPUT).elf: $(OFILES) $(LIBFILES)
+$(OFILES_SRC): $(HFILES_BIN)
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data
 #---------------------------------------------------------------------------------
-%.bin.o	:	%.bin
+%.bin.o %_bin.h : %.bin
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	@$(bin2o)
 
 -include $(DEPENDS)
 
-#---------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
 endif
-#---------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
