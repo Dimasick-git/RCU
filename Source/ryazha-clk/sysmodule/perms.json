@@ -21,7 +21,8 @@
         "*"
     ],
     "service_host": [
-        "ryazha:c"
+        "ryazha:c",
+        "hoc:clk"
     ],
     "kernel_capabilities": [
         {

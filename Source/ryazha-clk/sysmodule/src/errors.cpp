@@ -31,10 +31,14 @@
 
 namespace errors {
     void ThrowException(const char* format, ...) {
+        char buffer[256];
         va_list args;
         va_start(args, format);
-        fileUtils::LogLine(format, args);
+        vsnprintf(buffer, sizeof(buffer), format, args);
         va_end(args);
+
+        fileUtils::LogLine("%s", buffer);
+
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
         // throw std::runtime_error(msg);
     }
