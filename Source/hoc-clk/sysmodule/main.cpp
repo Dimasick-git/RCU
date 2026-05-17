@@ -1,48 +1,22 @@
 #include <switch.h>
 
-extern "C" void __appInit(void)
-{
+extern "C" void __appInit(void) {
     svcSleepThread(10000000000L);
-
-    Result rc;
-
-    rc = smInitialize();
-    if (R_FAILED(rc))
-        fatalThrow(rc);
-
-    rc = fsInitialize();
-    if (R_FAILED(rc))
-        fatalThrow(rc);
-
-    rc = fsdevMountSdmc();
-    if (R_FAILED(rc))
-        fatalThrow(rc);
-
-    rc = timeInitialize();
-    if (R_FAILED(rc))
-        fatalThrow(rc);
-
-    rc = hidInitialize();
-    if (R_FAILED(rc))
-        fatalThrow(rc);
 }
 
-extern "C" void __appExit(void)
-{
-    hidExit();
-    timeExit();
-    fsdevUnmountAll();
-    fsExit();
-    smExit();
+extern "C" void __appExit(void) {
 }
 
-int main(int argc, char **argv)
-{
-    // Main loop
-    while (true)
-    {
+int main(int argc, char **argv) {
+    consoleInit(NULL);
+
+    printf("ryazha-clk sysmodule started\n");
+
+    while (appletMainLoop()) {
+        consoleUpdate(NULL);
         svcSleepThread(1000000000L);
     }
 
+    consoleExit(NULL);
     return 0;
 }
