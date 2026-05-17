@@ -1,15 +1,20 @@
-name: AI Auto-Fixer
+name: Universal AI Fixer
 
 on:
   workflow_run:
     workflows: ["Build Horizon OC Zeus"]
     types:
       - completed
+  issue_comment:
+    types: [created]
 
 jobs:
-  on-failure:
+  fixer:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    # Run if the build failed OR if someone comments "/fix" on a PR/Issue
+    if: >
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure') ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '/fix'))
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,9 +32,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Run AI Fixer
+      - name: Run Universal AI Fixer
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GH_PAT || github.token }}
           FAILED_RUN_ID: ${{ github.event.workflow_run.id }}
-        run: python scripts/ai_fixer.py
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: python scripts/universal_ai_fixer.py
