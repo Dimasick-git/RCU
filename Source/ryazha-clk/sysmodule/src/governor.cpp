@@ -18,6 +18,7 @@
 #include "governor.hpp"
 #include "process_management.hpp"
 #include <hocclk/clock_manager.h>
+#include "auto_ryazha.hpp"
 namespace governor {
 
     #define POLL_NS 5'000'000  // 5 ms  – governor poll rate
@@ -252,7 +253,8 @@ namespace governor {
 
         u8 tick = 0, tick2 = 0;
         for (;;) {
-            if (!clockManager::gRunning || clockManager::gContext.profile == HocClkProfile_Docked || !isVRREnabled) {
+            // Если Ryazha-Авто VRR активен — он сам управляет дисплеем, не вмешиваемся.
+            if (!clockManager::gRunning || clockManager::gContext.profile == HocClkProfile_Docked || !isVRREnabled || autoRyazha::IsVrrActive()) {
                 svcSleepThread(POLL_NS);
                 continue;
             }

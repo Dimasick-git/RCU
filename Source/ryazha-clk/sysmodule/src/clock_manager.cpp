@@ -42,6 +42,7 @@
 #include <nxExt/cpp/lockable_mutex.h>
 #include "kip.hpp"
 #include "governor.hpp"
+#include "auto_ryazha.hpp"
 #include "display/aula.hpp"
 
 #define HOSPPC_HAS_BOOST (hosversionAtLeast(7,0,0))
@@ -374,7 +375,8 @@ namespace clockManager {
 
             bool noCPU = governor::isCpuGovernorEnabled;
             bool noGPU = governor::isGpuGovernorEnabled;
-            bool noDisp = governor::isVRREnabled;
+            // Если Ryazha-Авто VRR активен, он сам управляет дисплеем через override — пропускаем через SetClocks.
+            bool noDisp = governor::isVRREnabled && !autoRyazha::IsVrrActive();
             if (noDisp && module == HocClkModule_Display)
                 continue;
 

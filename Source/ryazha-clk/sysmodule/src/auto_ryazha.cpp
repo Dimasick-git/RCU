@@ -672,4 +672,9 @@ void SetConfig(const HocClkLadderConfig* in) {
     g.ladderFpsWindow.clear();
 }
 
+bool IsVrrActive() {
+    std::scoped_lock lock{g.cfgMutex};
+    return NormalizeVrrMode(g.cfg.vrrMode) != HocClkLadderVrr_Off;
+}
+
 } // namespace autoRyazha

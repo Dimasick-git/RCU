@@ -23,4 +23,9 @@ namespace autoRyazha {
     void GetConfig(HocClkLadderConfig* out);         // snapshot cfg для overlay
     void SetConfig(const HocClkLadderConfig* cfg);   // overlay прислал новый cfg — применим и сохраним
 
+    // === Запросы состояния ================================================
+    /** Возвращает true, если Ryazha-Авто VRR активен (vrrMode != Off).
+     *  Используется governor::VRRThread для предотвращения конфликта. */
+    bool IsVrrActive();
+
 }

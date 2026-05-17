@@ -1,0 +1,3 @@
+[submodule "Source/SaltyNX"]
+	path = Source/SaltyNX
+	url = https://github.com/masagrator/SaltyNX.git

@@ -1,3 +1,0 @@
-;YouTube
-;Stucks in infinite loop
-01003A400C3DA000
