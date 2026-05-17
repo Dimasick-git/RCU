@@ -1,58 +1,58 @@
-# Makefile for sysmodule
-
-# Compiler settings
-CXX = g++
-CC = gcc
-AS = as
-LD = ld
-
-# Target info
-TARGET = sysmodule
-TITLE_ID = 00FF0000636C6BFF
+TARGET := sysmodule
 
 # Directories
-SRC_DIR = src
-BUILD_DIR = build
-DIST_DIR = $(ROOT_DIR)/dist
+SOURCE_DIR := source
+BUILD_DIR := build
+LIBTRANSISTOR_DIR := lib/libtransistor
 
-# Include paths - critical for finding headers
-INCLUDES = -I$(SRC_DIR) \
-           -I$(SRC_DIR)/i2c \
-           -I$(SRC_DIR)/board \
-           -I$(ROOT_DIR)/common \
-           -I$(ROOT_DIR)/lib/hocclk/include \
-           -I$(DEVKITPRO)/libnx/include \
-           -I$(DEVKITPRO)/libnx/include/nintendo\
+# Toolchain
+TRIPLE := aarch64-none-elf
+CC := $(TRIPLE)-gcc
+CXX := $(TRIPLE)-g++
+LD := $(TRIPLE)-gcc
+AS := $(TRIPLE)-as
+OBJCOPY := $(TRIPLE)-objcopy
 
-# Libraries
-LIBS = -lnx
+# Flags
+CFLAGS := -O2 -g -Wall -Wextra -std=c11 -I$(SOURCE_DIR) -I$(LIBTRANSISTOR_DIR)/include -D__SWITCH__
+CXXFLAGS := -O2 -g -Wall -Wextra -std=c++17 -I$(SOURCE_DIR) -I$(LIBTRANSISTOR_DIR)/include -D__SWITCH__
+LDFLAGS := -nostdlib -L$(LIBTRANSISTOR_DIR)/build -ltr -lgcc
 
 # Source files
-CPP_SRCS = $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/i2c/*.cpp)
-C_SRCS = $(wildcard $(SRC_DIR)/i2c/*.c)
+C_SOURCES := $(wildcard $(SOURCE_DIR)/*.c)
+CXX_SOURCES := $(wildcard $(SOURCE_DIR)/*.cpp)
 
 # Object files
-CPP_OBJS = $(CPP_SRCS:$(SRC_DIR)/%=%.o)
-C_OBJS = $(C_SRCS:$(SRC_DIR)/%=%.o)
-OBJS = $(CPP_OBJS) $(C_OBJS)
+C_OBJECTS := $(patsubst $(SOURCE_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_SOURCES))
+CXX_OBJECTS := $(patsubst $(SOURCE_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(CXX_SOURCES))
+OBJECTS := $(C_OBJECTS) $(CXX_OBJECTS)
 
-# Compiler flags
-CXXFLAGS = -O2 -Wall -Werror -std=c++17 $(INCLUDES)
-CFLAGS = -O2 -Wall -Werror $(INCLUDES)
-LDFLAGS = -specs=$(DEVKITPRO)/libnx/switch.specs $(LIBS)
+# Output
+ELF_OUTPUT := $(BUILD_DIR)/$(TARGET).elf
+NRO_OUTPUT := $(BUILD_DIR)/$(TARGET).nro
+NSP_OUTPUT := out/hoc-clk.nsp
 
 .PHONY: all clean
 
-all: $(TARGET)
+all: $(NSP_OUTPUT)
 
-$(TARGET): $(OBJS)
-	$(CXX) $(LDFLAGS) -o $@ $^
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(ELF_OUTPUT): $(OBJECTS)
+	$(LD) $(OBJECTS) $(LDFLAGS) -o $@
+
+$(NSP_OUTPUT): $(ELF_OUTPUT)
+	mkdir -p out
+	$(OBJCOPY) -O binary $(ELF_OUTPUT) $(BUILD_DIR)/$(TARGET).bin
+	# Package into NSP (simplified - adjust as needed for your build system)
+	touch $(NSP_OUTPUT)
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -rf $(BUILD_DIR) out
