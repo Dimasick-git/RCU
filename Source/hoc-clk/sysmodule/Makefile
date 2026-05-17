@@ -11,26 +11,24 @@ include $(DEVKITPRO)/libnx/switch_rules
 # SOURCES is a list of directories containing source code
 # DATA is a list of directories containing data files
 # INCLUDES is a list of directories containing header files
-# ROMFS is the directory containing RomFS data (Icon, Audio, Binary files)
 #---------------------------------------------------------------------------------
-TARGET		:=	$(notdir $(CURDIR))
-BUILD		:=
-build
-SOURCES		:=	src
-DATA		:=	data
-INCLUDES	:=	include
+TARGET		:= $(notdir $(CURDIR))
+BUILD		:= build
+SOURCES		:= source
+DATA		:= data
+INCLUDES	:= include
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH		:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
+ARCH		:= -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE
 
-CFLAGS		:=	-g -Wall -O2 -ffunction-sections \
-				$(ARCH) $(DEFINES)
+CFLAGS		:= -g -Wall -O2 -ffunction-sections \
+			$(ARCH) $(DEFINES)
 
-CFLAGS		+=	$(INCLUDE) -D__SWITCH__ -DAPP_TITLE="Ryazha-CLK" -DAPP_VERSION="1.0.0"
+CFLAGS		+= $(INCLUDE) -D__SWITCH__
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++20
+CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++17
 
 ASFLAGS		:= -g $(ARCH)
 LDFLAGS		= -specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
@@ -41,18 +39,20 @@ LIBS		:= -lnx
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(LIBNX)
+LIBDIRS		:= $(LIBNX)
 
 #---------------------------------------------------------------------------------
-# no real need to modify anything past this point
+# no real need to edit anything past this point unless you need to add additional
+# rules for different file extensions
 #---------------------------------------------------------------------------------
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 
+#---------------------------------------------------------------------------------
 export OUTPUT	:= $(CURDIR)/$(TARGET)
 export TOPDIR	:= $(CURDIR)
 
 export VPATH	:= $(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-				$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+			$(foreach dir,$(DATA),$(CURDIR)/$(dir))
 
 export DEPSDIR	:= $(CURDIR)/$(BUILD)
 
@@ -62,33 +62,34 @@ SFILES		:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 BINFILES	:= $(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.bin)))
 
 #---------------------------------------------------------------------------------
-# use CXX for linking C++ projects, CC for standard C
+# use CXX linking if there are C++ files, otherwise use CC
 #---------------------------------------------------------------------------------
-ifeq ($(strip $(CPPFILES)),)
-	export LD := $(CC)
+ifneq ($(CPPFILES),)
+	export LD	:= $(CXX)
 else
-	export LD := $(CXX)
+	export LD	:= $(CC)
 endif
 
-export OFILES_BIN := $(addsuffix .o,$(BINFILES))
-export OFILES_SRC := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
-export OFILES := $(OFILES_BIN) $(OFILES_SRC)
-export HFILES_BIN := $(addsuffix .h,$(subst .bin,,$BINFILES))
+export OFILES_BIN	:= $(addsuffix .o,$(BINFILES))
+export OFILES_SRC	:= $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES		:= $(OFILES_BIN) $(OFILES_SRC)
+export HFILES_BIN	:= $(addsuffix .h,$(BINFILES))
 
-export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-				$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-				-I$(CURDIR)/$(BUILD)
+export INCLUDE	:= $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
+			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+			-I$(CURDIR)/$(BUILD)
 
-export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+export LIBPATHS	:= $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 .PHONY: $(BUILD) clean all
 
+#---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 clean:
-	@rm -fr $(BUILD) $(TARGET).nso $(TARGET).npdm $(TARGET).elf
+	@rm -fr $(BUILD) $(TARGET).nso $(TARGET).nsp $(TARGET).elf
 
 all: $(BUILD)
 
@@ -96,19 +97,19 @@ else
 
 DEPENDS	:= $(OFILES:.o=.d)
 
+#---------------------------------------------------------------------------------
 # main targets
-all		: $(OUTPUT).nso $(OUTPUT).npdm
+#---------------------------------------------------------------------------------
+$(TARGET).nsp: $(TARGET).nso
 
-$(OUTPUT).nso	: $(OUTPUT).elf $(OUTPUT).npdm
+$(TARGET).nso: $(TARGET).elf
 
-$(OUTPUT).elf	: $(OFILES)
-
-$(OFILES_SRC) : $(HFILES_BIN)
+$(TARGET).elf: $(OFILES)
 
 #---------------------------------------------------------------------------------
-# you need a rule like this for each extension used as binary data
+# you need a rule like this for each extension you use as binary data
 #---------------------------------------------------------------------------------
-%.bin.o	%.bin.h : %.bin
+%.bin.o %_bin.h: %.bin
 	@echo $(notdir $<)
 	@$(bin2o)
 
