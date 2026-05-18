@@ -46,6 +46,7 @@ extern "C" {
 #include "hocclk/board.h"
 #include "hocclk/clock_manager.h"
 #include "hocclk/apm.h"
+#include "hocclk/result.hpp"
 #include "hocclk/config.h"
 #include "hocclk/errors.h"
 #include "hocclk/psm_ext.h"
