@@ -27,7 +27,7 @@ INCLUDES	:=	../common/include
 EXEFS_SRC	:=	exefs_src
 IS_MINIMAL	:=	0
 
-APP_TITLE	:=	Ryazha CLK Gaea
+APP_TITLE	:=	Ryazha-CLK Gaea
 NO_ICON		:=	1
 
 
@@ -39,7 +39,7 @@ include ${TOPDIR}/lib/libultrahand/ultrahand.mk
 # version control constants
 #---------------------------------------------------------------------------------
 #TARGET_VERSION	:= $(shell git describe --dirty --always --tags)
-APP_VERSION		:= 2.3.1 # ensure to set KIP_VERSION and CUST_REV in sysmodule Makefile when updating this
+APP_VERSION		:= 3.0.0 # ensure to set KIP_VERSION and CUST_REV in sysmodule Makefile when updating this
 TARGET_VERSION := $(APP_VERSION)
 
 #---------------------------------------------------------------------------------

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2023 hanai3Bi
  *
- * Copyright (c) Souldbminer and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer and Ryazha-CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,

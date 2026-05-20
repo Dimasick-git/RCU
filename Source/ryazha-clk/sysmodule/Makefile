@@ -28,8 +28,8 @@ INCLUDES	:=	../common/include
 EXEFS_SRC	:=	exefs_src
 LIBNAMES	:=	minIni nxExt
 # major minor patch
-TARGET_VERSION	:= 2.3.1
-KIP_VERSION :=  231
+TARGET_VERSION	:= 3.0.0
+KIP_VERSION :=  300
 CUST_REV    :=  3
 
 #---------------------------------------------------------------------------------

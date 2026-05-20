@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha-CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -211,7 +211,7 @@ namespace board {
         svcCallSecureMonitor(&args);
 
         if (args.X[1] == (MC_REGISTER_BASE + MC_EMEM_CFG_0)) { // if param 1 is identical read failed
-            notification::writeNotification("Ryazha CLK\nSecmon read failed!\n This may be a hardware issue!");
+            notification::writeNotification("Ryazha-CLK\nSecmon read failed!\n This may be a hardware issue!");
             return false;
         }
 
