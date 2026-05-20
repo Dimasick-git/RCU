@@ -161,37 +161,82 @@ jobs:
             "$ROOT_DIR/README.md" \
             "$DIST_DIR/README.md"
 
+      # -------------------------------------------------
+      # SaltyNX submodule build
+      # -------------------------------------------------
       - name: Build SaltyNX
         shell: bash
         run: |
           export CC="ccache aarch64-none-elf-gcc"
           export CXX="ccache aarch64-none-elf-g++"
           DIST_DIR="$GITHUB_WORKSPACE/dist"
-          pushd Source/SaltyNX
-          make -j$(($(nproc) * 2))
-          # Копируем всё из sdcard_out/ прямо в dist/
-          if [ -d sdcard_out ]; then
-            cp -rvf sdcard_out/. "$DIST_DIR/"
+
+          if [ ! -d "Source/SaltyNX" ] || [ -z "$(ls -A Source/SaltyNX 2>/dev/null)" ]; then
+            echo "::warning::Source/SaltyNX submodule is empty, initializing..."
+            git submodule update --init --recursive Source/SaltyNX
           fi
+
+          pushd Source/SaltyNX
+          echo "*** Building SaltyNX ***"
+          make -j$(($(nproc) * 2)) 2>&1
           popd
 
+          # Pack sdcard_out -> dist/
+          if [ -d "Source/SaltyNX/sdcard_out" ]; then
+            echo "*** Packing SaltyNX artifacts ***"
+            cp -rvf Source/SaltyNX/sdcard_out/. "$DIST_DIR/"
+            echo "SaltyNX packed successfully"
+          else
+            echo "::error::SaltyNX sdcard_out/ not produced"
+            exit 1
+          fi
 
-      - name: Copy Ryazha-Status-Monitor (pre-built)
+      # -------------------------------------------------
+      # Ryazha-Status-Monitor submodule build
+      # -------------------------------------------------
+      - name: Build Ryazha-Status-Monitor
         shell: bash
         run: |
+          export CC="ccache aarch64-none-elf-gcc"
+          export CXX="ccache aarch64-none-elf-g++"
           DIST_DIR="$GITHUB_WORKSPACE/dist"
-          mkdir -p "$DIST_DIR/switch/.overlays"
-          if [ -f "Source/Ryazha-Status-Monitor/Ryazha-Status-Monitor.ovl" ]; then
-            cp -vf "Source/Ryazha-Status-Monitor/Ryazha-Status-Monitor.ovl" \
-              "$DIST_DIR/switch/.overlays/Ryazha-Status-Monitor.ovl"
-            echo "Ryazha-Status-Monitor.ovl copied from pre-built binary"
-          elif [ -f "Source/Ryazha-Status-Monitor/out/switch/.overlays/Ryazha-Status-Monitor.ovl" ]; then
-            cp -vf "Source/Ryazha-Status-Monitor/out/switch/.overlays/Ryazha-Status-Monitor.ovl" \
-              "$DIST_DIR/switch/.overlays/Ryazha-Status-Monitor.ovl"
-            echo "Ryazha-Status-Monitor.ovl copied from out/"
-          else
-            echo "Ryazha-Status-Monitor.ovl not found, skipping"
+
+          if [ ! -d "Source/Ryazha-Status-Monitor" ] || [ -z "$(ls -A Source/Ryazha-Status-Monitor 2>/dev/null)" ]; then
+            echo "::warning::Source/Ryazha-Status-Monitor submodule is empty, initializing..."
+            git submodule update --init --recursive Source/Ryazha-Status-Monitor
           fi
+
+          mkdir -p "$DIST_DIR/switch/.overlays"
+
+          pushd Source/Ryazha-Status-Monitor
+
+          # Try building from source first
+          if [ -f "Makefile" ]; then
+            echo "*** Building Ryazha-Status-Monitor from source ***"
+            make clean 2>&1 || true
+            make -j$(($(nproc) * 2)) 2>&1
+          fi
+
+          # Find the produced .ovl file (Makefile may put it in different locations)
+          OVL_FILE=""
+          for candidate in \
+            "out/switch/.overlays/Ryazha-Status-Monitor.ovl" \
+            "Ryazha-Status-Monitor.ovl" \
+            "out/Ryazha-Status-Monitor.ovl"; do
+            if [ -f "$candidate" ]; then
+              OVL_FILE="$candidate"
+              break
+            fi
+          done
+
+          if [ -n "$OVL_FILE" ]; then
+            echo "*** Packing Ryazha-Status-Monitor.ovl from $OVL_FILE ***"
+            cp -vf "$OVL_FILE" "$DIST_DIR/switch/.overlays/Ryazha-Status-Monitor.ovl"
+          else
+            echo "::warning::Could not find Ryazha-Status-Monitor.ovl, skipping"
+          fi
+
+          popd
 
       - name: Build kip
         working-directory: build/stratosphere/loader
