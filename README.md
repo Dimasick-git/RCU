@@ -2,6 +2,11 @@
 
 RCU — это инструмент с открытым исходным кодом для разгона консолей Nintendo Switch под управлением кастомной прошивки Atmosphere. Он позволяет выполнять продвинутую настройку CPU, GPU и RAM с помощью интегрированных инструментов конфигурации.
 
+- Автор форка: **Dimasick-git**
+- Хостинг: **Dimanchikgshehsbshene/RCU**
+- Лицензия: **GPL-2.0** (см. `LICENSE`)
+- Подмодули: `libryazhahand` (форк libultrahand для overlay-части), `Ryazha-Status-Monitor` (мониторинг), `SaltyNX` (системные хуки).
+
 ## Дисклеймер
 > **ЭТОТ ИНСТРУМЕНТ МОЖЕТ БЫТЬ ОПАСЕН ПРИ НЕПРАВИЛЬНОМ ИСПОЛЬЗОВАНИИ. ДЕЙСТВУЙТЕ С ОСТОРОЖНОСТЬЮ.**
 > Из-за особенностей дизайна Horizon OS, разгон оперативной памяти может привести к повреждению данных на NAND или SD-карте.
@@ -19,7 +24,7 @@ RCU предоставляет комплексный набор функций 
 * Совместимость с большинством homebrew-приложений
 
 ## Установка
-1. Убедитесь, что у вас установлены последние версии Atmosphere и Ultrahand Overlay.
+1. Убедитесь, что у вас установлены последние версии Atmosphere и [Ryzhand Overlay](https://github.com/Dimanchikgshehsbshene/Ryazhahand-Overlay) (или совместимый Ultrahand-форк). RCU поставляется как `.ovl` для libtesla и работает поверх любого ovlloader'а.
 2. Скачайте и распакуйте пакет RCU в корень вашей SD-карты.
    В сборке overlay дублируется в `switch/.overlays/ryazha-clk.ovl` и `switch/overlays/ryazha-clk.ovl` для совместимости с разными лаунчерами/интеграциями.
 3. Если вы используете Hekate, отредактируйте `hekate_ipl.ini`, добавив строку:
@@ -87,7 +92,7 @@ RCU предоставляет комплексный набор функций 
 * **B3711 (halop)** — EOS
 * **sys-clk team** — sys-clk
 * **Dominatorul** — драйвер Soctherm, руководства, общая помощь
-* **ppkantorski** — Ultrahand sys-clk и форк Status Monitor
+* **ppkantorski** — Ultrahand sys-clk и форк Status Monitor; через [libryazhahand](https://github.com/Dimanchikgshehsbshene/libryazhahand) overlay-часть RCU собирается на форке его libultrahand
 * **MasaGratoR and ZachyCatGames** — общая помощь
 * **MasaGratoR** — Status Monitor и драйвер Display Refresh Rate
 * **Nvidia** — Tegra X1 Technical Reference Manual, драйвер soctherm, L4T
