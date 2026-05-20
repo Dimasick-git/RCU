@@ -6,7 +6,6 @@
 	path = Source/Ryazha-Status-Monitor
 	url = https://github.com/Dimasick-git/Ryazha-Status-Monitor.git
 
-[submodule "Source/ryazha-clk/overlay/lib/libultrahand"]
-	path = Source/ryazha-clk/overlay/lib/libultrahand
-	url = https://github.com/ppkantorski/libultrahand
-	branch = main
+[submodule "Source/ryazha-clk/overlay/lib/libryazhahand"]
+	path = Source/ryazha-clk/overlay/lib/libryazhahand
+	url = https://github.com/Dimanchikgshehsbshene/libryazhahand.git

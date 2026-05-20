@@ -31,8 +31,9 @@ APP_TITLE	:=	Ryazha-CLK
 NO_ICON		:=	1
 
 
-# This location should reflect where you place the libultrahand directory (lib can vary between projects).
-include ${TOPDIR}/lib/libultrahand/ultrahand.mk
+# libryazhahand is our rebranded fork of libultrahand. Its ultrahand.mk is
+# API-compatible with upstream, so this stays a one-line include.
+include ${TOPDIR}/lib/libryazhahand/ultrahand.mk
 
 
 #---------------------------------------------------------------------------------
