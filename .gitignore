@@ -1,0 +1,32 @@
+# Build artifacts
+build/
+out/
+dist/.commit
+*.o
+*.d
+*.elf
+*.lst
+*.map
+
+# Compiled binaries (kept in repo but not in src)
+# Keep .ovl, .nsp, .kip in dist/ but ignore in source build dirs
+Source/**/build/
+Source/**/out/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.bak
+*~
+
+# devkitPro env caches
+.cache/
