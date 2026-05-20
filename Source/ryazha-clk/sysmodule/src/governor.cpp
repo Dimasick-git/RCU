@@ -44,7 +44,7 @@ namespace governor {
         if (!tempTargetHz) {
             tempTargetHz = config::GetAutoClockHz(clockManager::gContext.applicationId, RClkModule_Governor, clockManager::gContext.profile, true);
             if (!tempTargetHz)
-                tempTargetHz = config::GetAutoClockHz(HOCCLK_GLOBAL_PROFILE_TID, RClkModule_Governor, clockManager::gContext.profile, true);
+                tempTargetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, RClkModule_Governor, clockManager::gContext.profile, true);
         }
 
         auto resolve = [](u8 app, u8 temp) -> u8 {
@@ -108,7 +108,7 @@ namespace governor {
                     clockManager::gContext.profile, false);
         if (!hz)
             hz = config::GetAutoClockHz(
-                    HOCCLK_GLOBAL_PROFILE_TID, module,
+                    RCLK_GLOBAL_PROFILE_TID, module,
                     clockManager::gContext.profile, false);
         return hz;
     }
@@ -296,7 +296,7 @@ namespace governor {
             if (!targetHz) {
                 targetHz = config::GetAutoClockHz(clockManager::gContext.applicationId, RClkModule_Display, clockManager::gContext.profile, false);
                 if (!targetHz)
-                    targetHz = config::GetAutoClockHz(HOCCLK_GLOBAL_PROFILE_TID, RClkModule_Display, clockManager::gContext.profile, false);
+                    targetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, RClkModule_Display, clockManager::gContext.profile, false);
             }
 
             u8 maxDisplay;

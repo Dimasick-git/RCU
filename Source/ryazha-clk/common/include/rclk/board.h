@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -42,22 +42,20 @@ typedef enum
 typedef enum
 {
     RClkConsoleType_Icosa = 0, // V1
-    RClkConsoleType_Copper,    // Unreleased Erista
-    RClkConsoleType_Hoag,      // Lite
     RClkConsoleType_Iowa,      // V2
-    RClkConsoleType_Calcio,    // Unreleased Mariko
+    RClkConsoleType_Hoag,      // Lite
     RClkConsoleType_Aula,      // OLED
     RClkConsoleType_EnumMax,
 } RClkConsoleType;
 
 typedef enum {
-    RClkVoltage_SOC = 0,
-    RClkVoltage_EMCVDD2,
-    RClkVoltage_CPU,
-    RClkVoltage_GPU,
-    RClkVoltage_EMCVDDQ, // Returns VDD2 on Erista
-    RClkVoltage_Display,
-    RClkVoltage_Battery,
+    RClkVoltage_SOC = 0, // VDD_SOC rail. 
+    RClkVoltage_EMCVDD2, // DRAM VDD2 rail
+    RClkVoltage_CPU,     // CPU rail
+    RClkVoltage_GPU,     // GPU rail
+    RClkVoltage_EMCVDDQ, // DRAM VDDQ rail
+    RClkVoltage_Display, // Display rail
+    RClkVoltage_Battery, // Battery voltage
     RClkVoltage_EnumMax,
 } RClkVoltage;
 
@@ -73,7 +71,7 @@ typedef enum
 
 typedef enum
 {
-    RClkModule_CPU = 0,
+    RClkModule_CPU = 0, 
     RClkModule_GPU,
     RClkModule_MEM,
     RClkModule_Governor,
@@ -83,16 +81,17 @@ typedef enum
 
 typedef enum
 {
-    RClkThermalSensor_SOC = 0,
-    RClkThermalSensor_PCB,
-    RClkThermalSensor_Skin,
-    RClkThermalSensor_Battery,
+    RClkThermalSensor_SOC = 0, // SoC temperature in millicelcius
+    RClkThermalSensor_PCB,     // PCB temperature in millicelcius
+    RClkThermalSensor_Skin,    // "Skin" temperature in millicelcius
+    RClkThermalSensor_Battery, // Battery temperature in millicelcius
     RClkThermalSensor_PMIC, // Always return 50.0C, as thats the only reasonable value the PMIC sensor can generate
-    RClkThermalSensor_CPU,
-    RClkThermalSensor_GPU,
-    RClkThermalSensor_MEM, // Returns the PLLX sensor value on Mariko
-    RClkThermalSensor_PLLX, 
-    RClkThermalSensor_BQ24193,
+    RClkThermalSensor_CPU, // CPU temperature in millicelcius
+    RClkThermalSensor_GPU, // GPU temperature in millicelcius
+    RClkThermalSensor_MEM, // MEM temperature in millicelcius. Returns the PLLX sensor value on Mariko
+    RClkThermalSensor_PLLX, // PLLX temperature in millicelcius
+    RClkThermalSensor_AO, // AOTAG
+    RClkThermalSensor_BQ24193, // BQ24193 temperature. Refer to BQ24193Temp for returned values
     RClkThermalSensor_EnumMax
 } RClkThermalSensor;
 
@@ -114,7 +113,7 @@ typedef enum
     RClkPartLoad_RamBWAll,
     RClkPartLoad_RamBWCpu,
     RClkPartLoad_RamBWGpu,
-    RClkPartLoad_RamBWPeak, 
+    RClkPartLoad_RamBWPeak, // Maximum possible RAM bandwidth
     RClkPartLoad_EnumMax
 } RClkPartLoad;
 
@@ -134,7 +133,7 @@ typedef enum {
 
 enum {
     DVFSMode_Disabled = 0,
-    DVFSMode_Hijack,
+    DVFSMode_Hijack, // PCV hijack dvfs
     // DVFSMode_OfficialService,
     // DVFSMode_Hack,
     DVFSMode_EnumMax,
@@ -176,8 +175,15 @@ typedef enum {
     RamDisplayUnit_MHzMTs,
     RamDisplayUnit_EnumMax,
 } RamDisplayUnit;
-
+typedef enum {
+    BQ24193Temp_Normal = 0,
+    BQ24193Temp_Warm,
+    BQ24193Temp_Hot,
+    BQ24193Temp_Overheat,
+    BQ24193Temp_EnumMax
+} BQ24193Temp;
 typedef enum AulaColorMode {
+    AulaDisplayColorMode_DoNotOverride = 0xFF,
     AulaDisplayColorMode_Saturated = 0x0,
     AulaDisplayColorMode_Washed = 0x45,
     AulaDisplayColorMode_Basic = 0x03, // Default
@@ -189,6 +195,7 @@ typedef enum AulaColorMode {
     AulaDisplayColorMode_Night2 = 0x35,
     AulaDisplayColorMode_Night3 = 0x75,
 } AulaColorMode;
+
 // typedef enum {
 // 	PANEL_JDI_XXX062M     = 0x10,
 // 	PANEL_JDI_LAM062M109A = 0x0910, // SI.
@@ -214,7 +221,7 @@ typedef enum AulaColorMode {
 // 	//0x0F40 [40] 94 [0F], 5.5" clone
 // } RClkDisplayPanel;
 
-#define HOCCLK_ENUM_VALID(n, v) ((v) < n##_EnumMax)
+#define RCLK_ENUM_VALID(n, v) ((v) < n##_EnumMax)
 
 // Packed u32
 // Bits 0-7 - CPU
@@ -275,6 +282,10 @@ static inline const char* rclkFormatThermalSensor(RClkThermalSensor thermSensor,
             return pretty ? "MEM" : "mem";
         case RClkThermalSensor_PLLX:
             return pretty ? "PLLX" : "pllx";
+        case RClkThermalSensor_AO:
+            return pretty ? "AO" : "ao";
+        case RClkThermalSensor_BQ24193:
+            return pretty ? "BQ24193" : "bq24193";
         default:
             return "unknown";
     }
@@ -329,6 +340,23 @@ static inline const char* hocClkFormatVoltage(RClkVoltage voltage, bool pretty)
             return pretty ? "SOC" : "soc";
         case RClkVoltage_Display:
             return pretty ? "Display" : "display";
+        default:
+            return "unknown";
+    }
+}
+
+static inline const char* hocClkFormatConsoleType(RClkConsoleType consoleType, bool pretty)
+{
+    switch(consoleType)
+    {
+        case RClkConsoleType_Icosa:
+            return pretty ? "Icosa (V1)" : "icosa";
+        case RClkConsoleType_Iowa:
+            return pretty ? "Iowa (V2)" : "iowa";
+        case RClkConsoleType_Hoag:
+            return pretty ? "Hoag (Lite)" : "hoag";
+        case RClkConsoleType_Aula:
+            return pretty ? "Aula (OLED)" : "aula";
         default:
             return "unknown";
     }

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -25,6 +25,7 @@
 #include <vector>
 #include "freq_choice_gui.h"
 #include "value_choice_gui.h"
+#include "info_gui.h"
 class MiscGui : public BaseMenuGui
 {
 public:
@@ -32,7 +33,7 @@ public:
     ~MiscGui();
     void listUI() override;
     void refresh() override;
-    
+
 protected:
     RClkConfigValueList* configList;
     std::map<RClkConfigValue, tsl::elm::ListItem*> configButtons;
@@ -43,7 +44,7 @@ protected:
     std::set<RClkConfigValue> configButtonSKeys;
     std::map<RClkConfigValue, std::string> configButtonSSubtext;
     std::set<RClkConfigValue> emcClockConfigs;
-    
+
     void addConfigToggle(RClkConfigValue configVal, const char* altName, bool kip = false);
     void addConfigTrackbar(RClkConfigValue configVal, const char* altName, const ValueRange& range, bool kip = true);
     void addMappedConfigTrackbar(RClkConfigValue configVal, const char* altName,
@@ -74,7 +75,7 @@ protected:
                             RClkModule module,
                             const std::map<uint32_t, std::string>& labels = {});
     void updateConfigToggles();
-    
+
     tsl::elm::ToggleListItem* enabledToggle;
     u8 frameCounter = 60;
     bool shouldSaveKip = false;

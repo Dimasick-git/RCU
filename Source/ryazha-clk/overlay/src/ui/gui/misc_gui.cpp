@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -17,13 +17,12 @@
  */
 
 #include "misc_gui.h"
-#include "display_hz_trackbar.hpp"
 #include "fatal_gui.h"
+#include "config_info_strings.h"
 #include "../format.h"
 #include <cstdio>
 #include <cstring>
 #include <vector>
-#include <notification.h>
 #include "labels.h"
 
 // This workaround *may* not be nessasary, but it seems to help with reducing stutter
@@ -90,7 +89,24 @@ MiscGui::~MiscGui()
 
 void MiscGui::addConfigToggle(RClkConfigValue configVal, const char* altName, bool kip) {
     const char* configName = altName ? altName : rclkFormatConfigValue(configVal, true);
-    tsl::elm::ToggleListItem* toggle = new tsl::elm::ToggleListItem(configName, this->configList->values[configVal]);
+    auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
+
+    struct YAwareToggle : tsl::elm::ToggleListItem {
+        std::vector<std::string> m_info;
+        std::string m_title;
+        YAwareToggle(const char* text, bool state, std::string title, std::vector<std::string> info)
+            : tsl::elm::ToggleListItem(text, state), m_info(std::move(info)), m_title(std::move(title)) {}
+        bool onClick(u64 keys) override {
+            if (!m_info.empty() && (keys & HidNpadButton_Y) && !(keys & ~HidNpadButton_Y)) {
+                tsl::changeTo<InfoGui>(m_title, m_info);
+                return true;
+            }
+            return tsl::elm::ToggleListItem::onClick(keys);
+        }
+    };
+
+    auto* toggle = new YAwareToggle(configName, this->configList->values[configVal],
+                                    configName, std::move(infoStrings));
     if (!kip)
         toggle->setTextColor(tsl::Color(120, 235, 255, 255));
     toggle->setStateChangedListener([this, configVal, kip](bool state) {
@@ -108,9 +124,13 @@ void MiscGui::addConfigToggle(RClkConfigValue configVal, const char* altName, bo
 }
 
 void MiscGui::addConfigTrackbar(RClkConfigValue configVal, const char* altName, const ValueRange& range, bool kip) {
+    auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
     struct IndexedBar : tsl::elm::NamedStepTrackBar {
-        IndexedBar(const char* label, const ValueRange& r)
-            : tsl::elm::NamedStepTrackBar("", {""}, true, label) {
+        std::vector<std::string> m_info;
+        std::string m_title;
+        IndexedBar(const char* label, const ValueRange& r, std::string title, std::vector<std::string> info)
+            : tsl::elm::NamedStepTrackBar("", {""}, true, label),
+              m_info(std::move(info)), m_title(std::move(title)) {
             m_stepDescriptions.clear();
             u32 numSteps = (r.max - r.min) / r.step + 1;
             for (u32 i = 0; i < numSteps; i++) {
@@ -122,9 +142,17 @@ void MiscGui::addConfigTrackbar(RClkConfigValue configVal, const char* altName, 
             m_numSteps = (u8)m_stepDescriptions.size();
             m_selection = m_stepDescriptions[0];
         }
+        bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState& touchPos,
+                         HidAnalogStickState leftJoyStick, HidAnalogStickState rightJoyStick) override {
+            if (!m_info.empty() && (keysDown & HidNpadButton_Y) && !(keysDown & ~HidNpadButton_Y)) {
+                tsl::changeTo<InfoGui>(m_title, m_info);
+                return true;
+            }
+            return tsl::elm::NamedStepTrackBar::handleInput(keysDown, keysHeld, touchPos, leftJoyStick, rightJoyStick);
+        }
     };
     const char* name = altName ? altName : rclkFormatConfigValue(configVal, true);
-    auto* bar = new IndexedBar(name, range);
+    auto* bar = new IndexedBar(name, range, name, std::move(infoStrings));
     u32 cur = (u32)this->configList->values[configVal];
     u16 curStep = 0;
     if (cur >= range.min && cur <= range.max && range.step > 0 && (cur - range.min) % range.step == 0)
@@ -143,7 +171,25 @@ void MiscGui::addMappedConfigTrackbar(RClkConfigValue configVal, const char* alt
                                        std::vector<u32> vals,
                                        std::initializer_list<std::string> names, bool kip) {
     const char* name = altName ? altName : rclkFormatConfigValue(configVal, true);
-    auto* bar = new tsl::elm::NamedStepTrackBar("", names, true, name);
+    auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
+
+    struct YAwareTrackBar : tsl::elm::NamedStepTrackBar {
+        std::vector<std::string> m_info;
+        std::string m_title;
+        YAwareTrackBar(const char* label, std::initializer_list<std::string> steps, std::string title, std::vector<std::string> info)
+            : tsl::elm::NamedStepTrackBar("", steps, true, label),
+              m_info(std::move(info)), m_title(std::move(title)) {}
+        bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState& touchPos,
+                         HidAnalogStickState leftJoyStick, HidAnalogStickState rightJoyStick) override {
+            if (!m_info.empty() && (keysDown & HidNpadButton_Y) && !(keysDown & ~HidNpadButton_Y)) {
+                tsl::changeTo<InfoGui>(m_title, m_info);
+                return true;
+            }
+            return tsl::elm::NamedStepTrackBar::handleInput(keysDown, keysHeld, touchPos, leftJoyStick, rightJoyStick);
+        }
+    };
+
+    auto* bar = new YAwareTrackBar(name, names, name, std::move(infoStrings));
     u32 cur = (u32)this->configList->values[configVal];
     u16 curIdx = 0;
     for (u16 i = 0; i < (u16)vals.size(); i++) {
@@ -172,6 +218,7 @@ void MiscGui::addConfigButton(RClkConfigValue configVal,
     bool kip)
 {
     const char* configName = altName ? altName : rclkFormatConfigValue(configVal, true);
+    auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
 
     tsl::elm::ListItem* listItem = new tsl::elm::ListItem(configName);
     if (!kip)
@@ -205,8 +252,14 @@ void MiscGui::addConfigButton(RClkConfigValue configVal,
     ValueThresholds thresholdsCopy = (thresholds ? *thresholds : ValueThresholds{});
 
     listItem->setClickListener(
-        [this, configVal, range, categoryName, thresholdsCopy, labels, showDefaultValue, kip](u64 keys)
+        [this, configVal, range, categoryName, thresholdsCopy, labels, showDefaultValue, kip,
+         infoStrings = std::move(infoStrings), configName = std::string(configName)](u64 keys)
         {
+            if (!infoStrings.empty() && (keys & HidNpadButton_Y) && !(keys & ~HidNpadButton_Y)) {
+                tsl::changeTo<InfoGui>(configName, infoStrings);
+                return true;
+            }
+
             if ((keys & HidNpadButton_A) == 0)
                 return false;
 
@@ -289,6 +342,8 @@ void MiscGui::addConfigButtonS(RClkConfigValue configVal,
     const char* subText,
     bool kip)
 {
+    const char* configName = altName ? altName : rclkFormatConfigValue(configVal, true);
+    auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
     tsl::elm::ListItem* listItem = new tsl::elm::ListItem("");
     if (!kip)
         listItem->setTextColor(tsl::Color(120, 235, 255, 255));
@@ -323,8 +378,14 @@ void MiscGui::addConfigButtonS(RClkConfigValue configVal,
     ValueThresholds thresholdsCopy = (thresholds ? *thresholds : ValueThresholds{});
 
     listItem->setClickListener(
-        [this, configVal, range, categoryName, thresholdsCopy, labels, showDefaultValue, kip](u64 keys)
+        [this, configVal, range, categoryName, thresholdsCopy, labels, showDefaultValue, kip,
+         infoStrings = std::move(infoStrings), configName = std::string(configName)](u64 keys)
         {
+            if (!infoStrings.empty() && (keys & HidNpadButton_Y) && !(keys & ~HidNpadButton_Y)) {
+                tsl::changeTo<InfoGui>(configName, infoStrings);
+                return true;
+            }
+
             if ((keys & HidNpadButton_A) == 0)
                 return false;
 
@@ -412,24 +473,31 @@ void MiscGui::addFreqButton(RClkConfigValue configVal,
                             const std::map<uint32_t, std::string>& labels)
 {
     const char* configName = altName ? altName : rclkFormatConfigValue(configVal, true);
+    auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
 
     tsl::elm::ListItem* listItem = new tsl::elm::ListItem(configName);
 
     uint64_t currentMHz = this->configList->values[configVal];
     char valueText[32];
-    snprintf(valueText, sizeof(valueText), "%lu МГц", currentMHz);
+    snprintf(valueText, sizeof(valueText), "%lu MHz", currentMHz);
     listItem->setValue(valueText);
 
     listItem->setClickListener(
-        [this, configVal, module, labels](u64 keys)
+        [this, configVal, module, labels,
+         infoStrings = std::move(infoStrings), configName = std::string(configName)](u64 keys)
         {
+            if (!infoStrings.empty() && (keys & HidNpadButton_Y) && !(keys & ~HidNpadButton_Y)) {
+                tsl::changeTo<InfoGui>(configName, infoStrings);
+                return true;
+            }
+
             if ((keys & HidNpadButton_A) == 0)
                 return false;
 
-            std::uint32_t hzList[HOCCLK_FREQ_LIST_MAX];
+            std::uint32_t hzList[RCLK_FREQ_LIST_MAX];
             std::uint32_t hzCount;
 
-            Result rc = rclkIpcGetFreqList(module, hzList, HOCCLK_FREQ_LIST_MAX, &hzCount);
+            Result rc = rclkIpcGetFreqList(module, hzList, RCLK_FREQ_LIST_MAX, &hzCount);
             if (R_FAILED(rc)) {
                 FatalGui::openWithResultCode("rclkIpcGetFreqList", rc);
                 return false;
@@ -466,7 +534,7 @@ void MiscGui::addFreqButton(RClkConfigValue configVal,
     this->listElement->addItem(listItem);
     this->configButtons[configVal] = listItem;
 
-    this->configRanges[configVal] = ValueRange(0, 0, 0, "МГц", 1);
+    this->configRanges[configVal] = ValueRange(0, 0, 0, "MHz", 1);
 }
 
 void MiscGui::listUI()
@@ -480,16 +548,19 @@ void MiscGui::listUI()
     ValueThresholds thresholdsDisabled(0, 0);
     std::vector<NamedValue> noNamedValues = {};
 
-    this->listElement->addItem(new tsl::elm::CategoryHeader("Настройки"));
+    this->listElement->addItem(new tsl::elm::CategoryHeader("Settings"));
 
     tsl::elm::CustomDrawer* rebootSetWarning = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
-        renderer->drawString("\uE150 Изменения, отмеченные синим,", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
-        renderer->drawString("применяются без перезагрузки!", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
+        renderer->drawString("\uE150 Settings marked in blue", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
+        renderer->drawString("don't require a reboot to apply!", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
+        renderer->drawString("You can also press \ue0e3 to show", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
+        renderer->drawString("information about each setting.", false, x + 20, y + 90, 18, tsl::style::color::ColorText);
+
     });
-    rebootSetWarning->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 70);
+    rebootSetWarning->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 110);
     this->listElement->addItem(rebootSetWarning);
 
-    tsl::elm::ListItem* sysmoduleSettingsSubMenu = new tsl::elm::ListItem("Общие настройки");
+    tsl::elm::ListItem* sysmoduleSettingsSubMenu = new tsl::elm::ListItem("General Settings");
     sysmoduleSettingsSubMenu->setClickListener([](u64 keys) {
         if (keys & HidNpadButton_A) {
             tsl::changeTo<GeneralSettingsSubMenuGui>();
@@ -500,7 +571,7 @@ void MiscGui::listUI()
     sysmoduleSettingsSubMenu->setValue(R_ARROW);
     this->listElement->addItem(sysmoduleSettingsSubMenu);
 
-    tsl::elm::ListItem* governorSettingsSubMenu = new tsl::elm::ListItem("Настройки Говернера");
+    tsl::elm::ListItem* governorSettingsSubMenu = new tsl::elm::ListItem("Governor Settings");
     governorSettingsSubMenu->setClickListener([](u64 keys) {
         if (keys & HidNpadButton_A) {
             tsl::changeTo<GovernorSettingsSubMenuGui>();
@@ -511,7 +582,7 @@ void MiscGui::listUI()
     governorSettingsSubMenu->setValue(R_ARROW);
     this->listElement->addItem(governorSettingsSubMenu);
 
-    tsl::elm::ListItem* safetySubmenu = new tsl::elm::ListItem("Настройки безопасности");
+    tsl::elm::ListItem* safetySubmenu = new tsl::elm::ListItem("Safety Settings");
     safetySubmenu->setClickListener([](u64 keys) {
         if (keys & HidNpadButton_A) {
             tsl::changeTo<SafetySubMenuGui>();
@@ -522,7 +593,7 @@ void MiscGui::listUI()
     safetySubmenu->setValue(R_ARROW);
     this->listElement->addItem(safetySubmenu);
 
-    tsl::elm::ListItem* ramSubmenu = new tsl::elm::ListItem("Настройки ОЗУ");
+    tsl::elm::ListItem* ramSubmenu = new tsl::elm::ListItem("RAM Settings");
     ramSubmenu->setClickListener([](u64 keys) {
         if (keys & HidNpadButton_A) {
             tsl::changeTo<RamSubmenuGui>();
@@ -533,7 +604,7 @@ void MiscGui::listUI()
     ramSubmenu->setValue(R_ARROW);
     this->listElement->addItem(ramSubmenu);
 
-    tsl::elm::ListItem* cpuSubmenu = new tsl::elm::ListItem("Настройки ЦП");
+    tsl::elm::ListItem* cpuSubmenu = new tsl::elm::ListItem("CPU Settings");
     cpuSubmenu->setClickListener([](u64 keys) {
         if (keys & HidNpadButton_A) {
             tsl::changeTo<CpuSubmenuGui>();
@@ -544,7 +615,7 @@ void MiscGui::listUI()
     cpuSubmenu->setValue(R_ARROW);
     this->listElement->addItem(cpuSubmenu);
 
-    tsl::elm::ListItem* gpuSubmenu = new tsl::elm::ListItem("Настройки ГП");
+    tsl::elm::ListItem* gpuSubmenu = new tsl::elm::ListItem("GPU Settings");
     gpuSubmenu->setClickListener([](u64 keys) {
         if (keys & HidNpadButton_A) {
             tsl::changeTo<GpuSubmenuGui>();
@@ -555,7 +626,7 @@ void MiscGui::listUI()
     gpuSubmenu->setValue(R_ARROW);
     this->listElement->addItem(gpuSubmenu);
 
-    tsl::elm::ListItem* displaySubMenu = new tsl::elm::ListItem("Настройки дисплея");
+    tsl::elm::ListItem* displaySubMenu = new tsl::elm::ListItem("Display Settings");
     displaySubMenu->setClickListener([](u64 keys) {
         if (keys & HidNpadButton_A) {
             tsl::changeTo<DisplaySubMenuGui>();
@@ -567,7 +638,7 @@ void MiscGui::listUI()
     this->listElement->addItem(displaySubMenu);
 
     if(this->configList->values[RClkConfigValue_EnableExperimentalSettings]) {
-        tsl::elm::ListItem* experimentalSubMenu = new tsl::elm::ListItem("Экспериментальные настройки");
+        tsl::elm::ListItem* experimentalSubMenu = new tsl::elm::ListItem("Experimental Settings");
         experimentalSubMenu->setClickListener([](u64 keys) {
             if (keys & HidNpadButton_A) {
                 tsl::changeTo<ExperimentalSettingsSubMenuGui>();
@@ -589,7 +660,8 @@ protected:
     void listUI() override {
         Result rc = rclkIpcGetConfigValues(this->configList);
         if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc); return; }
-        this->listElement->addItem(new tsl::elm::CategoryHeader("Общие настройки"));
+        this->listElement->addItem(new tsl::elm::CategoryHeader("General Settings"));
+
         ValueThresholds thresholdsDisabled(0, 0);
         std::vector<NamedValue> ramVoltDispModes = {
             NamedValue("VDD2", RamDisplayMode_VDD2),
@@ -597,19 +669,19 @@ protected:
         };
 
         if(IsMariko()) {
-            addConfigButton(RClkConfigValue_RAMVoltDisplayMode, "Показ напряжения ОЗУ", ValueRange(0, 12, 1, "", 0), "Показ напряжения ОЗУ", &thresholdsDisabled, {}, ramVoltDispModes, false);
+            addConfigButton(RClkConfigValue_RAMVoltDisplayMode, "RAM Voltage Display Mode", ValueRange(0, 12, 1, "", 0), "RAM Voltage Display Mode", &thresholdsDisabled, {}, ramVoltDispModes, false);
         }
 
         std::vector<NamedValue> RamDisplayUnitValues = {
-            NamedValue("МГц", RamDisplayUnit_MHz),
-            NamedValue("МТ/с", RamDisplayUnit_MTs),
-            NamedValue("МГц и МТ/с", RamDisplayUnit_MHzMTs),
+            NamedValue("MHz", RamDisplayUnit_MHz),
+            NamedValue("MT/s", RamDisplayUnit_MTs),
+            NamedValue("MHz and MT/s", RamDisplayUnit_MHzMTs),
         };
         addConfigButton(
             RClkConfigValue_RamDisplayUnit,
-            "Единицы отображения ОЗУ",
+            "RAM Display Unit",
             ValueRange(0, 0, 2, "", 0),
-            "Единицы отображения ОЗУ",
+            "RAM Display Unit",
             &thresholdsDisabled,
             {},
             RamDisplayUnitValues,
@@ -619,9 +691,9 @@ protected:
         
         addConfigButton(
             RClkConfigValue_PollingIntervalMs,
-            "Интервал опроса",
-            ValueRange(50, 1000, 50, " мс", 1),
-            "Интервал опроса",
+            "Polling Interval",
+            ValueRange(50, 1000, 50, "ms", 1),
+            "Polling Interval",
             &thresholdsDisabled,
             {},
             {},
@@ -629,14 +701,14 @@ protected:
         );
 
         tsl::elm::CustomDrawer* exSetWarning = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
-            renderer->drawString("\uE150 Экспериментальные настройки", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
-            renderer->drawString("могут работать нестабильно", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
-            renderer->drawString("или не работать вовсе!", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
+            renderer->drawString("\uE150 Experimental Settings are incomplete ", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
+            renderer->drawString("and may not work correctly or at all!", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
+            renderer->drawString("Here be dragons!", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
         });
         exSetWarning->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 90);
         this->listElement->addItem(exSetWarning);
 
-        addConfigToggle(RClkConfigValue_EnableExperimentalSettings, "Экспериментальные настройки");
+        addConfigToggle(RClkConfigValue_EnableExperimentalSettings, nullptr);
     }
 };
 
@@ -648,19 +720,21 @@ protected:
     void listUI() override {
         Result rc = rclkIpcGetConfigValues(this->configList);
         if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc); return; }
-        this->listElement->addItem(new tsl::elm::CategoryHeader("Экспериментальные настройки"));
+        this->listElement->addItem(new tsl::elm::CategoryHeader("Experimental Settings"));
         ValueThresholds thresholdsDisabled(0, 0);
-
-        addConfigToggle(RClkConfigValue_LiveCpuUv, "Live UV ЦП");
+        if(IsMariko()) {
+            addConfigToggle(RClkConfigValue_MarikoMiddleFreqs, nullptr, true);
+        }
+        addConfigToggle(RClkConfigValue_LiveCpuUv, nullptr);
         std::vector<NamedValue> gpuSchedMethodValues = {
             NamedValue("INI", GpuSchedulingOverrideMethod_Ini),
-            NamedValue("NV сервис", GpuSchedulingOverrideMethod_NvService),
+            NamedValue("NV Service", GpuSchedulingOverrideMethod_NvService),
         };
         addConfigButton(
             RClkConfigValue_GPUSchedulingMethod,
-            "Метод переопр. планирования ГП",
+            "GPU Scheduling Override Method",
             ValueRange(0, 0, 1, "", 0),
-            "Метод переопр. планирования ГП",
+            "GPU Scheduling Override Method",
             &thresholdsDisabled,
             {},
             gpuSchedMethodValues,
@@ -674,9 +748,9 @@ protected:
         };
         addConfigButton(
             RClkConfigValue_MemoryFrequencyMeasurementMode,
-            "Режим измер. частоты ОЗУ",
+            "Memory Frequency Measurement Mode",
             ValueRange(0, 0, 1, "", 0),
-            "Режим измер. частоты ОЗУ",
+            "Memory Frequency Measurement Mode",
             &thresholdsDisabled,
             {},
             ramRFMeasurementMethods,
@@ -684,34 +758,34 @@ protected:
         );
 
         tsl::elm::CustomDrawer* chargeWarningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
-            renderer->drawString("\uE150 Переопределение тока зарядки", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
-            renderer->drawString("может быть опасным и привести", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
-            renderer->drawString("к повреждению АКБ или зарядки!", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
+            renderer->drawString("\uE150 Overriding the charge current", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
+            renderer->drawString("can be dangerous and may cause", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
+            renderer->drawString("damage to your battery or charger!", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
         });
         chargeWarningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 90);
         this->listElement->addItem(chargeWarningText);
 
         if(!IsHoag()) {
                 std::vector<NamedValue> chargerCurrents = {
-                    NamedValue("Выкл", 0),
-                    NamedValue("1024 мА", 1024),
-                    NamedValue("1280 мА", 1280),
-                    NamedValue("1536 мА", 1536),
-                    NamedValue("1792 мА", 1792),
-                    NamedValue("2048 мА", 2048),
-                    NamedValue("2304 мА", 2304),
-                    NamedValue("2560 мА", 2560),
-                    NamedValue("2816 мА", 2816),
-                    NamedValue("3072 мА", 3072),
+                    NamedValue("Disabled", 0),
+                    NamedValue("1024mA", 1024),
+                    NamedValue("1280mA", 1280),
+                    NamedValue("1536mA", 1536),
+                    NamedValue("1792mA", 1792),
+                    NamedValue("2048mA", 2048),
+                    NamedValue("2304mA", 2304),
+                    NamedValue("2560mA", 2560),
+                    NamedValue("2816mA", 2816),
+                    NamedValue("3072mA", 3072),
                 };
 
                 ValueThresholds chargerThresholds(2048, 2049);
 
                 addConfigButton(
                     RClkConfigValue_BatteryChargeCurrent,
-                    "Переопределение тока зарядки",
+                    "Charge Current Override",
                     ValueRange(0, 0, 1, "", 0),
-                    "Переопределение тока зарядки",
+                    "Charge Current Override",
                     &chargerThresholds,
                     {},
                     chargerCurrents,
@@ -719,30 +793,56 @@ protected:
                 );
         } else {
             std::vector<NamedValue> chargerCurrents = {
-                NamedValue("Выкл", 0),
-                NamedValue("1024 мА", 1024),
-                NamedValue("1280 мА", 1280),
-                NamedValue("1536 мА", 1536),
-                NamedValue("1664 мА", 1664), // Why Nintendo?
-                NamedValue("1792 мА", 1792),
-                NamedValue("2048 мА", 2048),
-                NamedValue("2304 мА", 2304),
-                NamedValue("2560 мА", 2560),
+                NamedValue("Disabled", 0),
+                NamedValue("1024mA", 1024),
+                NamedValue("1280mA", 1280),
+                NamedValue("1536mA", 1536),
+                NamedValue("1664mA", 1664), // Why Nintendo?
+                NamedValue("1792mA", 1792),
+                NamedValue("2048mA", 2048),
+                NamedValue("2304mA", 2304),
+                NamedValue("2560mA", 2560),
             };
 
             ValueThresholds chargerThresholds(1664, 1793);
 
             addConfigButton(
                 RClkConfigValue_BatteryChargeCurrent,
-                "Переопределение тока зарядки",
+                "Charge Current Override",
                 ValueRange(0, 0, 1, "", 0),
-                "Переопределение тока зарядки",
+                "Charge Current Override",
                 &chargerThresholds,
                 {},
                 chargerCurrents,
                 false
             );
 
+        }
+        if(IsAula()) {
+            std::vector<NamedValue> displayClrPreset = {
+                NamedValue("Do Not Override", AulaDisplayColorMode_DoNotOverride),
+                NamedValue("Basic", AulaDisplayColorMode_Basic),
+                NamedValue("Saturated", AulaDisplayColorMode_Saturated),
+                NamedValue("Washed", AulaDisplayColorMode_Washed),
+                NamedValue("Natural", AulaDisplayColorMode_Natural),
+                NamedValue("Vivid", AulaDisplayColorMode_Vivid),
+                NamedValue("Washed", AulaDisplayColorMode_Night0, "Night"),
+                NamedValue("Basic", AulaDisplayColorMode_Night1, "Night"),
+                NamedValue("Natural", AulaDisplayColorMode_Night2, "Night"),
+                NamedValue("Vivid", AulaDisplayColorMode_Night3, "Night"),
+            };
+
+            addConfigButton(
+                RClkConfigValue_AulaDisplayColorPreset,
+                "Display Color Preset",
+                ValueRange(0, 1, 1, "", 0),
+                "Display Color Preset",
+                &thresholdsDisabled,
+                {},
+                displayClrPreset,
+                false,
+                false
+            );
         }
     }
 };
@@ -756,16 +856,16 @@ protected:
     void listUI() override {
         Result rc = rclkIpcGetConfigValues(this->configList);
         if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc); return; }
-        this->listElement->addItem(new tsl::elm::CategoryHeader("Настройки Говернера"));
+        this->listElement->addItem(new tsl::elm::CategoryHeader("Governor Settings"));
         ValueThresholds thresholdsDisabled(0, 0);
 
         std::vector<NamedValue> GovernorMinHz = {
-            NamedValue("510 МГц", 510000000),
-            NamedValue("612 МГц", 612000000),
-            NamedValue("714 МГц", 714000000),
-            NamedValue("816 МГц", 816000000),
-            NamedValue("918 МГц", 918000000),
-            NamedValue("1020 МГц", 1020000000),
+            NamedValue("510 MHz", 510000000),
+            NamedValue("612 MHz", 612000000),
+            NamedValue("714 MHz", 714000000),
+            NamedValue("816 MHz", 816000000),
+            NamedValue("918 MHz", 918000000),
+            NamedValue("1020 MHz", 1020000000),
         };
 
         addConfigButton(
@@ -797,70 +897,41 @@ protected:
         if(!this->context)
             return;
 
-        this->listElement->addItem(new tsl::elm::CategoryHeader("Настройки дисплея"));
-        addConfigToggle(RClkConfigValue_OverwriteRefreshRate, "Изменение частоты обновления дисплея");
+        this->listElement->addItem(new tsl::elm::CategoryHeader("Display Settings"));
+        addConfigToggle(RClkConfigValue_OverwriteRefreshRate, nullptr);
         if(!this->context->isUsingRetroSuper) {
             tsl::elm::CustomDrawer* warningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
-                renderer->drawString("\uE150 Небезопасные частоты дисплея", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
-                renderer->drawString("могут вызвать повышенный износ", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
-                renderer->drawString("или повреждение экрана.", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
-                renderer->drawString("Используйте на свой риск!", false, x + 20, y + 90, 18, tsl::style::color::ColorText);
+                renderer->drawString("\uE150 Usage of unsafe display", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
+                renderer->drawString("refresh rates may cause stress", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
+                renderer->drawString("or damage to your display! ", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
+                renderer->drawString("Proceed at your own risk!", false, x + 20, y + 90, 18, tsl::style::color::ColorText);
             });
 
             warningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 110);
             this->listElement->addItem(warningText);
-            const u32 capMin = 60u;
-            const u32 capMax = IsAula() ? 65u : 75u;
-            auto* maxHzBar = new ryazha_ui::DisplayHzTrackBar(capMin, capMax, 1u, "Макс. частота экрана, Гц");
-            u32 capCur = ryazha_ui::displayHzOrDefault((u32)this->configList->values[RClkConfigValue_MaxDisplayClockH]);
-            maxHzBar->setProgress(ryazha_ui::displayHzToProgress(capCur, maxHzBar->minHz(), maxHzBar->maxHz(), maxHzBar->stepHz()));
-            maxHzBar->setValueChangedListener([this, maxHzBar](u16 v) {
-                const u32 hz = std::min(maxHzBar->maxHz(), maxHzBar->minHz() + (u32)v * maxHzBar->stepHz());
-                this->configList->values[RClkConfigValue_MaxDisplayClockH] = hz;
-                Result rc = rclkIpcSetConfigValues(this->configList);
-                if (R_FAILED(rc)) FatalGui::openWithResultCode("rclkIpcSetConfigValues", rc);
-                ryazha_ui::syncLadderVrrMaxToHocCap(hz);
-                this->lastContextUpdate = armGetSystemTick();
-            });
-            this->listElement->addItem(maxHzBar);
+            ValueThresholds displayThresholds(60, 65);
+            addConfigButton(
+                RClkConfigValue_MaxDisplayClockH,
+                "Max Handheld Display Hz",
+                ValueRange(60, IsAula() ? 65 : 75, 1, " Hz", 1),
+                "Display Clock",
+                &displayThresholds,
+                {},
+                {},
+                false
+            );
         }
         if(!IsAula()) {
             addConfigButton(
                 RClkConfigValue_DisplayVoltage,
-                "Напряжение дисплея",
-                ValueRange(800, 1200, 25, " мВ", 1),
-                "Напряжение дисплея",
+                "Display Voltage",
+                ValueRange(800, 1200, 25, " mV", 1),
+                "Display Voltage",
                 &thresholdsDisabled,
                 {},
                 {},
                 false
             );
-        } else {
-            std::vector<NamedValue> displayClrPreset = {
-                NamedValue("Базовый", AulaDisplayColorMode_Basic),
-                NamedValue("Перенасыщенный", AulaDisplayColorMode_Saturated),
-                NamedValue("Приглушённый", AulaDisplayColorMode_Washed),
-                NamedValue("Естественный", AulaDisplayColorMode_Natural),
-                NamedValue("Яркий", AulaDisplayColorMode_Vivid),
-                NamedValue("Приглушённый", AulaDisplayColorMode_Night0, "Ночь"),
-                NamedValue("Базовый", AulaDisplayColorMode_Night1, "Ночь"),
-                NamedValue("Естественный", AulaDisplayColorMode_Night2, "Ночь"),
-                NamedValue("Яркий", AulaDisplayColorMode_Night3, "Ночь"),
-            };
-
-            addConfigButton(
-                RClkConfigValue_AulaDisplayColorPreset,
-                "Цветовой режим OLED",
-                ValueRange(0, 1, 1, "", 0),
-                "Цветовой режим OLED",
-                &thresholdsDisabled,
-                {},
-                displayClrPreset,
-                false,
-                false
-            );
-
-            
         }
     }
 };
@@ -873,23 +944,23 @@ protected:
     void listUI() override {
         Result rc = rclkIpcGetConfigValues(this->configList);
         if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc); return; }
-        this->listElement->addItem(new tsl::elm::CategoryHeader("Настройки безопасности"));
-        addConfigToggle(RClkConfigValue_UncappedClocks, "Без лимита частот");
-        addConfigToggle(RClkConfigValue_ThermalThrottle, "Термо-троттлинг");
-        addConfigToggle(RClkConfigValue_HandheldTDP, "Лимит TDP (портатив)");
+        this->listElement->addItem(new tsl::elm::CategoryHeader("Safety Settings"));
+        addConfigToggle(RClkConfigValue_UncappedClocks, nullptr);
+        addConfigToggle(RClkConfigValue_ThermalThrottle, nullptr);
+        addConfigToggle(RClkConfigValue_HandheldTDP, nullptr);
 
         #if IS_MINIMAL == 0
             std::map<uint32_t, std::string> labels_pwr_l = {
-                {6400, "Официальный рейтинг"}
+                {6400, "Official Rating"}
             };
 
             if(IsHoag()) {
                 ValueThresholds tdpThresholdsLite(6400, 7500);
                 addConfigButton(
                     RClkConfigValue_LiteTDPLimit,
-                    "Порог TDP",
-                    ValueRange(4000, 8000, 100, "мВт", 1),
-                    "Мощность",
+                    "TDP Threshold",
+                    ValueRange(4000, 8000, 100, "mW", 1),
+                    "Power",
                     &tdpThresholdsLite,
                     labels_pwr_l
                 );
@@ -897,9 +968,9 @@ protected:
                 ValueThresholds tdpThresholds(9600, 11000);
                 addConfigButton(
                     RClkConfigValue_HandheldTDPLimit,
-                    "Порог TDP",
-                    ValueRange(8000, 12000, 100, "мВт", 1),
-                    "Мощность",
+                    "TDP Threshold",
+                    ValueRange(8000, 12000, 100, "mW", 1),
+                    "Power",
                     &tdpThresholds
                 );
             }
@@ -907,9 +978,9 @@ protected:
             ValueThresholds throttleThresholds(70, 80);
             addConfigButton(
                 RClkConfigValue_ThermalThrottleThreshold,
-                "Лимит термо-троттлинга",
+                "Thermal Throttle Limit",
                 ValueRange(50, 85, 1, "°C", 1),
-                "Температура",
+                "Temp",
                 &throttleThresholds
             );
         #endif
@@ -933,31 +1004,34 @@ protected:
 
 
 
-        this->listElement->addItem(new tsl::elm::CategoryHeader("Настройки ОЗУ"));
+        this->listElement->addItem(new tsl::elm::CategoryHeader("RAM Settings"));
         
-        addConfigTrackbar(KipConfigValue_emcDvbShift,  "SoC DVB Shift",  ValueRange(0, 16, 1)); // yes, DVB 16 is nessesary
+        addMappedConfigTrackbar(KipConfigValue_emcDvbShift, "DVB Shift",
+            {0xFFFFFFFCu, 0xFFFFFFFDu, 0xFFFFFFFEu, 0xFFFFFFFFu, 0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u},
+            {"-4", "-3", "-2", "-1", " 0", "1", "2", "3", "4", "5", "6", "7", "8"});
+
         if(IsMariko()) {
             u32 socSpeedo = this->context->speedos[RClkSpeedo_SOC];
-            std::string autoText = "1000 мВ";
+            std::string autoText = "1000 mV";
             if (socSpeedo <= 1597) {
-                autoText = "1050 мВ";
+                autoText = "1050 mV";
             } else if (socSpeedo <= 1708) {
-                autoText = "1025 мВ";
+                autoText = "1025 mV";
             } else if(socSpeedo >= 1709) {
-                autoText = "1000 мВ";
+                autoText = "1000 mV";
             }
 
             std::vector<NamedValue> marikovmaxconf = {
                 NamedValue("Do not override", 0, autoText),
-                NamedValue("1000 мВ", 1000),
-                NamedValue("1025 мВ", 1025),
-                NamedValue("1050 мВ", 1050),
-                NamedValue("1075 мВ", 1075),
-                NamedValue("1100 мВ", 1100),
-                NamedValue("1125 мВ", 1125),
-                NamedValue("1150 мВ", 1150),
-                NamedValue("1175 мВ", 1175),
-                NamedValue("1200 мВ", 1200),
+                NamedValue("1000 mV", 1000),
+                NamedValue("1025 mV", 1025),
+                NamedValue("1050 mV", 1050),
+                NamedValue("1075 mV", 1075),
+                NamedValue("1100 mV", 1100),
+                NamedValue("1125 mV", 1125),
+                NamedValue("1150 mV", 1150),
+                NamedValue("1175 mV", 1175),
+                NamedValue("1200 mV", 1200),
             };
             ValueThresholds marikovmaxT(1075, 1150);
 
@@ -989,7 +1063,7 @@ protected:
         addConfigButton(
             KipConfigValue_commonEmcMemVolt,
             "RAM VDD2 Voltage",
-            ValueRange(912500, 1350000, 12500, "мВ", 1000, 1),
+            ValueRange(912500, 1350000, 12500, "mV", 1000, 1),
             "Voltage",
             &vdd2Thresholds,
             emc_voltage_label,
@@ -1002,7 +1076,7 @@ protected:
             addConfigButton(
                 KipConfigValue_marikoEmcVddqVolt,
                 "RAM VDDQ Voltage",
-                ValueRange(400000, 700000, 5000, "мВ", 1000),
+                ValueRange(400000, 700000, 5000, "mV", 1000),
                 "RAM VDDQ Voltage",
                 &thresholdsDisabled,
                 {},
@@ -1014,9 +1088,9 @@ protected:
 
         if (IsMariko()) {
             std::vector<NamedValue> stepMode = {
-                NamedValue("66 МГц", 0),
-                NamedValue("100 МГц", 1),
-                NamedValue("133 МГц", 3), // Mantain compatability
+                NamedValue("66MHz", 0),
+                NamedValue("100MHz", 1),
+                NamedValue("133MHz", 3), // Mantain compatability
                 NamedValue("JEDEC.", 2),
             };
 
@@ -1150,7 +1224,7 @@ protected:
 
         /* Yes this is duplicated code, yes I don't care. */
         std::vector<NamedValue> timingTbreakFreqs = {
-            NamedValue("Выкл",       0),
+            NamedValue("Disabled",       0),
             NamedValue("1633 MHz", 1633000),
             NamedValue("1666 MHz", 1666000),
             NamedValue("1700 MHz", 1700000),
@@ -1349,7 +1423,12 @@ protected:
             tsl::elm::ListItem* item = new tsl::elm::ListItem(label);
             item->setValue(makeValueText(currentVal));
 
-            item->setClickListener([this, tierIdx, thisKey, keysArr](u64 keys) -> bool {
+            item->setClickListener([this, tierIdx, thisKey, keysArr, label](u64 keys) -> bool {
+                auto infoStrings = ConfigInfoStrings(thisKey, IsMariko(), IsHoag());
+                if (!infoStrings.empty() && (keys & HidNpadButton_Y) && !(keys & ~HidNpadButton_Y)) {
+                    tsl::changeTo<InfoGui>(std::string(label), infoStrings);
+                    return true;
+                }
                 if ((keys & HidNpadButton_A) == 0)
                     return false;
 
@@ -1503,7 +1582,7 @@ protected:
         ValueThresholds eCpuClockThresholds(1785000, 2091000);
         ValueThresholds eCpuClockThresholdsUV(2091000, 2193000);
 
-        this->listElement->addItem(new tsl::elm::CategoryHeader("Настройки ЦП"));
+        this->listElement->addItem(new tsl::elm::CategoryHeader("CPU Settings"));
         if(IsMariko()) {
             addConfigTrackbar(KipConfigValue_marikoCpuUVLow, "CPU Low UV", ValueRange(0, 8, 1));
             addConfigTrackbar(KipConfigValue_marikoCpuUVHigh, "CPU High UV", ValueRange(0, 12, 1));
@@ -1710,7 +1789,7 @@ protected:
         ValueThresholds eristaRamThresholds(2208000, 2304000);
 
         std::vector<NamedValue> eristaMaxEmcClock = {
-            NamedValue("Выкл", 1600000),
+            NamedValue("Disabled", 1600000),
             NamedValue("1633 MHz", 1633000),
             NamedValue("1666 MHz", 1666000),
             NamedValue("1700 MHz", 1700000),
@@ -1750,7 +1829,7 @@ protected:
         };
 
         for (auto& nv : eristaMaxEmcClock)
-            if (nv.name != "Выкл")
+            if (nv.name != "Disabled")
                 nv.name = formatMemClockKhzLabel(nv.value, unit);
 
         addConfigButtonS(KipConfigValue_eristaEmcMaxClock, "", ValueRange(0, 1, 1, "", 1), "", &eristaRamThresholds, {}, eristaMaxEmcClock, false, A_BTN, true);
@@ -1770,7 +1849,7 @@ protected:
         ValueThresholds thresholdsDisabled(0, 0);
         std::vector<NamedValue> noNamedValues = {};
 
-        this->listElement->addItem(new tsl::elm::CategoryHeader("Настройки ГП"));
+        this->listElement->addItem(new tsl::elm::CategoryHeader("GPU Settings"));
 
         std::vector<NamedValue> gpuUvConf = {
             NamedValue("HiOPT", 0),
@@ -1877,7 +1956,7 @@ protected:
             NamedValue("-15 mV", 15),
             NamedValue("-10 mV", 10),
             NamedValue(" -5 mV", 5),
-            NamedValue("Выкл", 0),
+            NamedValue("Disabled", 0),
         };
 
         addConfigButton(
@@ -1895,7 +1974,7 @@ protected:
         std::vector<NamedValue> gpuSchedValues = {
             NamedValue("Do not override", GpuSchedulingMode_DoNotOverride),
             NamedValue("Enabled (Default)", GpuSchedulingMode_Enabled, "96.6% limit"),
-            NamedValue("Выкл", GpuSchedulingMode_Disabled, "99.7% limit"),
+            NamedValue("Disabled", GpuSchedulingMode_Disabled, "99.7% limit"),
         };
 
         addConfigButton(
@@ -1927,7 +2006,7 @@ protected:
                 NamedValue("-15 mV", 0xFFFFFFF1),
                 NamedValue("-10 mV", 0xFFFFFFF6),
                 NamedValue(" -5 mV", 0xFFFFFFFB),
-                NamedValue("Выкл",        0),
+                NamedValue("Disabled",        0),
                 NamedValue(" +5 mV",          5),
                 NamedValue("+10 mV",         10),
                 NamedValue("+15 mV",         15),
@@ -1935,7 +2014,7 @@ protected:
             };
 
             std::vector<NamedValue> dvfsValues = {
-                NamedValue("Выкл", DVFSMode_Disabled),
+                NamedValue("Disabled", DVFSMode_Disabled),
                 NamedValue("PCV Hijack", DVFSMode_Hijack),
                 // NamedValue("Official Service", DVFSMode_OfficialService),
             };
@@ -1986,7 +2065,7 @@ protected:
         ValueThresholds EgpuVmaxThresholds(950, 975);
 
         std::vector<NamedValue> mGpuVolts = {
-            NamedValue("Выкл", 2000),
+            NamedValue("Disabled", 2000),
             NamedValue("Auto", 0),
             NamedValue("480mV", 480), NamedValue("485mV", 485), NamedValue("490mV", 490),
             NamedValue("495mV", 495), NamedValue("500mV", 500), NamedValue("505mV", 505),
@@ -2024,7 +2103,7 @@ protected:
         };
 
         std::vector<NamedValue> eGpuVolts = {
-            NamedValue("Выкл", 2000),
+            NamedValue("Disabled", 2000),
             NamedValue("Auto", 0),
             NamedValue("675mV", 675), NamedValue("680mV", 680), NamedValue("685mV", 685),
             NamedValue("690mV", 690), NamedValue("695mV", 695),
@@ -2051,7 +2130,7 @@ protected:
         };
 
         std::vector<NamedValue> mGpuVolts_noAuto = {
-            NamedValue("Выкл", 2000),
+            NamedValue("Disabled", 2000),
             NamedValue("480mV", 480), NamedValue("485mV", 485), NamedValue("490mV", 490),
             NamedValue("495mV", 495), NamedValue("500mV", 500), NamedValue("505mV", 505),
             NamedValue("510mV", 510), NamedValue("515mV", 515), NamedValue("520mV", 520),
@@ -2088,7 +2167,7 @@ protected:
         };
 
         std::vector<NamedValue> eGpuVolts_noAuto = {
-            NamedValue("Выкл", 2000),
+            NamedValue("Disabled", 2000),
             NamedValue("700mV", 700), NamedValue("705mV", 705), NamedValue("710mV", 710),
             NamedValue("715mV", 715), NamedValue("720mV", 720), NamedValue("725mV", 725),
             NamedValue("730mV", 730), NamedValue("735mV", 735), NamedValue("740mV", 740),
@@ -2248,7 +2327,7 @@ void MiscGui::refresh() {
             auto it = this->configNamedValues.find(key);
             if (it != this->configNamedValues.end()) {
                 for (auto& nv : it->second)
-                    if(nv.name != "Выкл")
+                    if(nv.name != "Disabled")
                         nv.name = formatMemClockKhzLabel(nv.value, unit);
             }
         }

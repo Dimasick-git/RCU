@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2023 hanai3Bi
  *
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -24,7 +24,6 @@
 #include "pcv_common.hpp"
 #include "pcv_erista.hpp"
 #include "pcv_mariko.hpp"
-#include "pcv_asm.hpp"
 
 namespace ams::ldr::hoc::pcv {
 
@@ -119,34 +118,34 @@ namespace ams::ldr::hoc::pcv {
         cvb_entry_t *customize_table;
         if (isMariko) {
             switch (C.marikoGpuUV) {
-            case 0:
-                customize_table = const_cast<cvb_entry_t *>(C.marikoGpuDvfsTable);
-                break;
-            case 1:
-                customize_table = const_cast<cvb_entry_t *>(C.marikoGpuDvfsTableSLT);
-                break;
-            case 2:
-                customize_table = const_cast<cvb_entry_t *>(C.marikoGpuDvfsTableHiOPT);
-                break;
-            default:
-                customize_table = const_cast<cvb_entry_t *>(C.marikoGpuDvfsTable);
-                break;
-            }
+                case 0:
+                    customize_table = const_cast<cvb_entry_t *>(C.marikoGpuDvfsTable);
+                    break;
+                case 1:
+                    customize_table = const_cast<cvb_entry_t *>(C.marikoGpuDvfsTableSLT);
+                    break;
+                case 2:
+                    customize_table = const_cast<cvb_entry_t *>(C.marikoGpuDvfsTableHiOPT);
+                    break;
+                default:
+                    customize_table = const_cast<cvb_entry_t *>(C.marikoGpuDvfsTable);
+                    break;
+                }
         } else {
             switch (C.eristaGpuUV) {
-            case 0:
-                customize_table = const_cast<cvb_entry_t *>(C.eristaGpuDvfsTable);
-                break;
-            case 1:
-                customize_table = const_cast<cvb_entry_t *>(C.eristaGpuDvfsTableSLT);
-                break;
-            case 2:
-                customize_table = const_cast<cvb_entry_t *>(C.eristaGpuDvfsTableHiOPT);
-                break;
-            default:
-                customize_table = const_cast<cvb_entry_t *>(C.eristaGpuDvfsTable);
-                break;
-            }
+                case 0:
+                    customize_table = const_cast<cvb_entry_t *>(C.eristaGpuDvfsTable);
+                    break;
+                case 1:
+                    customize_table = const_cast<cvb_entry_t *>(C.eristaGpuDvfsTableSLT);
+                    break;
+                case 2:
+                    customize_table = const_cast<cvb_entry_t *>(C.eristaGpuDvfsTableHiOPT);
+                    break;
+                default:
+                    customize_table = const_cast<cvb_entry_t *>(C.eristaGpuDvfsTable);
+                    break;
+                }
         }
 
         size_t default_entry_count = GetDvfsTableEntryCount(default_table);
@@ -195,26 +194,6 @@ namespace ams::ldr::hoc::pcv {
 
     Result MemFreqPllmLimit(u32 *ptr);
     Result MemVoltHandler(u32 *ptr); // Used for Erista MEM Vdd2 + EMC Vddq or Mariko MEM Vdd2
-
-    template <typename T>
-    Result MemMtcCustomizeTable(T *dst, T *src) {
-        constexpr u32 mtc_magic = std::is_same_v<T, MarikoMtcTable> ? MARIKO_MTC_MAGIC : ERISTA_MTC_MAGIC;
-        R_UNLESS(src->rev == mtc_magic, ldr::ResultInvalidMtcMagic());
-
-        constexpr u32 ZERO_VAL = UINT32_MAX;
-        // Skip params from dvfs_ver to clock_src;
-        for (size_t offset = offsetof(T, clk_src_emc); offset < sizeof(T); offset += sizeof(u32)) {
-            u32 *src_ent = reinterpret_cast<u32 *>(reinterpret_cast<size_t>(src) + offset);
-            u32 *dst_ent = reinterpret_cast<u32 *>(reinterpret_cast<size_t>(dst) + offset);
-            u32 src_val = *src_ent;
-
-            if (src_val){
-                PATCH_OFFSET(dst_ent, src_val == ZERO_VAL ? 0 : src_val);
-            }
-        }
-
-        R_SUCCEED();
-    };
 
     void SafetyCheck();
     void Patch(uintptr_t mapped_nso, size_t nso_size);

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) Switch-OC-Suite
  *
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -18,17 +18,16 @@
 
 #pragma once
 
-#ifdef ATMOSPHERE_IS_STRATOSPHERE
-    #include <stratosphere.hpp>
-    #include <vapours/results/results_common.hpp>
-    #define LOGGING(fmt, ...) ((void)0)
-    #define CRASH(msg, ...) { ams::diag::AbortImpl(msg, __PRETTY_FUNCTION__, "", 0); __builtin_unreachable(); }
-#else
-    #include "oc_test.hpp"
-#endif
+#include <stratosphere.hpp>
+#include <vapours/results/results_common.hpp>
+#define LOGGING(fmt, ...) ((void)0)
+#define CRASH(msg, ...) { ams::diag::AbortImpl(msg, __PRETTY_FUNCTION__, "", 0); __builtin_unreachable(); }
 
 #include "customize.hpp"
-#include "oc_log.hpp"
+
+#if defined(AMS_BUILD_FOR_AUDITING) || defined(AMS_BUILD_FOR_DEBUGGING)
+    #include "oc_log.hpp"
+#endif
 
 #define PATCH_OFFSET(offset, value) \
     static_assert(sizeof(__typeof__(offset)) <= sizeof(u64)); \
@@ -67,38 +66,42 @@ namespace ams::ldr::hoc {
         size_t      maximum_patched_count = 0;
         patternFn   pattern_search_fn = nullptr;
         Pointer     value_search;
-
         size_t      patched_count = 0;
 
-        Result Apply(Pointer* ptr) {
+        Result Apply(Pointer *ptr) {
             Result res = patcher_fn(ptr);
-            if (R_SUCCEEDED(res))
+            if (R_SUCCEEDED(res)) {
                 patched_count++;
+            }
 
             return res;
         }
 
-        Result SearchAndApply(Pointer* ptr) {
+        Result SearchAndApply(Pointer *ptr) {
             bool searchOk = false;
             if (pattern_search_fn) {
-                if (pattern_search_fn(ptr)) searchOk = true;
+                if (pattern_search_fn(ptr)) {
+                    searchOk = true;
+                }
             } else {
-                if (value_search == *(ptr)) searchOk = true;
+                if (value_search == *(ptr)) {
+                    searchOk = true;
+                }
             }
 
-            if (searchOk)
+            if (searchOk) {
                 return Apply(ptr);
+            }
 
             R_THROW(ldr::ResultUnsuccessfulPatcher());
         }
 
         Result CheckResult() {
-            #ifndef ATMOSPHERE_IS_STRATOSPHERE
             R_UNLESS(patched_count > 0, ldr::ResultUnsuccessfulPatcher());
-            #endif
 
-            if (maximum_patched_count)
+            if (maximum_patched_count) {
                 R_UNLESS(patched_count <= maximum_patched_count, ldr::ResultUnsuccessfulPatcher());
+            }
 
             R_SUCCEED();
         }

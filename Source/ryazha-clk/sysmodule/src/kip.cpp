@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -18,8 +18,11 @@
 #include "kip.hpp"
 #include "board/board.hpp"
 #include "file_utils.hpp"
+#include "clock_manager.hpp"
 
 #define CUST_REV 2
+#define KIP_VERSION 220
+
 namespace kip {
 
     bool kipAvailable = false;
@@ -30,7 +33,7 @@ namespace kip {
         // if(board::GetSocType() == RClkSocType_Mariko) {
         //     if(R_FAILED(I2c_BuckConverter_SetMvOut(&I2c_Mariko_DRAM_VDDQ, config::GetConfigValue(KipConfigValue_marikoEmcVddqVolt) / 1000))) {
         //         fileUtils::LogLine("[clock_manager] Failed set i2c vddq");
-        //         notification::writeNotification("Horizon OC\nFailed to write I2C\nwhile setting vddq");
+        //         notification::writeNotification("Ryazha CLK\nFailed to write I2C\nwhile setting vddq");
         //     }
         // }
         CustomizeTable table;
@@ -38,7 +41,7 @@ namespace kip {
         fp = fopen("sdmc:/atmosphere/kips/rcu.kip", "r");
 
         if (fp == NULL) {
-            notification::writeNotification("Horizon OC\nKip opening failed");
+            notification::writeNotification("Ryazha CLK\nKip opening failed");
             kipAvailable = false;
             return;
         } else {
@@ -48,17 +51,16 @@ namespace kip {
 
         if (!cust_read_and_cache("sdmc:/atmosphere/kips/rcu.kip", &table)) {
             fileUtils::LogLine("[kip] Failed to read KIP file");
-            notification::writeNotification("Horizon OC\nKip read failed");
+            notification::writeNotification("Ryazha CLK\nKip read failed");
             return;
         }
 
         // if(cust_get_cust_rev(&table) != CUST_REV) {
         //     fileUtils::LogLine("Revision: %u", cust_get_cust_rev(&table));
-        //     notification::writeNotification("Horizon OC\nKip version mismatch\nPlease reinstall Horizon OC");
+        //     notification::writeNotification("Ryazha CLK\nKip version mismatch\nPlease reinstall Ryazha CLK");
         //     return;
         // }
 
-        CUST_WRITE_FIELD_BATCH(&table, custRev, config::GetConfigValue(KipConfigValue_custRev));
         // CUST_WRITE_FIELD_BATCH(&table, mtcConf, config::GetConfigValue(KipConfigValue_mtcConf));
         CUST_WRITE_FIELD_BATCH(&table, hpMode, config::GetConfigValue(KipConfigValue_hpMode));
 
@@ -137,7 +139,7 @@ namespace kip {
 
         if (!cust_write_table("sdmc:/atmosphere/kips/rcu.kip", &table)) {
             fileUtils::LogLine("[kip] Failed to write KIP file");
-            notification::writeNotification("Horizon OC\nKip write failed");
+            notification::writeNotification("Ryazha CLK\nKip write failed");
         }
 
         RClkConfigValueList configValues;
@@ -152,7 +154,7 @@ namespace kip {
             }
         } else {
             fileUtils::LogLine("[kip] Warning: Failed to set config values from KIP");
-            notification::writeNotification("Horizon OC\nKip config set failed");
+            notification::writeNotification("Ryazha CLK\nKip config set failed");
         }
     }
 
@@ -165,7 +167,7 @@ namespace kip {
             fp = fopen("sdmc:/atmosphere/kips/rcu.kip", "r");
 
             if (fp == NULL) {
-                notification::writeNotification("Horizon OC\nKip opening failed");
+                notification::writeNotification("Ryazha CLK\nKip opening failed");
                 kipAvailable = false;
                 return;
             } else {
@@ -179,27 +181,35 @@ namespace kip {
             CustomizeTable table;
             if (!cust_read_and_cache("sdmc:/atmosphere/kips/rcu.kip", &table)) {
                 fileUtils::LogLine("[kip] Failed to read KIP file for GetKipData");
-                notification::writeNotification("Horizon OC\nKip read failed");
+                notification::writeNotification("Ryazha CLK\nKip read failed");
                 return;
             }
 
             // if(cust_get_cust_rev(&table) != CUST_REV) {
-            //     notification::writeNotification("Horizon OC\nKip version mismatch\nPlease reinstall Horizon OC");
+            //     notification::writeNotification("Ryazha CLK\nKip version mismatch\nPlease reinstall Ryazha CLK");
             //     return;
             // }
 
             if ((u64)crc32::checksum_file("sdmc:/atmosphere/kips/rcu.kip") != config::GetConfigValue(KipCrc32) && !config::GetConfigValue(RClkConfigValue_IsFirstLoad)) {
                 SetKipData();
-                notification::writeNotification("Horizon OC\nKIP has been updated\nPlease reboot your console");
+                notification::writeNotification("Ryazha CLK\nKIP has been updated\nPlease reboot your console");
                 return;
             }
             if (config::GetConfigValue(RClkConfigValue_IsFirstLoad) == true) {
                 configValues.values[RClkConfigValue_IsFirstLoad] = (u64)false;
-                notification::writeNotification("Horizon OC has been installed");
+                notification::writeNotification("Ryazha CLK has been installed");
             }
 
             configValues.values[KipCrc32] = (u64)crc32::checksum_file("sdmc:/atmosphere/kips/rcu.kip"); // write checksum
             // configValues.values[KipConfigValue_mtcConf] = cust_get_mtc_conf(&table);
+            clockManager::gContext.custRev    = cust_get_cust_rev(&table);
+
+            u16 kipVersion = cust_get_kip_version(&table);
+            if (kipVersion != KIP_VERSION) {
+                notification::writeNotification("Ryazha CLK\nKip version mismatch detected!");
+            }
+
+            clockManager::gContext.kipVersion = kipVersion;
             configValues.values[KipConfigValue_hpMode] = cust_get_hp_mode(&table);
 
             configValues.values[KipConfigValue_commonEmcMemVolt] = cust_get_common_emc_volt(&table);
@@ -286,15 +296,15 @@ namespace kip {
                     }
                 } else {
                     fileUtils::LogLine("[kip] Warning: Failed to set config values from KIP");
-                    notification::writeNotification("Horizon OC\nKip config set failed");
+                    notification::writeNotification("Ryazha CLK\nKip config set failed");
                 }
             } else {
                 fileUtils::LogLine("[kip] Error: Config value list buffer size mismatch");
-                notification::writeNotification("Horizon OC\nConfig Buffer Mismatch");
+                notification::writeNotification("Ryazha CLK\nConfig Buffer Mismatch");
             }
         } else {
             fileUtils::LogLine("[kip] Config refresh error in GetKipData!");
-            notification::writeNotification("Horizon OC\nConfig refresh failed");
+            notification::writeNotification("Ryazha CLK\nConfig refresh failed");
         }
     }
 }

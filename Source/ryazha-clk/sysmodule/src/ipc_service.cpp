@@ -44,7 +44,7 @@ namespace ipcService {
         IpcServer gServer;
 
         Result GetApiVersion(u32* out_version) {
-            *out_version = HOCCLK_IPC_API_VERSION;
+            *out_version = RCLK_IPC_API_VERSION;
             return 0;
         }
 
@@ -67,7 +67,7 @@ namespace ipcService {
 
         Result GetProfileCount(std::uint64_t* tid, std::uint8_t* out_count) {
             if (!config::HasProfilesLoaded()) {
-                return HOCCLK_ERROR(ConfigNotLoaded);
+                return RCLK_ERROR(ConfigNotLoaded);
             }
             *out_count = config::GetProfileCount(*tid);
             return 0;
@@ -75,7 +75,7 @@ namespace ipcService {
 
         Result GetProfiles(std::uint64_t* tid, RClkTitleProfileList* out_profiles) {
             if (!config::HasProfilesLoaded()) {
-                return HOCCLK_ERROR(ConfigNotLoaded);
+                return RCLK_ERROR(ConfigNotLoaded);
             }
             config::GetProfiles(*tid, out_profiles);
             return 0;
@@ -83,11 +83,11 @@ namespace ipcService {
 
         Result SetProfiles(RClkIpc_SetProfiles_Args* args) {
             if (!config::HasProfilesLoaded()) {
-                return HOCCLK_ERROR(ConfigNotLoaded);
+                return RCLK_ERROR(ConfigNotLoaded);
             }
             RClkTitleProfileList profiles = args->profiles;
             if (!config::SetProfiles(args->tid, &profiles, true)) {
-                return HOCCLK_ERROR(ConfigSaveFailed);
+                return RCLK_ERROR(ConfigSaveFailed);
             }
             clockManager::NotifyClockReapply();
             return 0;
@@ -99,8 +99,8 @@ namespace ipcService {
         }
 
         Result SetOverride(RClkIpc_SetOverride_Args* args) {
-            if (!HOCCLK_ENUM_VALID(RClkModule, args->module)) {
-                return HOCCLK_ERROR(Generic);
+            if (!RCLK_ENUM_VALID(RClkModule, args->module)) {
+                return RCLK_ERROR(Generic);
             }
             config::SetOverrideHz(args->module, args->hz);
             clockManager::NotifyClockReapply();
@@ -109,7 +109,7 @@ namespace ipcService {
 
         Result GetConfigValuesHandler(RClkConfigValueList* out_configValues) {
             if (!config::HasProfilesLoaded()) {
-                return HOCCLK_ERROR(ConfigNotLoaded);
+                return RCLK_ERROR(ConfigNotLoaded);
             }
             config::GetConfigValues(out_configValues);
             return 0;
@@ -117,22 +117,22 @@ namespace ipcService {
 
         Result SetConfigValuesHandler(RClkConfigValueList* configValues) {
             if (!config::HasProfilesLoaded()) {
-                return HOCCLK_ERROR(ConfigNotLoaded);
+                return RCLK_ERROR(ConfigNotLoaded);
             }
             RClkConfigValueList copy = *configValues;
             if (!config::SetConfigValues(&copy, true)) {
-                return HOCCLK_ERROR(ConfigSaveFailed);
+                return RCLK_ERROR(ConfigSaveFailed);
             }
             clockManager::NotifyClockReapply();
             return 0;
         }
 
         Result GetFreqList(RClkIpc_GetFreqList_Args* args, std::uint32_t* out_list, std::size_t size, std::uint32_t* out_count) {
-            if (!HOCCLK_ENUM_VALID(RClkModule, args->module)) {
-                return HOCCLK_ERROR(Generic);
+            if (!RCLK_ENUM_VALID(RClkModule, args->module)) {
+                return RCLK_ERROR(Generic);
             }
             if (args->maxCount != size/sizeof(*out_list)) {
-                return HOCCLK_ERROR(Generic);
+                return RCLK_ERROR(Generic);
             }
             clockManager::GetFreqList(args->module, out_list, args->maxCount, out_count);
             return 0;
@@ -258,7 +258,7 @@ namespace ipcService {
                     break;
             }
 
-            return HOCCLK_ERROR(Generic);
+            return RCLK_ERROR(Generic);
         }
 
         void ProcessThreadFunc(void* arg) {
@@ -283,7 +283,7 @@ namespace ipcService {
         std::int32_t priority;
         Result rc = svcGetThreadPriority(&priority, CUR_THREAD_HANDLE);
         ASSERT_RESULT_OK(rc, "svcGetThreadPriority");
-        rc = ipcServerInit(&gServer, HOCCLK_IPC_SERVICE_NAME, 42);
+        rc = ipcServerInit(&gServer, RCLK_IPC_SERVICE_NAME, 42);
         ASSERT_RESULT_OK(rc, "ipcServerInit");
         rc = threadCreate(&gThread, &ProcessThreadFunc, nullptr, NULL, 0x4000, priority, -2);
         ASSERT_RESULT_OK(rc, "threadCreate");

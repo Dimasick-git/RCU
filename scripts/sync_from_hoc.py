@@ -47,6 +47,9 @@ PATH_MAPPINGS = [
 
 # Content adaptation: token -> replacement
 CONTENT_REPLACEMENTS = [
+    # Commit-message-style prefix
+    (r"\bhocclk:\s*", "ryazha-clk: "),
+    (r"\bhoc-clk:\s*", "ryazha-clk: "),
     # Namespace/include renames
     (r"hocclk/", "rclk/"),
     (r"\"hocclk\.h\"", "\"rclk.h\""),

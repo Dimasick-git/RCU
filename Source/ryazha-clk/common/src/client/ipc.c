@@ -37,11 +37,11 @@ static atomic_size_t g_refCnt;
 bool rclkIpcRunning()
 {
     Handle handle;
-    bool running = R_FAILED(smRegisterService(&handle, smEncodeName(HOCCLK_IPC_SERVICE_NAME), false, 1));
+    bool running = R_FAILED(smRegisterService(&handle, smEncodeName(RCLK_IPC_SERVICE_NAME), false, 1));
 
     if (!running)
     {
-        smUnregisterService(smEncodeName(HOCCLK_IPC_SERVICE_NAME));
+        smUnregisterService(smEncodeName(RCLK_IPC_SERVICE_NAME));
     }
 
   return running;
@@ -56,7 +56,7 @@ Result rclkIpcInitialize(void)
     if (serviceIsActive(&g_rclkSrv))
         return 0;
 
-    rc = smGetService(&g_rclkSrv, HOCCLK_IPC_SERVICE_NAME);
+    rc = smGetService(&g_rclkSrv, RCLK_IPC_SERVICE_NAME);
 
     if (R_FAILED(rc)) rclkIpcExit();
 

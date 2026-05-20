@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -73,6 +73,7 @@ typedef enum {
     RClkConfigValue_IsFirstLoad,
 
     RClkConfigValue_AulaDisplayColorPreset,
+    RClkConfigValue_MarikoMiddleFreqs,
 
     KipConfigValue_custRev,
     // KipConfigValue_mtcConf,
@@ -288,8 +289,9 @@ static inline const char* rclkFormatConfigValue(RClkConfigValue val, bool pretty
         case RClkConfigValue_RamDisplayUnit:
             return pretty ? "RAM Frequency Display Unit" : "RAM_display_unit";
         case RClkConfigValue_AulaDisplayColorPreset:
-            return pretty ? "Цветовой режим OLED (Aula)" : "aula_color_preset";
-
+            return pretty ? "Aula Display Color Preset" : "aula_color_preset";
+        case RClkConfigValue_MarikoMiddleFreqs:
+            return pretty ? "Mariko Middle Clocks" : "mariko_middle_freqs";
         // KIP config values
         case KipConfigValue_custRev:
             return pretty ? "Custom Revision" : "kip_cust_rev";
@@ -489,7 +491,7 @@ static inline uint64_t rclkDefaultConfigValue(RClkConfigValue val)
     switch(val)
     {
         case RClkConfigValue_PollingIntervalMs:
-            return 100ULL;
+            return 300ULL;
         case RClkConfigValue_TempLogIntervalMs:
         case RClkConfigValue_FreqLogIntervalMs:
         case RClkConfigValue_PowerLogIntervalMs:
@@ -502,6 +504,7 @@ static inline uint64_t rclkDefaultConfigValue(RClkConfigValue val)
         case RClkConfigValue_LiveCpuUv:
         case RClkConfigValue_GPUSchedulingMethod:
         case RClkConfigValue_MemoryFrequencyMeasurementMode:
+        case RClkConfigValue_MarikoMiddleFreqs:
             return 0ULL;
         case RClkConfigValue_RamDisplayUnit:
             return (uint64_t)RamDisplayUnit_MHz;
@@ -529,7 +532,7 @@ static inline uint64_t rclkDefaultConfigValue(RClkConfigValue val)
         case RClkConfigValue_DisplayVoltage:
             return 1200ULL; // Auto
         case RClkConfigValue_AulaDisplayColorPreset:
-            return AulaDisplayColorMode_Basic;
+            return AulaDisplayColorMode_DoNotOverride;
         default:
             return 0ULL;
     }
@@ -561,6 +564,7 @@ static inline uint64_t rclkValidConfigValue(RClkConfigValue val, uint64_t input)
         case RClkConfigValue_EnableExperimentalSettings:
         case RClkConfigValue_LiveCpuUv:
         case RClkConfigValue_GPUSchedulingMethod:
+        case RClkConfigValue_MarikoMiddleFreqs:
             return (input & 0x1) == input;
 
         case KipConfigValue_custRev:

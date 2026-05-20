@@ -405,7 +405,7 @@ namespace config {
     }
 
     bool ResetConfigValue(RClkConfigValue kval) {
-        if (!HOCCLK_ENUM_VALID(RClkConfigValue, kval)) {
+        if (!RCLK_ENUM_VALID(RClkConfigValue, kval)) {
             fileUtils::LogLine("[cfg] Invalid RClkConfigValue: %u", kval);
             return false;
         }
@@ -442,7 +442,7 @@ namespace config {
     }
 
     bool SetConfigValue(RClkConfigValue kval, std::uint64_t value, bool immediate) {
-        if (!HOCCLK_ENUM_VALID(RClkConfigValue, kval)) {
+        if (!RCLK_ENUM_VALID(RClkConfigValue, kval)) {
             return false;
         }
         if (!rclkValidConfigValue(kval, value)) {

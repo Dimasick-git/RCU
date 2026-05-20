@@ -65,7 +65,7 @@ void MainGui::listUI()
     globalProfileItem->setClickListener([this](u64 keys) {
         if((keys & HidNpadButton_A) == HidNpadButton_A && this->context)
         {
-            AppProfileGui::changeTo(HOCCLK_GLOBAL_PROFILE_TID);
+            AppProfileGui::changeTo(RCLK_GLOBAL_PROFILE_TID);
             return true;
         }
 

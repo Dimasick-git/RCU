@@ -27,8 +27,8 @@
 
 #pragma once
 
-#define HOCCLK_ERROR_MODULE 388
-#define HOCCLK_ERROR(desc) ((HOCCLK_ERROR_MODULE & 0x1FF) | (RClkError_##desc & 0x1FFF)<<9)
+#define RCLK_ERROR_MODULE 388
+#define RCLK_ERROR(desc) ((RCLK_ERROR_MODULE & 0x1FF) | (RClkError_##desc & 0x1FFF)<<9)
 
 typedef enum
 {

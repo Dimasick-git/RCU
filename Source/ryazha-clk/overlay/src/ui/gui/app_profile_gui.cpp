@@ -79,9 +79,9 @@ AppProfileGui::~AppProfileGui()
 
 void AppProfileGui::openFreqChoiceGui(tsl::elm::ListItem* listItem, RClkProfile profile, RClkModule module)
 {
-    std::uint32_t hzList[HOCCLK_FREQ_LIST_MAX];
+    std::uint32_t hzList[RCLK_FREQ_LIST_MAX];
     std::uint32_t hzCount;
-    Result rc = rclkIpcGetFreqList(module, &hzList[0], HOCCLK_FREQ_LIST_MAX, &hzCount);
+    Result rc = rclkIpcGetFreqList(module, &hzList[0], RCLK_FREQ_LIST_MAX, &hzCount);
     if(R_FAILED(rc))
     {
         FatalGui::openWithResultCode("rclkIpcGetFreqList", rc);
@@ -498,7 +498,7 @@ void AppProfileGui::update()
 {
     BaseMenuGui::update();
 
-    if((this->context && this->applicationId != this->context->applicationId) &&  this->applicationId != HOCCLK_GLOBAL_PROFILE_TID)
+    if((this->context && this->applicationId != this->context->applicationId) &&  this->applicationId != RCLK_GLOBAL_PROFILE_TID)
     {
         tsl::changeTo<FatalGui>(
             "Application changed\n\n"

@@ -34,7 +34,7 @@ namespace clockManager {
 
     struct FreqTable {
         std::uint32_t count;
-        std::uint32_t list[HOCCLK_FREQ_LIST_MAX];
+        std::uint32_t list[RCLK_FREQ_LIST_MAX];
     };
 
 

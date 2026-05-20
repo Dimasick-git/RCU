@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2023 hanai3Bi
  *
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -20,19 +20,18 @@
 
 #pragma once
 
-#define CUST_REV 2
+#define CUST_REV 3
+#define KIP_VERSION 231
 
 #include "oc_common.hpp"
 #include "pcv/pcv_common.hpp"
 
 namespace ams::ldr::hoc {
 
-#include "mtc_timing_table.hpp"
-
 enum TableConfig: u32 {
     DEFAULT_TABLE = 1,
-    TBREAK_1581 = 2,
-    TBREAK_1683 = 3,
+    TBREAK_1581   = 2,
+    TBREAK_1683   = 3,
     EXTREME_TABLE = 4,
 };
 
@@ -42,19 +41,6 @@ enum StepMode: u32 {
     StepMode_Jedec  = 2,
     StepMode_133MHz = 3,
 };
-
-/*
- *  Read:
- *   2133RL = 40
- *   1866RL = 36
- *   1600RL = 32
- *   1331RL = 28
- *  Write:
- *   2133WL = 18
- *   1866WL = 16
- *   1600WL = 14
- *   1331WL = 12
- */
 
 enum ReadLatency: u32 {
     RL_2133 = 40,
@@ -75,14 +61,11 @@ using CustomizeGpuDvfsTable = pcv::cvb_entry_t[pcv::DvfsTableEntryLimit];
 static_assert(sizeof(CustomizeCpuDvfsTable) == sizeof(CustomizeGpuDvfsTable));
 static_assert(sizeof(CustomizeCpuDvfsTable) == sizeof(pcv::cvb_entry_t) * pcv::DvfsTableEntryLimit);
 
-constexpr uint32_t ERISTA_MTC_MAGIC = 0x43544D45; // EMTC
-constexpr uint32_t MARIKO_MTC_MAGIC = 0x43544D4D; // MMTC
+struct CustomizeTable {
+    u8  cust[4]    = {'C', 'U', 'S', 'T'};
+    u32 custRev    = CUST_REV;
+    u32 kipVersion = KIP_VERSION;
 
-typedef struct CustomizeTable {
-    u8  cust[4] = {'C', 'U', 'S', 'T'};
-    u32 custRev = CUST_REV;
-
-    u32 placeholder;
     u32 hpMode;
 
     u32 commonEmcMemVolt;
@@ -93,7 +76,7 @@ typedef struct CustomizeTable {
     StepMode stepMode;
     u32 marikoEmcMaxClock;
     u32 marikoEmcVddqVolt;
-    u32 emcDvbShift;
+    s32 emcDvbShift;
     u32 marikoSocVmax;
     // advanced config
     u32 t1_tRCD;
@@ -169,7 +152,7 @@ typedef struct CustomizeTable {
     CustomizeGpuDvfsTable marikoGpuDvfsTableSLT;
     CustomizeGpuDvfsTable marikoGpuDvfsTableHiOPT;
 
-} CustomizeTable;
+};
 
 extern volatile CustomizeTable C;
 

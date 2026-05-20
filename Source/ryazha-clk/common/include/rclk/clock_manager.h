@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -30,21 +30,41 @@
 #include <stdint.h>
 #include "board.h"
 
-typedef struct
-{
+typedef struct {
+
+    /*
+     * This "stable struct" must never be modified. It provides a fixed memory layout so external clients can safely read the expected fields even
+     * if RClkContext changes in newer versions and the client is not recompiled.
+     */
+    struct {
+        #define RClkModuleStable_EnumMax 5
+        #define RClkThermalSensorStable_EnumMax 11
+        #define RClkPowerSensorStable_EnumMax 2
+        #define RClkPartLoadStable_EnumMax 10
+        #define RClkVoltageStable_EnumMax 7
+
+        u32 freqs[RClkModuleStable_EnumMax];
+        u32 realFreqs[RClkModuleStable_EnumMax];
+        u32 overrideFreqs[RClkModuleStable_EnumMax];
+        s32 temps[RClkThermalSensorStable_EnumMax];
+        s32 power[RClkPowerSensorStable_EnumMax];
+        u32 partLoad[RClkPartLoadStable_EnumMax];
+        u32 voltages[RClkVoltageStable_EnumMax];
+    } stable;
+
     uint64_t applicationId;
     RClkProfile profile;
     uint32_t freqs[RClkModule_EnumMax];
     uint32_t realFreqs[RClkModule_EnumMax];
     uint32_t overrideFreqs[RClkModule_EnumMax];
-    uint32_t temps[RClkThermalSensor_EnumMax];
+    int32_t temps[RClkThermalSensor_EnumMax];
     int32_t power[RClkPowerSensor_EnumMax];
     uint32_t partLoad[RClkPartLoad_EnumMax];
     uint32_t voltages[RClkVoltage_EnumMax];
     u16 speedos[RClkSpeedo_EnumMax];
     u16 iddq[RClkSpeedo_EnumMax];
-    u16 waferX;
-    u16 waferY;
+    s16 waferX;
+    s16 waferY;
 
     // Misc stuff
     GpuSchedulingMode gpuSchedulingMode;
@@ -54,13 +74,16 @@ typedef struct
     u8 maxDisplayFreq;
     u8 dramID;
     bool isDram8GB;
+    RClkConsoleType consoleType;
 
     // FPS / Resolution
     u8 fps;
     u16 resolutionHeight;
+    u8 custRev;
+    u16 kipVersion;
 
     // Reserved for future use
-    u8 reserved[0x424];
+    u8 reserved[0x35B];
 } RClkContext;
 
 typedef struct
@@ -71,8 +94,8 @@ typedef struct
     };
 } RClkTitleProfileList;
 
-#define HOCCLK_FREQ_LIST_MAX 32
+#define RCLK_FREQ_LIST_MAX 48
 
-#define HOCCLK_GLOBAL_PROFILE_TID 0xA111111111111111
+#define RCLK_GLOBAL_PROFILE_TID 0xA111111111111111
 
 static_assert(sizeof(RClkContext) == 0x500);
