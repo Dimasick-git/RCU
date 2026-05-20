@@ -1,0 +1,62 @@
+name: Sync from upstream (Ryazha-CLK adaptation)
+
+on:
+  schedule:
+    # Run daily at 04:00 UTC
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      since_days:
+        description: 'Days back to sync'
+        required: false
+        default: '21'
+      dry_run:
+        description: 'Dry run (no commits)'
+        required: false
+        default: 'false'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Ryazha-CLK
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Configure git identity
+        run: |
+          git config user.name "ryazha-sync[bot]"
+          git config user.email "ryazha-sync[bot]@users.noreply.github.com"
+
+      - name: Run sync script
+        run: |
+          ARGS=()
+          if [ -n "${{ github.event.inputs.since_days }}" ]; then
+            ARGS+=(--since "${{ github.event.inputs.since_days }}")
+          fi
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            ARGS+=(--dry-run)
+          fi
+          python3 scripts/sync_from_hoc.py "${ARGS[@]}"
+
+      - name: Push changes
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          # Only push if we made commits beyond origin/main
+          AHEAD=$(git rev-list --count origin/main..HEAD)
+          if [ "$AHEAD" -gt 0 ]; then
+            echo "Pushing $AHEAD new commits"
+            git push origin HEAD:main
+          else
+            echo "Nothing to push"
+          fi
