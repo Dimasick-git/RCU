@@ -105,9 +105,24 @@ EXCLUDED_PATHS = [
 
 
 def run(cmd: list[str], cwd: str | None = None, check: bool = True) -> str:
-    """Run a shell command and return stdout."""
+    """Run a shell command and return stdout decoded as UTF-8.
+    Lossy on invalid bytes -- callers that need real binary data must
+    use run_bytes() instead.
+    """
     result = subprocess.run(
-        cmd, cwd=cwd, check=check, capture_output=True, text=True, encoding="utf-8"
+        cmd, cwd=cwd, check=check, capture_output=True
+    )
+    # Decode with replacement -- никогда не падаем из-за бинарного шума
+    # в stdout (например, file-content git show на PNG/ICO).
+    return result.stdout.decode("utf-8", errors="replace")
+
+
+def run_bytes(cmd: list[str], cwd: str | None = None, check: bool = True) -> bytes:
+    """Run a shell command and return stdout as raw bytes.
+    Used для бинарных файлов (icons, kip, blobs) которые нельзя
+    декодировать как текст без потерь."""
+    result = subprocess.run(
+        cmd, cwd=cwd, check=check, capture_output=True
     )
     return result.stdout
 
@@ -170,16 +185,47 @@ def get_changed_files(repo_dir: Path, commit: str) -> list[tuple[str, str]]:
     return files
 
 
-def get_file_content_at(repo_dir: Path, commit: str, path: str) -> str | None:
-    """Get the content of a file at a specific commit."""
+def get_file_content_at(repo_dir: Path, commit: str, path: str) -> bytes | None:
+    """Get the content of a file at a specific commit as RAW BYTES.
+    Текст-decoding делает только caller'у и только для известных
+    текстовых расширений. Иначе UnicodeDecodeError при синке бинарей
+    (PNG-иконки, KIP, ELF).
+    """
     try:
-        return run(
+        return run_bytes(
             ["git", "show", f"{commit}:{path}"],
             cwd=str(repo_dir),
             check=True,
         )
     except subprocess.CalledProcessError:
         return None
+
+
+# Расширения, которые однозначно текстовые. Только их пропускаем через
+# adapt_content() и пишем как UTF-8. Всё остальное -- write_bytes.
+TEXT_EXTENSIONS: tuple[str, ...] = (
+    ".cpp", ".hpp", ".h", ".c", ".cc", ".cxx",
+    ".md", ".txt", ".json", ".yml", ".yaml",
+    ".sh", ".bat", ".ps1",
+    ".ini", ".cfg", ".conf", ".toml",
+    ".py", ".rb", ".lua",
+    ".mk", ".cmake",
+    ".gitignore", ".gitattributes", ".gitmodules",
+)
+
+# Дополнительные текстовые имена без расширения.
+TEXT_BASENAMES: tuple[str, ...] = (
+    "Makefile", "LICENSE", "AUTHORS", "CHANGELOG", "README",
+    "Dockerfile",
+)
+
+
+def is_text_path(path: str) -> bool:
+    lower = path.lower()
+    if lower.endswith(TEXT_EXTENSIONS):
+        return True
+    basename = os.path.basename(path)
+    return basename in TEXT_BASENAMES or any(basename.startswith(b) for b in TEXT_BASENAMES)
 
 
 def get_commit_message(repo_dir: Path, commit: str) -> tuple[str, str]:
@@ -247,17 +293,31 @@ def apply_commit(our_repo: Path, upstream_repo: Path, commit: str, dry_run: bool
                 applied_any = True
             continue
 
-        content = get_file_content_at(upstream_repo, commit, path)
-        if content is None:
+        raw = get_file_content_at(upstream_repo, commit, path)
+        if raw is None:
             continue
 
-        # Only adapt content for text files
-        if path.endswith((".cpp", ".hpp", ".h", ".c", ".md", ".json",
-                          ".yml", ".sh", ".ini", "Makefile")):
-            content = adapt_content(content)
-
         our_path.parent.mkdir(parents=True, exist_ok=True)
-        our_path.write_text(content, encoding="utf-8")
+
+        # Текстовые файлы -- адаптируем имена/пути внутри + пишем UTF-8.
+        # Всё остальное (PNG, ICO, KIP, ELF, BIN) -- write_bytes как есть,
+        # никакого regex'а по байтам.
+        if is_text_path(path):
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                # Случай: файл с похожим текстовым расширением, но
+                # содержит non-UTF-8 байты (legacy CP-1251 и т.п.).
+                # Лучше пропустить с предупреждением, чем повредить
+                # данные адаптацией по битому декоду.
+                print(f"    (skip {path}: non-UTF8 text -- saving raw bytes)")
+                our_path.write_bytes(raw)
+            else:
+                text = adapt_content(text)
+                our_path.write_text(text, encoding="utf-8")
+        else:
+            our_path.write_bytes(raw)
+
         applied_any = True
 
     if not applied_any:
