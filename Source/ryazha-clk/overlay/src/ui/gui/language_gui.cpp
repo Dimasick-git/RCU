@@ -55,12 +55,18 @@ void LanguageGui::listUI() {
             // Применяем язык (пишет в config.ini + перезагружает таблицу).
             i18n::ApplyLanguage(code);
 
-            // ОН-ТЕ-ФЛАЙ редраw: swap текущей LanguageGui на свежую.
-            // tsl::changeTo заменяет current GUI -- listUI() пересоздаётся
-            // и читает уже новые переводы. goBack() оставлял parent menu
-            // со старыми строками в кэше Tesla, поэтому раньше выглядело
-            // как "ничего не применилось".
-            tsl::changeTo<LanguageGui>();
+            // ВАЖНО: swapTo, НЕ changeTo.
+            //
+            // changeTo<LanguageGui>() PUSHES новую LanguageGui на nav-stack:
+            //   [Main, LangGui_ru, LangGui_en, LangGui_uk, ...]
+            // Юзер тыкает 3 языка -> в стэке 4 LangGui, и B-кнопка
+            // последовательно "откатывает" по одному. Выглядит как
+            // "back rolls back action instead of leaving menu".
+            //
+            // swapTo<LanguageGui>(1) ЗАМЕНЯЕТ текущую LangGui на свежую,
+            // не растя стэк. После любого числа кликов в Language menu
+            // одно нажатие B возвращает прямо в Main.
+            tsl::swapTo<LanguageGui>();
             return true;
         });
 
