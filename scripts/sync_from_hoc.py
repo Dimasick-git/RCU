@@ -1,31 +1,45 @@
 #!/usr/bin/env python3
 """
-Smart HOC -> Ryazha-CLK Sync Script
+sync_from_hoc.py -- ADVISORY upstream HOC -> Ryazha-CLK diff inspector.
 
-Pulls commits from upstream Horizon-OC repo, adapts paths/names to our
-Ryazha-CLK conventions, and creates clean commits without exposing HOC origin.
+Что делает по умолчанию:
+  python3 scripts/sync_from_hoc.py
+  - клонирует upstream (Horizon-OC/Horizon-OC),
+  - проходит по последним коммитам,
+  - выводит, какие файлы upstream трогает и что бы с ними произошло
+    после нашей path/content adaptation (PROTECT / EXCLUDE / WRITE / LAYOUT-CONFLICT),
+  - НИЧЕГО НЕ ПИШЕТ И НЕ КОММИТИТ.
 
-Features:
-- Filename adaptation: hoc-clk -> ryazha-clk, hocclk -> rclk
-- Content adaptation: HOC namespaces and symbols renamed
-- Protected paths: skips Ryazha-Авто and VRR-related files
-- Excludes: vrr, Horizon-OC-Monitor, deleted/renamed-by-us paths
+Чтобы реально применить -- нужен явный --apply.
+Даже с --apply скрипт:
+  - не делает git commit (только пишет файлы; staging + commit -- руками,
+    чтобы код-ревью был обязателен);
+  - пропускает любой upstream-файл, для которого в нашем repo уже есть
+    эквивалент в subdir-layout (см. detect_layout_conflict);
+  - пропускает любой path в PROTECTED_PATHS (наши собственные файлы);
+  - пропускает любой path в EXCLUDED_PATHS (фичи, которые мы переписали).
 
-Usage:
-    python3 sync_from_hoc.py [--dry-run] [--since DAYS_BACK]
+Почему "advisory by default":
+RCU и HOC расходятся структурно (flat src/ -> subdir layout, nxExt
+extraction, RClk* rename, auto_ryazha, libryazhahand submodule, PNG
+wallpaper и т.д.). Любая попытка autosync затирала наши изменения и
+ломала сборку. Скрипт стал инструментом ревью, а не автомата.
+
+Раньше существовал .github/workflows/sync_from_hoc.yml с cron'ом 04:00 UTC --
+он был удалён по этой же причине. Запускайте вручную с явным контролем.
 """
+
+from __future__ import annotations
 
 import argparse
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Iterable
 
-# Ensure UTF-8 output even on Windows consoles
+# Ensure UTF-8 console output even on Windows.
 if hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -33,55 +47,58 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
+
 UPSTREAM_REPO = "https://github.com/Horizon-OC/Horizon-OC.git"
 UPSTREAM_BRANCH = "main"
 
-# ──────────────────────────────────────────────────────────────────────
-# Path adaptation: HOC path -> our path
-# ──────────────────────────────────────────────────────────────────────
-# Когда upstream трогает hoc-clk/* мы переписываем путь на наш ryazha-clk/*.
-# ВНИМАНИЕ: после adapt_path() ещё проверяется is_protected/is_excluded --
-# даже если путь "перенесли", мы можем его не записывать (см. ниже).
-PATH_MAPPINGS = [
-    ("Source/hoc-clk/", "Source/ryazha-clk/"),
-    ("Source/Horizon-OC-Monitor/", "Source/Ryazha-Status-Monitor/"),
-    ("dist/config/horizon-oc/", "dist/config/ryazha-clk/"),
-    ("common/include/hocclk/", "common/include/rclk/"),
-    ("common/include/hocclk.h", "common/include/rclk.h"),
-    # Иногда upstream хранит вспомогательные файлы в hocclk/ (нижний регистр)
-    ("hocclk/", "rclk/"),
-]
 
 # ──────────────────────────────────────────────────────────────────────
-# Content adaptation: token -> replacement (regex)
+# Path adaptation: upstream-путь -> наш путь.
+# Только префиксные/директорные ренеймы. Внутренний переезд upstream-flat
+# (Source/hoc-clk/sysmodule/src/<file>.cpp) в наш subdir-layout
+# (Source/ryazha-clk/sysmodule/src/<group>/<file>.cpp) сюда НЕ кладём --
+# это решает detect_layout_conflict() runtime'ом, сравнивая с тем, что
+# реально лежит в репо.
 # ──────────────────────────────────────────────────────────────────────
-# Длинные паттерны раньше коротких, чтобы "Horizon-OC" не поломалось от "horizon-oc".
+PATH_MAPPINGS: list[tuple[str, str]] = [
+    ("Source/hoc-clk/",            "Source/ryazha-clk/"),
+    ("Source/Horizon-OC-Monitor/", "Source/Ryazha-Status-Monitor/"),
+    ("dist/config/horizon-oc/",    "dist/config/ryazha-clk/"),
+    ("common/include/hocclk/",     "common/include/rclk/"),
+    ("common/include/hocclk.h",    "common/include/rclk.h"),
+    ("hocclk/",                    "rclk/"),
+]
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Content adaptation: token -> replacement (regex).
+# Длинные паттерны перед короткими, чтобы Horizon-OC не битался от horizon-oc.
 # Применяется ТОЛЬКО к текстовым файлам (см. is_text_path).
-CONTENT_REPLACEMENTS = [
-    # ── commit-message-style prefix ──
+# ──────────────────────────────────────────────────────────────────────
+CONTENT_REPLACEMENTS: list[tuple[str, str]] = [
+    # commit-msg-style prefix
     (r"\bhocclk:\s*",  "ryazha-clk: "),
     (r"\bhoc-clk:\s*", "ryazha-clk: "),
 
-    # ── namespace/include renames ──
+    # namespaces / includes
     (r"hocclk/",         "rclk/"),
     (r"\"hocclk\.h\"",   "\"rclk.h\""),
     (r"<hocclk\.h>",     "<rclk.h>"),
     (r"\"hocclk\.hpp\"", "\"rclk.hpp\""),
     (r"<hocclk\.hpp>",   "<rclk.hpp>"),
 
-    # ── symbol renames (длинные раньше коротких!) ──
-    (r"\bHOCCLK_",       "RCLK_"),
-    (r"\bHocClkGov\b",   "RClkGov"),
-    (r"\bHocClk\b",      "RClk"),
-    (r"\bHOCClk\b",      "RCLK"),
-    (r"\bHOC_",          "RCLK_"),
-    (r"\bhocclkGetVersionString\b", "rclkGetVersionString"),
-    (r"\bhocclkGetConfigValues\b",  "rclkGetConfigValues"),
-    (r"\bhocclkSetConfigValues\b",  "rclkSetConfigValues"),
-    # Generic IPC fallback -- любой hocclk* идентификатор.
-    (r"\bhocclk([A-Z]\w*)\b", r"rclk\1"),
+    # symbol renames (длинные раньше коротких)
+    (r"\bHOCCLK_",                 "RCLK_"),
+    (r"\bHocClkGov\b",             "RClkGov"),
+    (r"\bHocClk\b",                "RClk"),
+    (r"\bHOCClk\b",                "RCLK"),
+    (r"\bHOC_",                    "RCLK_"),
+    (r"\bhocclkGetVersionString\b","rclkGetVersionString"),
+    (r"\bhocclkGetConfigValues\b", "rclkGetConfigValues"),
+    (r"\bhocclkSetConfigValues\b", "rclkSetConfigValues"),
+    (r"\bhocclk([A-Z]\w*)\b",      r"rclk\1"),
 
-    # ── build artifact names ──
+    # artifacts
     (r"\bhoc-clk\.nsp\b", "ryazha-clk.nsp"),
     (r"\bhoc-clk\.ovl\b", "ryazha-clk.ovl"),
     (r"\bhoc-clk\.kip\b", "rcu.kip"),
@@ -89,76 +106,75 @@ CONTENT_REPLACEMENTS = [
     (r"\bhoc-clk\.nro\b", "ryazha-clk.nro"),
     (r"\bhoc-clk\.elf\b", "ryazha-clk.elf"),
 
-    # ── config paths ──
-    (r"\bhorizon-oc/\b",  "ryazha-clk/"),
+    # config paths
+    (r"\bhorizon-oc/\b",    "ryazha-clk/"),
     (r"/config/horizon-oc", "/config/ryazha-clk"),
-    (r"\[horizon-oc\]",   "[ryazha-clk]"),
-    (r"\[hoc-clk\]",      "[ryazha-clk]"),
+    (r"\[horizon-oc\]",     "[ryazha-clk]"),
+    (r"\[hoc-clk\]",        "[ryazha-clk]"),
 
-    # ── repo URLs ──
+    # repo URLs
     (r"github\.com/Horizon-OC/Horizon-OC",
      "github.com/Dimanchikgshehsbshene/RCU"),
     (r"github\.com/Horizon-OC/",
      "github.com/Dimanchikgshehsbshene/"),
 
-    # ── user-facing strings ──
-    (r"\bHorizon-OC\b",   "Ryazha-CLK"),
-    (r"\bHorizon OC\b",   "Ryazha CLK"),
-    (r"\bHorizonOC\b",    "RyazhaCLK"),
-    (r"\bhorizon-oc\b",   "ryazha-clk"),
-    (r"\bhorizonoc\b",    "ryazhaclk"),
-    (r"\bHOC\b",          "RCLK"),   # standalone capital (e.g. "HOC sysmodule")
-    (r"\bhoc\b",          "ryazha-clk"),
+    # user-facing brand strings
+    (r"\bHorizon-OC\b", "Ryazha-CLK"),
+    (r"\bHorizon OC\b", "Ryazha CLK"),
+    (r"\bHorizonOC\b",  "RyazhaCLK"),
+    (r"\bhorizon-oc\b", "ryazha-clk"),
+    (r"\bhorizonoc\b",  "ryazhaclk"),
+    (r"\bHOC\b",        "RCLK"),
+    (r"\bhoc\b",        "ryazha-clk"),
 ]
 
+
 # ──────────────────────────────────────────────────────────────────────
-# PROTECTED PATHS -- эти файлы написаны нами или существенно
-# модифицированы. Никогда не overwrite-аем upstream'ом.
+# PROTECTED_PATHS -- наш код или наша конфигурация. Никогда не overwrite-аем.
+# Pattern с '/' в конце = directory prefix. Иначе full path или basename match
+# (см. _matches_pattern).
 # ──────────────────────────────────────────────────────────────────────
-PROTECTED_PATHS = [
-    # ── наши уникальные фичи (Ryazha-Авто, VRR, living ladder) ──
+PROTECTED_PATHS: list[str] = [
+    # ── уникальные фичи ──
     "auto_ryazha",
     "Ryazha-Status-Monitor",
     "living_ladder",
     "display_hz_trackbar",
     "display_refresh_rate",
 
-    # ── наш i18n + переводы (переписаны полностью с нуля) ──
-    "Source/ryazha-clk/overlay/src/i18n.cpp",
-    "Source/ryazha-clk/overlay/src/i18n.hpp",
-    "Source/ryazha-clk/overlay/lang/",                 # все переводы
-    "Source/ryazha-clk/overlay/src/ui/gui/labels.cpp", # русские labels
-    "Source/ryazha-clk/overlay/src/ui/gui/labels.h",
-    "Source/ryazha-clk/overlay/src/ui/gui/language_gui.cpp",
-    "Source/ryazha-clk/overlay/src/ui/gui/language_gui.h",
-
-    # ── наш кастомный About / Info / Misc UI (упоминания автора и т.п.) ──
-    "Source/ryazha-clk/overlay/src/ui/gui/about_gui.cpp",
-    "Source/ryazha-clk/overlay/src/ui/gui/about_gui.h",
-    "Source/ryazha-clk/overlay/src/ui/gui/info_gui.cpp",
-    "Source/ryazha-clk/overlay/src/ui/gui/info_gui.h",
-    "Source/ryazha-clk/overlay/src/ui/gui/misc_gui.cpp",
-    "Source/ryazha-clk/overlay/src/ui/gui/misc_gui.h",
-    "Source/ryazha-clk/overlay/src/ui/gui/cat.h",      # пиксельарт автора
-
-    # ── manifest sysmodule (TitleID наш, perms кастомные) ──
+    # ── весь sysmodule (мы перенесли его в subdir layout, любой
+    #     upstream flat-write попадёт сюда и будет conflict'ом) ──
+    "Source/ryazha-clk/sysmodule/src/",
+    "Source/ryazha-clk/sysmodule/Makefile",
     "Source/ryazha-clk/sysmodule/toolbox.json",
     "Source/ryazha-clk/sysmodule/perms.json",
 
-    # ── билд-инфраструктура и upstream-mirror submodule'ы ──
+    # ── весь overlay + i18n + кастомный UI ──
+    "Source/ryazha-clk/overlay/src/",
+    "Source/ryazha-clk/overlay/lang/",
+    "Source/ryazha-clk/overlay/Makefile",
     "Source/ryazha-clk/overlay/lib/libryazhahand",
-    "Source/ryazha-clk/overlay/Makefile",  # переименован на ryazhahand.mk
+
+    # ── общий код (включая client/ipc.* с RClk*-renames и
+    #     auto_ryazha.h, который мы добавили) ──
+    "Source/ryazha-clk/common/include/rclk/auto_ryazha.h",
+    "Source/ryazha-clk/common/include/rclk/client/ipc.h",
+    "Source/ryazha-clk/common/include/rclk/ipc.h",
+    "Source/ryazha-clk/common/include/rclk/config.h",
+    "Source/ryazha-clk/common/include/i2c.h",
+    "Source/ryazha-clk/common/src/client/ipc.c",
+
+    # ── сборочная инфраструктура ──
     "Source/ryazha-clk/build.sh",
-    "Source/ryazha-clk/bitmap.py",
     "Source/ryazha-clk/config.ini.template",
     "Source/ryazha-clk/MIGRATION.md",
     "Source/ryazha-clk/LICENSE",
     "Source/ryazha-clk/README.md",
+    "Source/ryazha-clk/bitmap.py",
 
-    # ── корневая инфраструктура repo ──
-    ".github/",   # workflows, FUNDING, templates -- мы держим свой набор
-    "scripts/sync_from_hoc.py",
-    "scripts/fix_atmosphere_loader_includes.py",
+    # ── репо в целом ──
+    ".github/",
+    "scripts/",
     "build.sh",
     "collect_dist.sh",
     "ams_ver.txt",
@@ -177,17 +193,15 @@ PROTECTED_PATHS = [
     ".gitattributes",
 ]
 
+
 # ──────────────────────────────────────────────────────────────────────
-# EXCLUDED PATHS -- целые подкаталоги, которые мы не синхронизируем
-# (либо это сторонние submodule'ы, либо генерируемые артефакты).
+# EXCLUDED_PATHS -- HOC-фичи, которые мы переписали или вытащили
+# в submodule. Их и в дайджест не показываем.
 # ──────────────────────────────────────────────────────────────────────
-EXCLUDED_PATHS = [
-    # ── upstream фичи, которые мы реализовали по-своему ──
+EXCLUDED_PATHS: list[str] = [
     "vrr/",
     "Source/Horizon-OC-Monitor/",
     "Source/vrr/",
-
-    # ── сторонние submodule'ы (синхронятся отдельным workflow) ──
     "Source/Atmosphere/",
     "Source/Atmosphere-Patches/",
     "Source/Old-Atmosphere-Patches/",
@@ -195,8 +209,6 @@ EXCLUDED_PATHS = [
     "Source/MemTesterNX/",
     "Source/TinyMemBenchNX/",
     "Source/fatal_handler_payload/",
-
-    # ── артефакты сборки ──
     "build/",
     "build__bak/",
     "dist/",
@@ -205,136 +217,14 @@ EXCLUDED_PATHS = [
     "Source/ryazha-clk/overlay/out/",
     "Source/ryazha-clk/sysmodule/build/",
     "Source/ryazha-clk/sysmodule/out/",
-
-    # ── HOC-специфичные скрипты, которые не имеют смысла у нас ──
-    "fix_head.sh",       # их рескайн-скрипт
-    "ams_patch.bat",     # их Windows-only ams-патчер
+    "fix_head.sh",
+    "ams_patch.bat",
 ]
 
 
-def run(cmd: list[str], cwd: str | None = None, check: bool = True) -> str:
-    """Run a shell command and return stdout decoded as UTF-8.
-    Lossy on invalid bytes -- callers that need real binary data must
-    use run_bytes() instead.
-    """
-    result = subprocess.run(
-        cmd, cwd=cwd, check=check, capture_output=True
-    )
-    # Decode with replacement -- никогда не падаем из-за бинарного шума
-    # в stdout (например, file-content git show на PNG/ICO).
-    return result.stdout.decode("utf-8", errors="replace")
-
-
-def run_bytes(cmd: list[str], cwd: str | None = None, check: bool = True) -> bytes:
-    """Run a shell command and return stdout as raw bytes.
-    Used для бинарных файлов (icons, kip, blobs) которые нельзя
-    декодировать как текст без потерь."""
-    result = subprocess.run(
-        cmd, cwd=cwd, check=check, capture_output=True
-    )
-    return result.stdout
-
-
-def _matches_pattern(path: str, pattern: str) -> bool:
-    """Match path against pattern. Pattern ending with '/' = directory prefix.
-    Otherwise full-path или basename match. Не используем raw 'in' --
-    он матчит слишком широко (e.g. 'LICENSE' матчился бы в любом пути)."""
-    if pattern.endswith("/"):
-        # directory prefix match
-        return path.startswith(pattern) or ("/" + pattern) in ("/" + path)
-    # full path
-    if path == pattern:
-        return True
-    # path относится к директории, заданной pattern
-    if path.startswith(pattern + "/"):
-        return True
-    # basename match (для коротких имён типа LICENSE, .gitignore)
-    if "/" not in pattern and os.path.basename(path) == pattern:
-        return True
-    return False
-
-
-def is_protected(path: str) -> bool:
-    """Check if a path is protected (our code, don't overwrite).
-    Сравниваем с обоими -- сырым upstream-путём и адаптированным,
-    чтобы защита работала независимо от направления match'а.
-    """
-    candidates = (path, adapt_path(path))
-    return any(_matches_pattern(p, pat) for p in candidates for pat in PROTECTED_PATHS)
-
-
-def is_excluded(path: str) -> bool:
-    """Check if a path should be excluded from sync entirely."""
-    candidates = (path, adapt_path(path))
-    return any(_matches_pattern(p, pat) for p in candidates for pat in EXCLUDED_PATHS)
-
-
-def adapt_path(path: str) -> str:
-    """Transform HOC path to our path conventions."""
-    for src, dst in PATH_MAPPINGS:
-        if src in path:
-            path = path.replace(src, dst)
-    return path
-
-
-def adapt_content(content: str) -> str:
-    """Transform HOC content to our naming conventions."""
-    for pattern, repl in CONTENT_REPLACEMENTS:
-        content = re.sub(pattern, repl, content)
-    return content
-
-
-def clone_upstream(target_dir: Path) -> None:
-    """Clone the upstream HOC repo."""
-    print(f"[*] Cloning upstream {UPSTREAM_REPO} ...")
-    run(["git", "clone", "--depth=50", "--branch", UPSTREAM_BRANCH,
-         UPSTREAM_REPO, str(target_dir)])
-
-
-def get_recent_commits(repo_dir: Path, since_days: int) -> list[str]:
-    """Get commit SHAs from the last N days."""
-    out = run(
-        ["git", "log", f"--since={since_days} days ago", "--format=%H", "--reverse"],
-        cwd=str(repo_dir),
-    )
-    return [line.strip() for line in out.splitlines() if line.strip()]
-
-
-def get_changed_files(repo_dir: Path, commit: str) -> list[tuple[str, str]]:
-    """Get files changed in a commit. Returns (status, path) tuples."""
-    out = run(
-        ["git", "show", "--name-status", "--format=", commit],
-        cwd=str(repo_dir),
-    )
-    files = []
-    for line in out.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        parts = line.split("\t")
-        if len(parts) >= 2:
-            files.append((parts[0], parts[-1]))
-    return files
-
-
-def get_file_content_at(repo_dir: Path, commit: str, path: str) -> bytes | None:
-    """Get the content of a file at a specific commit as RAW BYTES.
-    Текст-decoding делает только caller'у и только для известных
-    текстовых расширений. Иначе UnicodeDecodeError при синке бинарей
-    (PNG-иконки, KIP, ELF).
-    """
-    try:
-        return run_bytes(
-            ["git", "show", f"{commit}:{path}"],
-            cwd=str(repo_dir),
-            check=True,
-        )
-    except subprocess.CalledProcessError:
-        return None
-
-
-# Расширения, которые однозначно текстовые. Только их пропускаем через
-# adapt_content() и пишем как UTF-8. Всё остальное -- write_bytes.
+# ──────────────────────────────────────────────────────────────────────
+# Расширения / имена текстовых файлов. Adaptation применяется только к ним.
+# ──────────────────────────────────────────────────────────────────────
 TEXT_EXTENSIONS: tuple[str, ...] = (
     ".cpp", ".hpp", ".h", ".c", ".cc", ".cxx", ".inc",
     ".md", ".txt", ".json", ".yml", ".yaml",
@@ -347,12 +237,61 @@ TEXT_EXTENSIONS: tuple[str, ...] = (
     ".html", ".css", ".js",
 )
 
-# Дополнительные текстовые имена без расширения.
 TEXT_BASENAMES: tuple[str, ...] = (
     "Makefile", "LICENSE", "AUTHORS", "CHANGELOG", "README",
-    "Dockerfile", "Doxyfile", ".clang-format", ".clang-tidy",
-    ".editorconfig", ".gitignore", ".gitattributes", ".gitmodules",
+    "Dockerfile", "Doxyfile",
 )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Subprocess helpers.
+# ──────────────────────────────────────────────────────────────────────
+def run(cmd: list[str], cwd: str | None = None, check: bool = True) -> str:
+    r = subprocess.run(cmd, cwd=cwd, check=check, capture_output=True)
+    return r.stdout.decode("utf-8", errors="replace")
+
+
+def run_bytes(cmd: list[str], cwd: str | None = None, check: bool = True) -> bytes:
+    r = subprocess.run(cmd, cwd=cwd, check=check, capture_output=True)
+    return r.stdout
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Matching.
+# ──────────────────────────────────────────────────────────────────────
+def _matches_pattern(path: str, pattern: str) -> bool:
+    if pattern.endswith("/"):
+        return path.startswith(pattern) or ("/" + pattern) in ("/" + path)
+    if path == pattern:
+        return True
+    if path.startswith(pattern + "/"):
+        return True
+    if "/" not in pattern and os.path.basename(path) == pattern:
+        return True
+    return False
+
+
+def is_protected(path: str) -> bool:
+    candidates = (path, adapt_path(path))
+    return any(_matches_pattern(p, pat) for p in candidates for pat in PROTECTED_PATHS)
+
+
+def is_excluded(path: str) -> bool:
+    candidates = (path, adapt_path(path))
+    return any(_matches_pattern(p, pat) for p in candidates for pat in EXCLUDED_PATHS)
+
+
+def adapt_path(path: str) -> str:
+    for src, dst in PATH_MAPPINGS:
+        if src in path:
+            path = path.replace(src, dst)
+    return path
+
+
+def adapt_content(content: str) -> str:
+    for pattern, repl in CONTENT_REPLACEMENTS:
+        content = re.sub(pattern, repl, content)
+    return content
 
 
 def is_text_path(path: str) -> bool:
@@ -363,136 +302,214 @@ def is_text_path(path: str) -> bool:
     return basename in TEXT_BASENAMES or any(basename.startswith(b) for b in TEXT_BASENAMES)
 
 
-def get_commit_message(repo_dir: Path, commit: str) -> tuple[str, str]:
-    """Get commit subject and body."""
-    subject = run(
-        ["git", "log", "-1", "--format=%s", commit], cwd=str(repo_dir)
-    ).strip()
-    body = run(
-        ["git", "log", "-1", "--format=%b", commit], cwd=str(repo_dir)
-    ).strip()
+# ──────────────────────────────────────────────────────────────────────
+# Layout conflict detector.
+# Upstream HOC хранит код в flat src/, мы -- в src/<group>/. Если у нас
+# уже есть файл с тем же базовым именем в одном из known subdir'ов,
+# upstream'овский flat-вариант -- это конфликт layout'а; пишут его
+# только вручную после ревью.
+# ──────────────────────────────────────────────────────────────────────
+SYSMODULE_SUBDIRS: tuple[str, ...] = (
+    "src/board", "src/display", "src/file", "src/hos", "src/i2c",
+    "src/ipc", "src/mapping", "src/mgr", "src/pwr", "src/soc",
+    "src/tsensor", "src/util",
+)
+
+
+def detect_layout_conflict(our_repo: Path, adapted_path: str) -> str | None:
+    """Если adapted_path -- это flat-файл в Source/ryazha-clk/sysmodule/src/
+    или /overlay/src/, и для него есть subdir-эквивалент в нашем repo --
+    верни путь конфликтующего файла. Иначе None."""
+    p = Path(adapted_path)
+    parts = p.parts
+    # ловим только sysmodule flat src/ файлы. Overlay тоже плоский, но
+    # внутри src/ui/gui/* etc. -- у нас upstream туда же кладёт.
+    try:
+        idx = parts.index("sysmodule")
+    except ValueError:
+        return None
+    if idx + 2 >= len(parts):
+        return None
+    if parts[idx + 1] != "src":
+        return None
+    if (idx + 3) != len(parts):
+        # flat = ровно sysmodule/src/<file>. Если внутри уже subdir --
+        # upstream сам кладёт в subdir, конфликта по layout'у нет.
+        return None
+    filename = parts[-1]
+    sysmodule_root = Path(*parts[:idx + 1])
+    for sub in SYSMODULE_SUBDIRS:
+        candidate = our_repo / sysmodule_root / sub / filename
+        if candidate.exists():
+            return str(candidate.relative_to(our_repo))
+    return None
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Git helpers против upstream-клона.
+# ──────────────────────────────────────────────────────────────────────
+def clone_upstream(target: Path) -> None:
+    print(f"[*] cloning {UPSTREAM_REPO}")
+    run(["git", "clone", "--depth=50", "--branch", UPSTREAM_BRANCH, UPSTREAM_REPO, str(target)])
+
+
+def get_recent_commits(repo: Path, since_days: int) -> list[str]:
+    out = run(
+        ["git", "log", f"--since={since_days} days ago", "--format=%H", "--reverse"],
+        cwd=str(repo),
+    )
+    return [l.strip() for l in out.splitlines() if l.strip()]
+
+
+def get_changed_files(repo: Path, commit: str) -> list[tuple[str, str]]:
+    out = run(["git", "show", "--name-status", "--format=", commit], cwd=str(repo))
+    files: list[tuple[str, str]] = []
+    for line in out.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        parts = line.split("\t")
+        if len(parts) >= 2:
+            files.append((parts[0], parts[-1]))
+    return files
+
+
+def get_file_content_at(repo: Path, commit: str, path: str) -> bytes | None:
+    try:
+        return run_bytes(["git", "show", f"{commit}:{path}"], cwd=str(repo), check=True)
+    except subprocess.CalledProcessError:
+        return None
+
+
+def get_commit_message(repo: Path, commit: str) -> tuple[str, str]:
+    subject = run(["git", "log", "-1", "--format=%s", commit], cwd=str(repo)).strip()
+    body    = run(["git", "log", "-1", "--format=%b", commit], cwd=str(repo)).strip()
     return subject, body
 
 
-def commit_should_be_skipped(subject: str, body: str, files: list[tuple[str, str]]) -> str | None:
-    """Decide if a commit should be SKIPPED ENTIRELY.
-
-    NB: protected-paths больше не повод отбрасывать весь коммит --
-    apply_commit() per-file пропускает protected'ы. Отбрасываем
-    только если в коммите ВООБЩЕ нет file changes для нас.
+# ──────────────────────────────────────────────────────────────────────
+# Decide per-file what would happen.
+# ──────────────────────────────────────────────────────────────────────
+def classify(our_repo: Path, path: str) -> tuple[str, str]:
+    """Returns (verdict, detail). Verdict is one of:
+      EXCLUDE  -- из EXCLUDED_PATHS, не показываем даже в advisory.
+      PROTECT  -- из PROTECTED_PATHS, наш код, никогда не overwrite.
+      LAYOUT   -- upstream flat-файл, у нас subdir-эквивалент => конфликт.
+      WRITE    -- безопасно записать (но всё равно требует --apply).
     """
+    if is_excluded(path):
+        return ("EXCLUDE", "excluded path")
+    if is_protected(path):
+        return ("PROTECT", "in PROTECTED_PATHS")
+    adapted = adapt_path(path)
+    conflict = detect_layout_conflict(our_repo, adapted)
+    if conflict:
+        return ("LAYOUT", f"upstream flat conflict with {conflict}")
+    return ("WRITE", adapted)
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Commit-level skip heuristic.
+# ──────────────────────────────────────────────────────────────────────
+def should_skip_commit(subject: str, body: str, files: list[tuple[str, str]], our_repo: Path) -> str | None:
     text = f"{subject}\n{body}".lower()
 
-    # Skip merges
     if subject.lower().startswith("merge "):
         return "merge commit"
 
-    # Если все файлы либо excluded, либо protected -- ничего не вытащим, скип.
-    # is_protected() и is_excluded() уже проверяют path+adapt_path внутри,
-    # передаём сырой upstream-путь.
-    actionable = [p for _, p in files if not is_excluded(p) and not is_protected(p)]
+    actionable = []
+    for _, p in files:
+        verdict, _ = classify(our_repo, p)
+        if verdict == "WRITE":
+            actionable.append(p)
     if not actionable:
-        return "no actionable files (all excluded/protected)"
+        return "no writable files (everything excluded/protected/layout-conflict)"
 
-    # Топик-конфликт: коммит про наши фичи -- скорее всего поломает.
     if re.search(r"\bvrr\b|\bryazha\b|ryazha-авто|auto[\s_-]?ryazha", text):
         return "topic conflicts with our Ryazha/VRR features"
 
     return None
 
 
-def apply_commit(our_repo: Path, upstream_repo: Path, commit: str, dry_run: bool) -> bool:
-    """Apply a single HOC commit to our repo with path/content adaptation."""
-    subject, body = get_commit_message(upstream_repo, commit)
-    files = get_changed_files(upstream_repo, commit)
+# ──────────────────────────────────────────────────────────────────────
+# Apply (only if --apply).
+# ──────────────────────────────────────────────────────────────────────
+def apply_file(our_repo: Path, upstream_repo: Path, commit: str, status: str, path: str) -> bool:
+    adapted = adapt_path(path)
+    our_path = our_repo / adapted
 
-    skip_reason = commit_should_be_skipped(subject, body, files)
-    if skip_reason:
-        print(f"[-] Skip {commit[:7]}: {skip_reason}")
+    if status.startswith("D"):
+        if our_path.exists():
+            our_path.unlink()
+            print(f"    del  {adapted}")
+            return True
         return False
 
-    print(f"[+] Apply {commit[:7]}: {subject}")
-    if dry_run:
-        for status, path in files:
-            if is_excluded(path):
-                print(f"    SKIP-EX {path}")
-                continue
-            if is_protected(path):
-                print(f"    SKIP-PR {path}")
-                continue
-            adapted = adapt_path(path)
-            marker = "TEXT" if is_text_path(path) else "BIN "
-            arrow = " -> " if adapted != path else "    "
-            print(f"    {status} {marker} {path}{arrow}{adapted if adapted != path else ''}")
-        return True
+    raw = get_file_content_at(upstream_repo, commit, path)
+    if raw is None:
+        return False
 
-    # Apply each file change
-    applied_any = False
-    for status, path in files:
-        if is_excluded(path):
-            print(f"    (excluded {path})")
-            continue
-        if is_protected(path):
-            print(f"    (protected {path} -- keeping our version)")
-            continue
-        our_path = our_repo / adapt_path(path)
+    our_path.parent.mkdir(parents=True, exist_ok=True)
 
-        if status.startswith("D"):
-            if our_path.exists():
-                our_path.unlink()
-                applied_any = True
-            continue
-
-        raw = get_file_content_at(upstream_repo, commit, path)
-        if raw is None:
-            continue
-
-        our_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Текстовые файлы -- адаптируем имена/пути внутри + пишем UTF-8.
-        # Всё остальное (PNG, ICO, KIP, ELF, BIN) -- write_bytes как есть,
-        # никакого regex'а по байтам.
-        if is_text_path(path):
-            try:
-                text = raw.decode("utf-8")
-            except UnicodeDecodeError:
-                # Случай: файл с похожим текстовым расширением, но
-                # содержит non-UTF-8 байты (legacy CP-1251 и т.п.).
-                # Лучше пропустить с предупреждением, чем повредить
-                # данные адаптацией по битому декоду.
-                print(f"    (skip {path}: non-UTF8 text -- saving raw bytes)")
-                our_path.write_bytes(raw)
-            else:
-                text = adapt_content(text)
-                our_path.write_text(text, encoding="utf-8")
-        else:
+    if is_text_path(path):
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            print(f"    skip {path}: non-UTF8 text -- saved as bytes")
             our_path.write_bytes(raw)
+        else:
+            text = adapt_content(text)
+            our_path.write_text(text, encoding="utf-8")
+    else:
+        our_path.write_bytes(raw)
 
-        applied_any = True
-
-    if not applied_any:
-        return False
-
-    # Make a clean commit without HOC attribution
-    clean_subject = adapt_content(subject)
-    run(["git", "add", "-A"], cwd=str(our_repo))
-
-    # Check if anything actually changed
-    diff = run(["git", "diff", "--cached", "--name-only"], cwd=str(our_repo))
-    if not diff.strip():
-        print(f"    (no net changes after adaptation)")
-        return False
-
-    run(["git", "commit", "-m", clean_subject], cwd=str(our_repo))
+    print(f"    {status:<3} {adapted}")
     return True
 
 
+def process_commit(our_repo: Path, upstream_repo: Path, commit: str, apply: bool) -> tuple[int, int]:
+    """Returns (would_write_count, skipped_count)."""
+    subject, body = get_commit_message(upstream_repo, commit)
+    files = get_changed_files(upstream_repo, commit)
+
+    reason = should_skip_commit(subject, body, files, our_repo)
+    if reason:
+        print(f"[-] skip {commit[:7]}: {reason}  ({subject})")
+        return 0, 1
+
+    print(f"[+] {commit[:7]}: {subject}")
+    writes = 0
+    for status, path in files:
+        verdict, detail = classify(our_repo, path)
+        if verdict == "EXCLUDE":
+            continue  # тихо
+        if verdict == "PROTECT":
+            print(f"    PROTECT  {path}  ({detail})")
+            continue
+        if verdict == "LAYOUT":
+            print(f"    LAYOUT!  {path}  ({detail})")
+            continue
+        # WRITE
+        if apply:
+            if apply_file(our_repo, upstream_repo, commit, status, path):
+                writes += 1
+        else:
+            print(f"    WRITE    {path} -> {detail}")
+            writes += 1
+    return writes, 0
+
+
+# ──────────────────────────────────────────────────────────────────────
+# main
+# ──────────────────────────────────────────────────────────────────────
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Sync from HOC with adaptation")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Show what would happen without changes")
+    parser = argparse.ArgumentParser(
+        description="Advisory upstream sync for Ryazha-CLK. Default is dry-run."
+    )
+    parser.add_argument("--apply", action="store_true",
+                        help="Actually write files (без commit'а). По умолчанию -- только показывает.")
     parser.add_argument("--since", type=int, default=21,
-                        help="Days back to sync (default: 21)")
+                        help="Days back to inspect (default: 21)")
     parser.add_argument("--our-repo", default=os.getcwd(),
                         help="Path to our repo (default: cwd)")
     args = parser.parse_args()
@@ -502,26 +519,40 @@ def main() -> int:
         print(f"[!] {our_repo} is not a git repo")
         return 1
 
-    with tempfile.TemporaryDirectory(prefix="hoc_sync_") as tmp:
+    if not args.apply:
+        print("=" * 64)
+        print("ADVISORY MODE -- ничего не пишется. Запусти с --apply, если уверен.")
+        print("Даже с --apply: НИ ЕДИНОГО git commit не делается -- ревью обязателен.")
+        print("=" * 64)
+
+    with tempfile.TemporaryDirectory(prefix="rcu_sync_") as tmp:
         upstream = Path(tmp) / "upstream"
         clone_upstream(upstream)
 
         commits = get_recent_commits(upstream, args.since)
-        print(f"[*] Found {len(commits)} commits in the last {args.since} days")
+        print(f"[*] {len(commits)} commits за последние {args.since} дней")
 
-        applied = 0
-        skipped = 0
+        total_writes = 0
+        total_skips = 0
         for c in commits:
-            if apply_commit(our_repo, upstream, c, args.dry_run):
-                applied += 1
-            else:
-                skipped += 1
+            w, s = process_commit(our_repo, upstream, c, apply=args.apply)
+            total_writes += w
+            total_skips += s
 
         print()
-        print(f"[*] Applied:  {applied}")
-        print(f"[*] Skipped:  {skipped}")
-        if args.dry_run:
-            print("[*] Dry run - no actual changes were made")
+        if args.apply:
+            print(f"[*] written:  {total_writes} files")
+            print(f"[*] commits skipped: {total_skips}")
+            print()
+            print("Next steps (manual):")
+            print("  git status                 # ревью изменений")
+            print("  git diff                   # построчно")
+            print("  git add <files>            # стейджим только то, что прошло ревью")
+            print("  git commit -m 'sync: ...'  # коммитим САМИ")
+        else:
+            print(f"[*] would write: {total_writes} files")
+            print(f"[*] commits skipped: {total_skips}")
+            print("Запусти с --apply, чтобы реально записать (но коммит -- руками).")
 
     return 0
 
