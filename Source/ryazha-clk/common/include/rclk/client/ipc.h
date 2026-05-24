@@ -31,6 +31,7 @@
 #include "../config.h"
 #include "../board.h"
 #include "../ipc.h"
+#include "../auto_ryazha.h"
 
 bool rclkIpcRunning();
 Result rclkIpcInitialize(void);
