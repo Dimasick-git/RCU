@@ -51,6 +51,10 @@ Result rclkIpcGetFreqList(RClkModule module, u32* list, u32 maxCount, u32* outCo
 Result hocClkIpcSetKipData();
 Result hocClkIpcGetKipData();
 
+// Ryazha-Авто (auto_ryazha) IPC -- snapshot/replace RClkLadderConfig.
+Result rclkIpcGetLadderConfig(RClkLadderConfig* out_cfg);
+Result rclkIpcSetLadderConfig(const RClkLadderConfig* cfg);
+
 static inline Result rclkIpcRemoveOverride(RClkModule module)
 {
     return rclkIpcSetOverride(module, 0);

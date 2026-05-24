@@ -39,6 +39,7 @@
 #include "../mgr/clock_manager.hpp"
 #include "../file/config.hpp"
 #include "../file/kip.hpp"
+#include "../auto_ryazha.hpp"
 namespace ipcService {
 
     namespace {
@@ -126,6 +127,16 @@ namespace ipcService {
             if (!config::SetConfigValues(&copy, true)) {
                 return RCLK_ERROR(ConfigSaveFailed);
             }
+            return 0;
+        }
+
+        Result GetLadderConfigHandler(RClkLadderConfig* out_cfg) {
+            autoRyazha::GetConfig(out_cfg);
+            return 0;
+        }
+
+        Result SetLadderConfigHandler(const RClkLadderConfig* cfg) {
+            autoRyazha::SetConfig(cfg);
             return 0;
         }
 
@@ -236,6 +247,24 @@ namespace ipcService {
                     if (r->data.size >= 0) {
                         kip::SetKipData();
                         return 0;
+                    }
+                    break;
+
+                case RClkIpcCmd_GetLadderConfig:
+                    if (r->hipc.meta.num_recv_buffers >= 1) {
+                        size_t bufSize = hipcGetBufferSize(r->hipc.data.recv_buffers);
+                        if (bufSize >= sizeof(RClkLadderConfig)) {
+                            return GetLadderConfigHandler((RClkLadderConfig*)hipcGetBufferAddress(r->hipc.data.recv_buffers));
+                        }
+                    }
+                    break;
+
+                case RClkIpcCmd_SetLadderConfig:
+                    if (r->hipc.meta.num_send_buffers >= 1) {
+                        size_t bufSize = hipcGetBufferSize(r->hipc.data.send_buffers);
+                        if (bufSize >= sizeof(RClkLadderConfig)) {
+                            return SetLadderConfigHandler((const RClkLadderConfig*)hipcGetBufferAddress(r->hipc.data.send_buffers));
+                        }
                     }
                     break;
             }
