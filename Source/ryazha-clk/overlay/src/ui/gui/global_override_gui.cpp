@@ -21,6 +21,7 @@
 #include "global_override_gui.h"
 #include "value_choice_gui.h"
 #include "labels.h"
+#include "display_hz_trackbar.hpp"
 
 GlobalOverrideGui::GlobalOverrideGui()
 {
@@ -367,9 +368,23 @@ void GlobalOverrideGui::listUI()
     this->addModuleListItem(RClkModule_GPU);
     this->addModuleListItem(RClkModule_MEM);
     #if IS_MINIMAL == 0
-        ValueThresholds lcdThresholds(60, 65);
-        if(configList.values[RClkConfigValue_OverwriteRefreshRate])
-            this->addModuleListItemValue(RClkModule_Display, "Display", IsAula() ? 45 : 40, configList.values[RClkConfigValue_MaxDisplayClockH], this->context->isUsingRetroSuper ? 5 : 1, " Hz", 1, 0, lcdThresholds);
+        if(configList.values[RClkConfigValue_OverwriteRefreshRate]) {
+            // Inline Hz trackbar (старый ползунок, который юзер просил вернуть).
+            // 0 в overrideFreqs трактуется как "панель по умолчанию" = 60 Гц.
+            u32 minHz  = IsAula() ? 45u : 40u;
+            u32 maxHz  = configList.values[RClkConfigValue_MaxDisplayClockH];
+            u32 stepHz = this->context->isUsingRetroSuper ? 5u : 1u;
+            auto* bar = new ryazha_ui::DisplayHzTrackBar(minHz, maxHz, stepHz, "Display");
+            u32 curHz = ryazha_ui::displayHzOrDefault(this->context->overrideFreqs[RClkModule_Display]);
+            bar->setProgress(ryazha_ui::displayHzToProgress(curHz, bar->minHz(), bar->maxHz(), bar->stepHz()));
+            bar->setValueChangedListener([this, bar](u16 progress) {
+                u32 hz = bar->minHz() + (u32)progress * bar->stepHz();
+                rclkIpcSetOverride(RClkModule_Display, hz);
+                ryazha_ui::syncLadderVrrMaxToPanelHz(hz);
+            });
+            this->listElement->addItem(bar);
+            // listItems[Display] остаётся nullptr -- bar держит свой UI state.
+        }
     #endif
 
     this->addGovernorSection();

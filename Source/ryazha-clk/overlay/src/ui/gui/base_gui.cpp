@@ -164,6 +164,16 @@ void BaseGui::preDraw(tsl::gfx::Renderer* renderer) {
         badgeY + BADGE_PAD_Y + textH - 2,  // baseline correction
         BADGE_FONT, BADGE_TEXT
     );
+
+    // "by Dimasick-git" -- тонкая subline под бейджем, чтобы автор
+    // оставался виден без отдельной About-страницы.
+    constexpr s32 AUTHOR_FONT = 11;
+    static const tsl::Color AUTHOR_COLOR = tsl::Color(10, 7, 1, 13);
+    renderer->drawString(
+        "by Dimasick-git", false,
+        badgeX, badgeY + badgeH + 12,
+        AUTHOR_FONT, AUTHOR_COLOR
+    );
 }
 
 tsl::elm::Element* BaseGui::createUI()
