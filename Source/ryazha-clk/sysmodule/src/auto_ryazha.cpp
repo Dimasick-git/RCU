@@ -28,12 +28,12 @@
 
 #include <nxExt/cpp/lockable_mutex.h>
 
-#include "clock_manager.hpp"
-#include "config.hpp"
-#include "errors.hpp"
-#include "file_utils.hpp"
+#include "mgr/clock_manager.hpp"
+#include "file/config.hpp"
+#include "file/errors.hpp"
+#include "file/file_utils.hpp"
 #include "board/board.hpp"
-#include "board/display_refresh_rate.hpp"
+#include "display/display_refresh_rate.hpp"
 
 namespace autoRyazha {
 
