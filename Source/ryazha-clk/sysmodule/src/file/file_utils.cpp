@@ -102,7 +102,7 @@ namespace fileUtils {
         va_end(args);
     }
 
-    void WriteContextToCsv(const HocClkContext* context) {
+    void WriteContextToCsv(const RClkContext* context) {
         std::scoped_lock lock{g_csv_mutex};
 
         FILE* file = fopen(FILE_CONTEXT_CSV_PATH, "a");
@@ -112,20 +112,20 @@ namespace fileUtils {
             if (!ftell(file)) {
                 fprintf(file, "timestamp,profile,app_tid");
 
-                for (unsigned int module = 0; module < HocClkModule_EnumMax; module++) {
-                    fprintf(file, ",%s_hz", rclkFormatModule((HocClkModule)module, false));
+                for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
+                    fprintf(file, ",%s_hz", rclkFormatModule((RClkModule)module, false));
                 }
 
-                for (unsigned int sensor = 0; sensor < HocClkThermalSensor_EnumMax; sensor++) {
-                    fprintf(file, ",%s_milliC", rclkFormatThermalSensor((HocClkThermalSensor)sensor, false));
+                for (unsigned int sensor = 0; sensor < RClkThermalSensor_EnumMax; sensor++) {
+                    fprintf(file, ",%s_milliC", rclkFormatThermalSensor((RClkThermalSensor)sensor, false));
                 }
 
-                for (unsigned int module = 0; module < HocClkModule_EnumMax; module++) {
-                    fprintf(file, ",%s_real_hz", rclkFormatModule((HocClkModule)module, false));
+                for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
+                    fprintf(file, ",%s_real_hz", rclkFormatModule((RClkModule)module, false));
                 }
 
-                for (unsigned int sensor = 0; sensor < HocClkPowerSensor_EnumMax; sensor++) {
-                    fprintf(file, ",%s_mw", rclkFormatPowerSensor((HocClkPowerSensor)sensor, false));
+                for (unsigned int sensor = 0; sensor < RClkPowerSensor_EnumMax; sensor++) {
+                    fprintf(file, ",%s_mw", rclkFormatPowerSensor((RClkPowerSensor)sensor, false));
                 }
 
                 fprintf(file, "\n");
@@ -136,19 +136,19 @@ namespace fileUtils {
 
             fprintf(file, "%ld%03ld,%s,%016lx", now.tv_sec, now.tv_nsec / 1000000UL, rclkFormatProfile(context->profile, false), context->applicationId);
 
-            for (unsigned int module = 0; module < HocClkModule_EnumMax; module++) {
+            for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
                 fprintf(file, ",%d", context->freqs[module]);
             }
 
-            for (unsigned int sensor = 0; sensor < HocClkThermalSensor_EnumMax; sensor++) {
+            for (unsigned int sensor = 0; sensor < RClkThermalSensor_EnumMax; sensor++) {
                 fprintf(file, ",%d", context->temps[sensor]);
             }
 
-            for (unsigned int module = 0; module < HocClkModule_EnumMax; module++) {
+            for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
                 fprintf(file, ",%d", context->realFreqs[module]);
             }
 
-            for (unsigned int sensor = 0; sensor < HocClkPowerSensor_EnumMax; sensor++) {
+            for (unsigned int sensor = 0; sensor < RClkPowerSensor_EnumMax; sensor++) {
                 fprintf(file, ",%d", context->power[sensor]);
             }
 

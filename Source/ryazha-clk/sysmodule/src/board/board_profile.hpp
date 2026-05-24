@@ -29,6 +29,6 @@
 
 namespace board {
 
-    HocClkProfile GetProfile();
+    RClkProfile GetProfile();
 
 }

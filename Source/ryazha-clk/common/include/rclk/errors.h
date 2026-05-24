@@ -28,12 +28,12 @@
 #pragma once
 
 #define RCLK_ERROR_MODULE 388
-#define RCLK_ERROR(desc) ((RCLK_ERROR_MODULE & 0x1FF) | (HocClkError_##desc & 0x1FFF)<<9)
+#define RCLK_ERROR(desc) ((RCLK_ERROR_MODULE & 0x1FF) | (RClkError_##desc & 0x1FFF)<<9)
 
 typedef enum
 {
-    HocClkError_Generic = 0,
-    HocClkError_ConfigNotLoaded = 1,
-    HocClkError_ConfigSaveFailed = 2,
-    // HocClkError_SocThermFail = 3,
-} HocClkError;
+    RClkError_Generic = 0,
+    RClkError_ConfigNotLoaded = 1,
+    RClkError_ConfigSaveFailed = 2,
+    // RClkError_SocThermFail = 3,
+} RClkError;

@@ -45,7 +45,7 @@ namespace board {
     void SetDfllTunings(u32 levelLow, u32 levelHigh, u32 tbreakPoint);
     void CacheDfllData();
     u32 CalculateTbreak(u32 table);
-    u32 GetVoltage(HocClkVoltage voltage);
+    u32 GetVoltage(RClkVoltage voltage);
     void CacheGpuVoltTable();
     void PcvHijackGpuVolts(u32 vmin);
     u32 GetMinimumGpuVmin(u32 freqMhz, u32 bracket);

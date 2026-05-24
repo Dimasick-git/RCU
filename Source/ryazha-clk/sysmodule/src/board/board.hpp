@@ -41,16 +41,16 @@
 
 namespace board {
     extern u64 clkVirtAddr, dsiVirtAddr, apbVirtAddr, fuseVirtAddr;
-    extern HocClkSocType gSocType;
+    extern RClkSocType gSocType;
     extern u8 gDramID;
-    extern HocClkConsoleType gConsoleType;
+    extern RClkConsoleType gConsoleType;
     extern FuseData fuseData;
     extern u8 speedoBracket;
     
     void Initialize();
     void Exit();
-    HocClkSocType GetSocType();
-    HocClkConsoleType GetConsoleType();
+    RClkSocType GetSocType();
+    RClkConsoleType GetConsoleType();
     u8 GetDramID();
     u8 GetGpuSpeedoBracket();
     bool IsDram8GB();

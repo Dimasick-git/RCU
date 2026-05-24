@@ -30,23 +30,23 @@
 
 namespace board {
 
-    const char *GetModuleName(HocClkModule module, bool pretty) {
-        ASSERT_ENUM_VALID(HocClkModule, module);
+    const char *GetModuleName(RClkModule module, bool pretty) {
+        ASSERT_ENUM_VALID(RClkModule, module);
         return rclkFormatModule(module, pretty);
     }
 
-    const char *GetProfileName(HocClkProfile profile, bool pretty) {
-        ASSERT_ENUM_VALID(HocClkProfile, profile);
+    const char *GetProfileName(RClkProfile profile, bool pretty) {
+        ASSERT_ENUM_VALID(RClkProfile, profile);
         return rclkFormatProfile(profile, pretty);
     }
 
-    const char *GetThermalSensorName(HocClkThermalSensor sensor, bool pretty) {
-        ASSERT_ENUM_VALID(HocClkThermalSensor, sensor);
+    const char *GetThermalSensorName(RClkThermalSensor sensor, bool pretty) {
+        ASSERT_ENUM_VALID(RClkThermalSensor, sensor);
         return rclkFormatThermalSensor(sensor, pretty);
     }
 
-    const char *GetPowerSensorName(HocClkPowerSensor sensor, bool pretty) {
-        ASSERT_ENUM_VALID(HocClkPowerSensor, sensor);
+    const char *GetPowerSensorName(RClkPowerSensor sensor, bool pretty) {
+        ASSERT_ENUM_VALID(RClkPowerSensor, sensor);
         return rclkFormatPowerSensor(sensor, pretty);
     }
 

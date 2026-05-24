@@ -30,7 +30,7 @@
 #include "../format.h"
 #include "fatal_gui.h"
 #include "labels.h"
-AppProfileGui::AppProfileGui(std::uint64_t applicationId, HocClkTitleProfileList* profileList)
+AppProfileGui::AppProfileGui(std::uint64_t applicationId, RClkTitleProfileList* profileList)
 {
     this->applicationId = applicationId;
     this->profileList = profileList;
@@ -41,7 +41,7 @@ AppProfileGui::~AppProfileGui()
     delete this->profileList;
 }
 
-void AppProfileGui::openFreqChoiceGui(tsl::elm::ListItem* listItem, HocClkProfile profile, HocClkModule module)
+void AppProfileGui::openFreqChoiceGui(tsl::elm::ListItem* listItem, RClkProfile profile, RClkModule module)
 {
     std::uint32_t hzList[RCLK_FREQ_LIST_MAX];
     std::uint32_t hzCount;
@@ -53,17 +53,17 @@ void AppProfileGui::openFreqChoiceGui(tsl::elm::ListItem* listItem, HocClkProfil
     }
     std::map<uint32_t, std::string> labels = {};
 
-    if (module == HocClkModule_CPU) {
+    if (module == RClkModule_CPU) {
         bool isUsingUv = IsMariko() ? configList.values[KipConfigValue_marikoCpuUVHigh] : configList.values[KipConfigValue_eristaCpuUV];
         labels = IsMariko() ? (isUsingUv ? cpu_freq_label_m_uv : cpu_freq_label_m) : (isUsingUv ? cpu_freq_label_e_uv : cpu_freq_label_e);
-    } else if (module == HocClkModule_GPU) {
+    } else if (module == RClkModule_GPU) {
         labels = IsMariko() ? *(marikoUV[configList.values[KipConfigValue_marikoGpuUV]]) : *(eristaUV[configList.values[KipConfigValue_eristaGpuUV]]);
     }
-    RamDisplayUnit memUnit = (RamDisplayUnit)configList.values[HocClkConfigValue_RamDisplayUnit];
+    RamDisplayUnit memUnit = (RamDisplayUnit)configList.values[RClkConfigValue_RamDisplayUnit];
     tsl::changeTo<FreqChoiceGui>(this->profileList->mhzMap[profile][module] * 1000000, hzList, hzCount, module, [this, listItem, profile, module, memUnit](std::uint32_t hz) {
         this->profileList->mhzMap[profile][module] = hz / 1000000;
         std::uint32_t mhz = this->profileList->mhzMap[profile][module];
-        listItem->setValue(module == HocClkModule_MEM ? formatListFreqMem(mhz, memUnit) : formatListFreqMHz(mhz));
+        listItem->setValue(module == RClkModule_MEM ? formatListFreqMem(mhz, memUnit) : formatListFreqMHz(mhz));
         Result rc = rclkIpcSetProfiles(this->applicationId, this->profileList);
         if(R_FAILED(rc))
         {
@@ -103,12 +103,12 @@ void AppProfileGui::openValueChoiceGui(
     );
 }
 
-void AppProfileGui::addModuleListItem(HocClkProfile profile, HocClkModule module)
+void AppProfileGui::addModuleListItem(RClkProfile profile, RClkModule module)
 {
     tsl::elm::ListItem* listItem = new tsl::elm::ListItem(rclkFormatModule(module, true));
-    RamDisplayUnit memUnit = (RamDisplayUnit)configList.values[HocClkConfigValue_RamDisplayUnit];
+    RamDisplayUnit memUnit = (RamDisplayUnit)configList.values[RClkConfigValue_RamDisplayUnit];
     std::uint32_t mhz = this->profileList->mhzMap[profile][module];
-    listItem->setValue(module == HocClkModule_MEM ? formatListFreqMem(mhz, memUnit) : formatListFreqMHz(mhz));
+    listItem->setValue(module == RClkModule_MEM ? formatListFreqMem(mhz, memUnit) : formatListFreqMHz(mhz));
     listItem->setClickListener([this, listItem, profile, module, memUnit](u64 keys) {
         if((keys & HidNpadButton_A) == HidNpadButton_A)
         {
@@ -119,7 +119,7 @@ void AppProfileGui::addModuleListItem(HocClkProfile profile, HocClkModule module
         {
             // Reset to "Default" (0 MHz)
             this->profileList->mhzMap[profile][module] = 0;
-            listItem->setValue(module == HocClkModule_MEM ? formatListFreqMem(0, memUnit) : formatListFreqMHz(0));
+            listItem->setValue(module == RClkModule_MEM ? formatListFreqMem(0, memUnit) : formatListFreqMHz(0));
             
             Result rc = rclkIpcSetProfiles(this->applicationId, this->profileList);
             if(R_FAILED(rc))
@@ -134,7 +134,7 @@ void AppProfileGui::addModuleListItem(HocClkProfile profile, HocClkModule module
     this->listElement->addItem(listItem);
 }
 
-void AppProfileGui::addModuleListItemToggle(HocClkProfile profile, HocClkModule module)
+void AppProfileGui::addModuleListItemToggle(RClkProfile profile, RClkModule module)
 {
     const char* moduleName = rclkFormatModule(module, true);
     std::uint32_t currentValue = this->profileList->mhzMap[profile][module];
@@ -185,8 +185,8 @@ std::string AppProfileGui::formatValueDisplay(
 }
 
 void AppProfileGui::addModuleListItemValue(
-    HocClkProfile profile,
-    HocClkModule module,
+    RClkProfile profile,
+    RClkModule module,
     const std::string& categoryName,
     std::uint32_t min,
     std::uint32_t max,
@@ -283,10 +283,10 @@ void AppProfileGui::addModuleListItemValue(
 
 class GovernorProfileSubMenuGui : public BaseMenuGui {
     uint64_t applicationId;
-    HocClkTitleProfileList* profileList;
-    HocClkProfile profile;
+    RClkTitleProfileList* profileList;
+    RClkProfile profile;
 public:
-    GovernorProfileSubMenuGui(uint64_t appId, HocClkTitleProfileList* pList, HocClkProfile prof)
+    GovernorProfileSubMenuGui(uint64_t appId, RClkTitleProfileList* pList, RClkProfile prof)
         : applicationId(appId), profileList(pList), profile(prof) {}
 
     void listUI() override {
@@ -303,10 +303,10 @@ public:
         static constexpr struct { const char* label; int shift; } kAll[] = {
             {"CPU", 0}, {"GPU", 8}, {"VRR", 16}
         };
-        int count = configList.values[HocClkConfigValue_OverwriteRefreshRate] || this->context->isUsingRetroSuper ? 3 : 2;
+        int count = configList.values[RClkConfigValue_OverwriteRefreshRate] || this->context->isUsingRetroSuper ? 3 : 2;
 
         for (int i = 0; i < count; i++) {
-            u8 cur = (this->profileList->mhzMap[this->profile][HocClkModule_Governor] >> kAll[i].shift) & 0xFF;
+            u8 cur = (this->profileList->mhzMap[this->profile][RClkModule_Governor] >> kAll[i].shift) & 0xFF;
             auto* bar = new tsl::elm::NamedStepTrackBar(
                 "", {"Do Not Override", "Disabled", "Enabled"},
                 true, kAll[i].label
@@ -314,7 +314,7 @@ public:
             bar->setProgress(cur);
             int shift = kAll[i].shift;
             bar->setValueChangedListener([this, shift](u8 value) {
-                u32& packed = this->profileList->mhzMap[this->profile][HocClkModule_Governor];
+                u32& packed = this->profileList->mhzMap[this->profile][RClkModule_Governor];
                 packed = (packed & ~(0xFFu << shift)) | ((u32)value << shift);
                 Result rc = rclkIpcSetProfiles(this->applicationId, this->profileList);
                 if (R_FAILED(rc)) FatalGui::openWithResultCode("rclkIpcSetProfiles", rc);
@@ -324,7 +324,7 @@ public:
     }
 };
 
-void AppProfileGui::addGovernorSection(HocClkProfile profile) {
+void AppProfileGui::addGovernorSection(RClkProfile profile) {
     auto* item = new tsl::elm::ListItem("Governor");
     item->setValue("\u2192"); // Right arrow
     item->setClickListener([this, profile](u64 keys) {
@@ -339,7 +339,7 @@ void AppProfileGui::addGovernorSection(HocClkProfile profile) {
     this->listElement->addItem(item);
 }
 
-void AppProfileGui::addProfileUI(HocClkProfile profile)
+void AppProfileGui::addProfileUI(RClkProfile profile)
 {    
     BaseMenuGui::refresh();
     if(!this->context)
@@ -349,19 +349,19 @@ void AppProfileGui::addProfileUI(HocClkProfile profile)
         FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
         return;
     }
-    if((profile == HocClkProfile_Docked && IsHoag()) || profile == HocClkProfile_HandheldCharging)
+    if((profile == RClkProfile_Docked && IsHoag()) || profile == RClkProfile_HandheldCharging)
         return;
     this->listElement->addItem(new tsl::elm::CategoryHeader(rclkFormatProfile(profile, true) + std::string(" ") + ult::DIVIDER_SYMBOL + " \ue0e3 Reset"));
-    this->addModuleListItem(profile, HocClkModule_CPU);
-    this->addModuleListItem(profile, HocClkModule_GPU);
-    this->addModuleListItem(profile, HocClkModule_MEM);
+    this->addModuleListItem(profile, RClkModule_CPU);
+    this->addModuleListItem(profile, RClkModule_GPU);
+    this->addModuleListItem(profile, RClkModule_MEM);
     #if IS_MINIMAL == 0
         ValueThresholds lcdThresholds(60, 65);
         ValueThresholds DThresholdsOLED(120, 500); // nothing is dangerous, past 120hz you can get applet crashes
 
-        if(configList.values[HocClkConfigValue_OverwriteRefreshRate]) {
-            if(profile != HocClkProfile_Docked) {
-                this->addModuleListItemValue(profile, HocClkModule_Display, "Display", IsAula() ? 45 : 40, configList.values[HocClkConfigValue_MaxDisplayClockH], this->context->isUsingRetroSuper ? 5 : 1, " Hz", 1, 0, lcdThresholds);
+        if(configList.values[RClkConfigValue_OverwriteRefreshRate]) {
+            if(profile != RClkProfile_Docked) {
+                this->addModuleListItemValue(profile, RClkModule_Display, "Display", IsAula() ? 45 : 40, configList.values[RClkConfigValue_MaxDisplayClockH], this->context->isUsingRetroSuper ? 5 : 1, " Hz", 1, 0, lcdThresholds);
             } else {
                 if(IsAula() && this->context->isSysDockInstalled) {
                     std::vector<NamedValue> dockedFreqs = {
@@ -395,7 +395,7 @@ void AppProfileGui::addProfileUI(HocClkProfile profile)
                         NamedValue("240 Hz", 240)
                     };
                     
-                    this->addModuleListItemValue(profile, HocClkModule_Display, "Display", 40, 240, 1, " Hz", 1, 0, DThresholdsOLED, dockedFreqs);
+                    this->addModuleListItemValue(profile, RClkModule_Display, "Display", 40, 240, 1, " Hz", 1, 0, DThresholdsOLED, dockedFreqs);
                 } else if (IsAula() && !this->context->isSysDockInstalled) {
                     std::vector<NamedValue> dockedFreqsLimited = {
                         NamedValue("50 Hz", 50),
@@ -407,7 +407,7 @@ void AppProfileGui::addProfileUI(HocClkProfile profile)
                         NamedValue("75 Hz", 75)
                     };
                     
-                    this->addModuleListItemValue(profile, HocClkModule_Display, "Display", 50, 75, 1, " Hz", 1, 0, DThresholdsOLED, dockedFreqsLimited);
+                    this->addModuleListItemValue(profile, RClkModule_Display, "Display", 50, 75, 1, " Hz", 1, 0, DThresholdsOLED, dockedFreqsLimited);
                 } else {
                     std::vector<NamedValue> dockedFreqsStandard = {
                         NamedValue("50 Hz", 50),
@@ -427,7 +427,7 @@ void AppProfileGui::addProfileUI(HocClkProfile profile)
                         NamedValue("115 Hz", 115),
                         NamedValue("120 Hz", 120)
                     };
-                    this->addModuleListItemValue(profile, HocClkModule_Display, "Display", 50, 120, 1, " Hz", 1, 0, ValueThresholds(), dockedFreqsStandard);
+                    this->addModuleListItemValue(profile, RClkModule_Display, "Display", 50, 120, 1, " Hz", 1, 0, ValueThresholds(), dockedFreqsStandard);
                 }
             }
         }
@@ -437,16 +437,16 @@ void AppProfileGui::addProfileUI(HocClkProfile profile)
 
 void AppProfileGui::listUI()
 {
-    this->addProfileUI(HocClkProfile_Docked);
-    this->addProfileUI(HocClkProfile_Handheld);
-    this->addProfileUI(HocClkProfile_HandheldCharging);
-    this->addProfileUI(HocClkProfile_HandheldChargingOfficial);
-    this->addProfileUI(HocClkProfile_HandheldChargingUSB);
+    this->addProfileUI(RClkProfile_Docked);
+    this->addProfileUI(RClkProfile_Handheld);
+    this->addProfileUI(RClkProfile_HandheldCharging);
+    this->addProfileUI(RClkProfile_HandheldChargingOfficial);
+    this->addProfileUI(RClkProfile_HandheldChargingUSB);
 }
 
 void AppProfileGui::changeTo(std::uint64_t applicationId)
 {
-    HocClkTitleProfileList* profileList = new HocClkTitleProfileList;
+    RClkTitleProfileList* profileList = new RClkTitleProfileList;
     Result rc = rclkIpcGetProfiles(applicationId, profileList);
     if(R_FAILED(rc))
     {

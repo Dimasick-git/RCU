@@ -53,9 +53,9 @@ namespace board {
 
     u64 clkVirtAddr, dsiVirtAddr, apbVirtAddr, fuseVirtAddr;
 
-    HocClkSocType gSocType;
+    RClkSocType gSocType;
     u8 gDramID;
-    HocClkConsoleType gConsoleType = HocClkConsoleType_Icosa;
+    RClkConsoleType gConsoleType = RClkConsoleType_Icosa;
     FuseData fuseData;
     u8 speedoBracket;
     PwmChannelSession iCon;
@@ -75,33 +75,33 @@ namespace board {
 
         u32 hidrev = *(u32*)(apbVirtAddr + APB_MISC_GP_HIDREV);
         if (((hidrev >> 4) & 0xF) >= GP_HIDREV_MAJOR_T210B01) {
-            gSocType = HocClkSocType_Mariko;
+            gSocType = RClkSocType_Mariko;
             CacheGpuVoltTable();
         } else {
-            gSocType = HocClkSocType_Erista;
+            gSocType = RClkSocType_Erista;
         }
 
         u32 odm4 = *(u32*)(fuseVirtAddr + FUSE_OFFSET + FUSE_RESERVED_ODMX(4));
 
-        if (gSocType == HocClkSocType_Mariko) {
+        if (gSocType == RClkSocType_Mariko) {
             switch ((odm4 & 0xF0000) >> 16) {
                 case 2:
-                    gConsoleType = HocClkConsoleType_Hoag;
+                    gConsoleType = RClkConsoleType_Hoag;
                     break;
                 case 4:
-                    gConsoleType = HocClkConsoleType_Aula;
+                    gConsoleType = RClkConsoleType_Aula;
                     break;
                 case 1:
                 default:
-                    gConsoleType = HocClkConsoleType_Iowa;
+                    gConsoleType = RClkConsoleType_Iowa;
             }
         } else {
-            gConsoleType = HocClkConsoleType_Icosa;
+            gConsoleType = RClkConsoleType_Icosa;
         }
 
         gDramID = (odm4 & 0xF8) >> 3;
         // Get extended dram id info.
-        if (gSocType == HocClkSocType_Mariko) {
+        if (gSocType == RClkSocType_Mariko) {
             gDramID |= (odm4 & 0x7000) >> 7;
         }
     }
@@ -180,7 +180,7 @@ namespace board {
         svcCallSecureMonitor(&args);
 
         if (args.X[1] != PMC_BASE) { // if param 1 is identical read failed
-            tsensor::InitializeAotag(GetSocType() == HocClkSocType_Mariko);
+            tsensor::InitializeAotag(GetSocType() == RClkSocType_Mariko);
         }
 
         Result pwmCheck = 1;
@@ -190,7 +190,7 @@ namespace board {
 
         StartMiscThread(pwmCheck, &iCon);
 
-        display::DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = (GetConsoleType() == HocClkConsoleType_Hoag), .isRetroSUPER = integrations::GetRETROSuperStatus()};
+        display::DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = (GetConsoleType() == RClkConsoleType_Hoag), .isRetroSUPER = integrations::GetRETROSuperStatus()};
         display::Initialize(&cfg);
 
         CacheDfllData();
@@ -225,11 +225,11 @@ namespace board {
         nvExit();
     }
 
-    HocClkSocType GetSocType() {
+    RClkSocType GetSocType() {
         return gSocType;
     }
 
-    HocClkConsoleType GetConsoleType() {
+    RClkConsoleType GetConsoleType() {
         return gConsoleType;
     }
 
@@ -253,7 +253,7 @@ namespace board {
 
     /* TODO: Put this into a different file. */
     void SetDisplayRefreshDockedState(bool docked) {
-        if (GetConsoleType() != HocClkConsoleType_Hoag) {
+        if (GetConsoleType() != RClkConsoleType_Hoag) {
             display::SetDockedState(docked);
         }
     }

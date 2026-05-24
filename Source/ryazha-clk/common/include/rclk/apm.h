@@ -34,6 +34,6 @@ typedef struct {
     uint32_t cpu_hz;
     uint32_t gpu_hz;
     uint32_t mem_hz;
-} HocClkApmConfiguration;
+} RClkApmConfiguration;
 
-extern HocClkApmConfiguration hocclk_g_apm_configurations[];
+extern RClkApmConfiguration hocclk_g_apm_configurations[];
