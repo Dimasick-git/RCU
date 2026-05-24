@@ -54,7 +54,7 @@ class AppOverlay : public tsl::Overlay
             if(!rclkIpcRunning())
             {
                 return initially<FatalGui>(
-                    "ryazha-clk-clk is not running.\n\n"
+                    "ryazha-clk is not running.\n\n"
                     "\n"
                     "Please make sure it is correctly\n\n"
                     "installed and enabled.",
@@ -65,7 +65,7 @@ class AppOverlay : public tsl::Overlay
             if(R_FAILED(rclkIpcInitialize()) || R_FAILED(rclkIpcGetAPIVersion(&apiVersion)))
             {
                 return initially<FatalGui>(
-                    "Could not connect to ryazha-clk-clk.\n\n"
+                    "Could not connect to ryazha-clk.\n\n"
                     "\n"
                     "Please make sure it is correctly\n\n"
                     "installed and enabled.",
@@ -77,7 +77,7 @@ class AppOverlay : public tsl::Overlay
             {
                 return initially<FatalGui>(
                     "Overlay not compatible with\n\n"
-                    "the running ryazha-clk-clk version.\n\n"
+                    "the running ryazha-clk version.\n\n"
                     "\n"
                     "Please make sure everything is\n\n"
                     "installed and up to date.",

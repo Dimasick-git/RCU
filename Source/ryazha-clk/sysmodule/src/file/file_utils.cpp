@@ -191,7 +191,7 @@ namespace fileUtils {
         if (R_SUCCEEDED(rc)) {
             RefreshFlags(true);
             g_has_initialized = true;
-            LogLine("=== ryazha-clk-clk " TARGET_VERSION " ===");
+            LogLine("=== ryazha-clk " TARGET_VERSION " ===");
             LogLine("by m4xw, natinusala, p-sam, Souldbminer, Lightos_ and Dominatorul");
         }
 

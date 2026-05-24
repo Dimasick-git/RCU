@@ -48,10 +48,15 @@ std::string getVersionString() {
     return std::string(buf);
 }
 
-static constexpr tsl::Color dynamicLogoRGB1 = tsl::Color(0, 15, 3, 15);
-static constexpr tsl::Color dynamicLogoRGB2 = tsl::Color(0, 8, 1, 15);
-static constexpr tsl::Color STATIC_GREEN     = tsl::Color(0, 15, 0, 15);
-const std::string name = "Ryazha CLK Gaea";
+// Amber gradient -- bright golden amber -> deep burnt amber.
+static constexpr tsl::Color dynamicLogoRGB1 = tsl::Color(15, 11, 0, 15);
+static constexpr tsl::Color dynamicLogoRGB2 = tsl::Color(12,  6, 0, 15);
+static constexpr tsl::Color STATIC_AMBER    = tsl::Color(15, 11, 0, 15);
+// Badge: pale amber text over a darker amber pill.
+static constexpr tsl::Color BADGE_BG        = tsl::Color( 5,  3, 0, 13);
+static constexpr tsl::Color BADGE_BORDER    = tsl::Color(12,  8, 0, 15);
+static constexpr tsl::Color BADGE_TEXT      = tsl::Color(15, 12, 4, 15);
+const std::string name = "Ryazha CLK";
 
 static s32 drawDynamicUltraText(
     tsl::gfx::Renderer* renderer,
@@ -121,13 +126,43 @@ static s32 drawDynamicUltraText(
 }
 
 void BaseGui::preDraw(tsl::gfx::Renderer* renderer) {
-    drawDynamicUltraText(
+    s32 titleEndX = drawDynamicUltraText(
         renderer,
         LOGO_X,
         LOGO_Y,
         LOGO_LABEL_FONT_SIZE,
-        STATIC_GREEN,
+        STATIC_AMBER,
         false
+    );
+
+    // RCU vX.Y.Z badge -- amber pill справа от заголовка.
+    static const std::string ver = getVersionString();
+    const std::string badgeText  = "RCU v" + ver;
+    constexpr s32 BADGE_FONT     = 14;
+    constexpr s32 BADGE_PAD_X    = 8;
+    constexpr s32 BADGE_PAD_Y    = 3;
+    constexpr s32 BADGE_RADIUS   = 6;
+    constexpr s32 BADGE_GAP      = 10;
+
+    auto [textW, textH] = renderer->drawString(
+        badgeText, false, 0, 0, BADGE_FONT, BADGE_TEXT, 0, false
+    );
+    const s32 badgeW = textW + BADGE_PAD_X * 2;
+    const s32 badgeH = textH + BADGE_PAD_Y * 2;
+    const s32 badgeX = titleEndX + BADGE_GAP;
+    const s32 badgeY = LOGO_Y - badgeH - 4;  // чуть выше базовой линии заголовка
+
+    renderer->drawRoundedRect(badgeX, badgeY, badgeW, badgeH, BADGE_RADIUS, BADGE_BG);
+    // Тонкая рамка -- 4 ребра drawRect.
+    renderer->drawRect(badgeX, badgeY,                 badgeW, 1, BADGE_BORDER);
+    renderer->drawRect(badgeX, badgeY + badgeH - 1,    badgeW, 1, BADGE_BORDER);
+    renderer->drawRect(badgeX, badgeY,                 1, badgeH, BADGE_BORDER);
+    renderer->drawRect(badgeX + badgeW - 1, badgeY,    1, badgeH, BADGE_BORDER);
+    renderer->drawString(
+        badgeText, false,
+        badgeX + BADGE_PAD_X,
+        badgeY + BADGE_PAD_Y + textH - 2,  // baseline correction
+        BADGE_FONT, BADGE_TEXT
     );
 }
 

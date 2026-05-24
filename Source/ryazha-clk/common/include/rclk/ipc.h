@@ -32,7 +32,10 @@
 #include "clock_manager.h"
 
 #define RCLK_IPC_API_VERSION 2
-#define RCLK_IPC_SERVICE_NAME "ryazha-clk:clk"
+// HOS limits service names to 8 chars (smEncodeName truncates).
+// Раньше тут лежало "ryazha-clk:clk" -- 14 chars, sm регистрацию
+// дропал, overlay получал "не запущен". 8-char fit + matches npdm.
+#define RCLK_IPC_SERVICE_NAME "rclk:clk"
 
 enum RClkIpcCmd
 {
