@@ -50,6 +50,11 @@ enum RClkIpcCmd
     RClkIpcCmd_GetFreqList = 11,
     RClkIpcCmd_SetKipData = 12,
     RClkIpcCmd_GetKipData = 13,
+
+    // Ryazha-Авто (auto_ryazha) IPC -- snapshot/replace RClkLadderConfig.
+    // Используется overlay'ем для отображения и UI-конфига auto-ladder.
+    RClkIpcCmd_GetLadderConfig = 14,
+    RClkIpcCmd_SetLadderConfig = 15,
 };
 
 

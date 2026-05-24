@@ -77,11 +77,18 @@ typedef enum {
 
     KipConfigValue_custRev,
     KipConfigValue_KipVersion,
+    // GPU speedo (fuse): hekate-style calibration value, x5 scale (см. fuse.cpp).
+    KipConfigValue_gpuSpeedo,
     // KipConfigValue_mtcConf,
     KipConfigValue_hpMode,
 
     KipConfigValue_commonEmcMemVolt,
     KipConfigValue_eristaEmcMaxClock,
+    // Erista отдельные клоки для двух dimm-slots (sysmodule kip.cpp пишет/читает
+    // эти поля как cust_get_erista_emc_max1 / max2). Добавлены при HOC sync,
+    // но header'у запоздал.
+    KipConfigValue_eristaEmcMaxClock1,
+    KipConfigValue_eristaEmcMaxClock2,
 
     KipConfigValue_stepMode,
     KipConfigValue_marikoEmcMaxClock,
@@ -103,6 +110,10 @@ typedef enum {
     KipConfigValue_low_t7_tWTR,
 
     KipConfigValue_t2_tRP_cap,
+
+    // RAM burst latency overrides -- доп. поля от HOC patch'а.
+    KipConfigValue_mem_burst_read_latency,
+    KipConfigValue_mem_burst_write_latency,
 
     KipConfigValue_read_latency_1333,
     KipConfigValue_read_latency_1600,
