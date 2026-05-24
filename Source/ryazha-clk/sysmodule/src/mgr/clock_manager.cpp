@@ -181,90 +181,9 @@ namespace clockManager {
 
         std::uint32_t *hz = &gFreqTable[module].list[0];
         gFreqTable[module].count = 0;
-
-        if (module == HocClkModule_GPU && board::GetSocType() == HocClkSocType_Mariko) {
-            constexpr u32 kStep = 38400000;
-            constexpr u32 kPcvStep = 76800000;
-            constexpr u32 kMax = 1228800000;
-
-            for (u32 f = kPcvStep; f <= kMax && gFreqTable[module].count < RCLK_FREQ_LIST_MAX; f += kStep) {
-                if (f % kPcvStep != 0) {
-                    if (!config::GetConfigValue(HocClkConfigValue_MarikoMiddleFreqs)) 
-                        continue;
-                    *hz = f;
-                    gFreqTable[module].count++;
-                    hz++;
-                } else {
-                    for (u32 i = 0; i < count; i++) {
-                        if (freqs[i] == f) {
-                            *hz = f;
-                            gFreqTable[module].count++;
-                            hz++;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            for (u32 i = 0; i < count && gFreqTable[module].count < RCLK_FREQ_LIST_MAX; i++) {
-                if (freqs[i] > kMax && IsAssignableHz(module, freqs[i])) {
-                    *hz = freqs[i];
-                    gFreqTable[module].count++;
-                    hz++;
-                }
-            }
-            return;
-        }
-
         for (std::uint32_t i = 0; i < count; i++) {
             if (!IsAssignableHz(module, freqs[i])) {
                 continue;
-            }
-
-            // Workaround for PCV bug involving 38.4mhz step rate on erista
-            if (module == HocClkModule_GPU && board::GetSocType() == HocClkSocType_Erista) {
-                static const struct { 
-                    u32 hz; 
-                    HocClkConfigValue kval; 
-                } eristaGpuVoltMap[] = {
-                    {  76800000, KipConfigValue_g_volt_e_76800   },
-                    { 115200000, KipConfigValue_g_volt_e_115200  },
-                    { 153600000, KipConfigValue_g_volt_e_153600  },
-                    { 192000000, KipConfigValue_g_volt_e_192000  },
-                    { 230400000, KipConfigValue_g_volt_e_230400  },
-                    { 268800000, KipConfigValue_g_volt_e_268800  },
-                    { 307200000, KipConfigValue_g_volt_e_307200  },
-                    { 345600000, KipConfigValue_g_volt_e_345600  },
-                    { 384000000, KipConfigValue_g_volt_e_384000  },
-                    { 422400000, KipConfigValue_g_volt_e_422400  },
-                    { 460800000, KipConfigValue_g_volt_e_460800  },
-                    { 499200000, KipConfigValue_g_volt_e_499200  },
-                    { 537600000, KipConfigValue_g_volt_e_537600  },
-                    { 576000000, KipConfigValue_g_volt_e_576000  },
-                    { 614400000, KipConfigValue_g_volt_e_614400  },
-                    { 652800000, KipConfigValue_g_volt_e_652800  },
-                    { 691200000, KipConfigValue_g_volt_e_691200  },
-                    { 729600000, KipConfigValue_g_volt_e_729600  },
-                    { 768000000, KipConfigValue_g_volt_e_768000  },
-                    { 806400000, KipConfigValue_g_volt_e_806400  },
-                    { 844800000, KipConfigValue_g_volt_e_844800  },
-                    { 883200000, KipConfigValue_g_volt_e_883200  },
-                    { 921600000, KipConfigValue_g_volt_e_921600  },
-                    { 960000000, KipConfigValue_g_volt_e_960000  },
-                    { 998400000, KipConfigValue_g_volt_e_998400  },
-                    {1036800000, KipConfigValue_g_volt_e_1036800 },
-                    {1075200000, KipConfigValue_g_volt_e_1075200 },
-                };
-                bool skip = false;
-                for (auto& entry : eristaGpuVoltMap) {
-                    if (entry.hz == freqs[i]) {
-                        if (config::GetConfigValue(entry.kval) == 2000) {
-                            skip = true;
-                        }
-                        break;
-                    }
-                }
-                if (skip) continue;
             }
 
             *hz = freqs[i];
@@ -298,6 +217,7 @@ namespace clockManager {
             return;
         }
     }
+
     void HandleMiscFeatures()
     {
         // these dont need to run that often, so dont bother
@@ -313,9 +233,6 @@ namespace clockManager {
 
             if(board::GetConsoleType() == HocClkConsoleType_Aula)
                 AulaDisplay::SetDisplayColorMode((AulaColorMode)config::GetConfigValue(HocClkConfigValue_AulaDisplayColorPreset));
-            if(config::GetConfigValue(HocClkConfigValue_LiveCpuUv)) {
-                board::HandleCpuUv();
-            }
         }
     }
 
@@ -348,6 +265,13 @@ namespace clockManager {
         }
     }
 
+    void HandleCpuUv()
+    {
+        if (board::GetSocType() == HocClkSocType_Erista)
+            board::SetDfllTunings(config::GetConfigValue(KipConfigValue_eristaCpuUV), 0, 1581000000); // Erista tbreak is always 1581MHz
+        else
+            board::SetDfllTunings(config::GetConfigValue(KipConfigValue_marikoCpuUVLow), config::GetConfigValue(KipConfigValue_marikoCpuUVHigh), board::CalculateTbreak(config::GetConfigValue(KipConfigValue_tableConf)));
+    }
 
     void DVFSReset()
     {
@@ -422,6 +346,7 @@ namespace clockManager {
             board::SetHz(HocClkModule_CPU, board::GetHz(HocClkModule_CPU));
             prepareBoostExit = false;
         }
+
         bool returnRaw = false; // Return a value scaled to MHz instead of raw value
         for (unsigned int module = 0; module < HocClkModule_EnumMax; module++) {
             u32 oldHz = board::GetHz((HocClkModule)module); // Get Old hz (used primarily for DVFS Logic)
@@ -492,6 +417,10 @@ namespace clockManager {
 
                     if (module < HocClkModuleStable_EnumMax) {
                         gContext.stable.freqs[module] = nearestHz;
+                    }
+
+                    if (module == HocClkModule_CPU && config::GetConfigValue(HocClkConfigValue_LiveCpuUv)) {
+                        HandleCpuUv();
                     }
 
                     if (module == HocClkModule_MEM && board::GetSocType() == HocClkSocType_Mariko && targetHz < oldHz && config::GetConfigValue(HocClkConfigValue_DVFSMode) == DVFSMode_Hijack) {
@@ -751,9 +680,8 @@ namespace clockManager {
 
         HandleSafetyFeatures();
         HandleMiscFeatures();
-        
-        // GPU clock should always be the same unless PCV has overwriten our change, so reset it
-        if (RefreshContext() || config::Refresh() || board::GetRealHz(HocClkModule_GPU) != gContext.freqs[HocClkModule_GPU]) {
+
+        if (RefreshContext() || config::Refresh()) {
             SetClocks(isBoost);
         }
     }

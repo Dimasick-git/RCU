@@ -24,6 +24,7 @@
 namespace kip {
 
     bool kipAvailable = false;
+
     void SetKipData()
     {
         // TODO: figure out if this REALLY causes issues (i doubt it)
@@ -52,25 +53,19 @@ namespace kip {
             return;
         }
 
-        u32 custRev    = cust_get_cust_rev(&table);
-        u32 kipVersion = cust_get_kip_version(&table);
-        if (custRev < CUST_REV || kipVersion < KIP_VERSION) {
-            notification::writeNotification("Ryazha CLK\nOutdated kip detected!\nPlease update Ryazha CLK");
-            fileUtils::LogLine("Cust revision: %u", custRev);
-            fileUtils::LogLine("Kip version: %u", kipVersion);
-            return;
-        } else if (custRev > CUST_REV || kipVersion > KIP_VERSION) {
-            notification::writeNotification("Ryazha CLK\nOutdated sysmodule detected!\nPlease update Ryazha CLK");
-            fileUtils::LogLine("Cust revision: %u", custRev);
-            fileUtils::LogLine("Kip version: %u", kipVersion);
-            return;
-        }
+        // if(cust_get_cust_rev(&table) != CUST_REV) {
+        //     fileUtils::LogLine("Revision: %u", cust_get_cust_rev(&table));
+        //     notification::writeNotification("Ryazha CLK\nKip version mismatch\nPlease reinstall Ryazha CLK");
+        //     return;
+        // }
 
         // CUST_WRITE_FIELD_BATCH(&table, mtcConf, config::GetConfigValue(KipConfigValue_mtcConf));
         CUST_WRITE_FIELD_BATCH(&table, hpMode, config::GetConfigValue(KipConfigValue_hpMode));
 
         CUST_WRITE_FIELD_BATCH(&table, commonEmcMemVolt, config::GetConfigValue(KipConfigValue_commonEmcMemVolt));
         CUST_WRITE_FIELD_BATCH(&table, eristaEmcMaxClock, config::GetConfigValue(KipConfigValue_eristaEmcMaxClock));
+        CUST_WRITE_FIELD_BATCH(&table, eristaEmcMaxClock1, config::GetConfigValue(KipConfigValue_eristaEmcMaxClock1));
+        CUST_WRITE_FIELD_BATCH(&table, eristaEmcMaxClock2, config::GetConfigValue(KipConfigValue_eristaEmcMaxClock2));
         CUST_WRITE_FIELD_BATCH(&table, marikoEmcMaxClock, config::GetConfigValue(KipConfigValue_marikoEmcMaxClock));
         CUST_WRITE_FIELD_BATCH(&table, marikoEmcVddqVolt, config::GetConfigValue(KipConfigValue_marikoEmcVddqVolt));
         CUST_WRITE_FIELD_BATCH(&table, emcDvbShift, config::GetConfigValue(KipConfigValue_emcDvbShift));
@@ -101,6 +96,8 @@ namespace kip {
         CUST_WRITE_FIELD_BATCH(&table, writeLatency1866, config::GetConfigValue(KipConfigValue_write_latency_1866));
         CUST_WRITE_FIELD_BATCH(&table, writeLatency2133, config::GetConfigValue(KipConfigValue_write_latency_2133));
 
+        CUST_WRITE_FIELD_BATCH(&table, mem_burst_read_latency, config::GetConfigValue(KipConfigValue_mem_burst_read_latency));
+        CUST_WRITE_FIELD_BATCH(&table, mem_burst_write_latency, config::GetConfigValue(KipConfigValue_mem_burst_write_latency));
         CUST_WRITE_FIELD_BATCH(&table, eristaCpuUV, config::GetConfigValue(KipConfigValue_eristaCpuUV));
         CUST_WRITE_FIELD_BATCH(&table, eristaCpuVmin, config::GetConfigValue(KipConfigValue_eristaCpuVmin));
         CUST_WRITE_FIELD_BATCH(&table, eristaCpuMaxVolt, config::GetConfigValue(KipConfigValue_eristaCpuMaxVolt));
@@ -125,6 +122,7 @@ namespace kip {
         CUST_WRITE_FIELD_BATCH(&table, marikoGpuVmax, config::GetConfigValue(KipConfigValue_marikoGpuVmax));
 
         CUST_WRITE_FIELD_BATCH(&table, commonGpuVoltOffset, config::GetConfigValue(KipConfigValue_commonGpuVoltOffset));
+        CUST_WRITE_FIELD_BATCH(&table, gpuSpeedo, config::GetConfigValue(KipConfigValue_gpuSpeedo));
 
         for (int i = 0; i < 24; i++) {
             table.marikoGpuVoltArray[i] = config::GetConfigValue((HocClkConfigValue)(KipConfigValue_g_volt_76800 + i));
@@ -163,156 +161,148 @@ namespace kip {
     void GetKipData()
     {
         FILE* fp;
-        fp = fopen("sdmc:/atmosphere/kips/rcu.kip", "r");
+        if (config::Refresh()) {
+            fp = fopen("sdmc:/atmosphere/kips/rcu.kip", "r");
 
-        if (fp == NULL) {
-            notification::writeNotification("Ryazha CLK\nKip opening failed");
-            kipAvailable = false;
-            return;
-        } else {
-            kipAvailable = true;
-            fclose(fp);
-        }
+            if (fp == NULL) {
+                notification::writeNotification("Ryazha CLK\nKip opening failed");
+                kipAvailable = false;
+                return;
+            } else {
+                kipAvailable = true;
+                fclose(fp);
+            }
 
-        HocClkConfigValueList configValues;
-        config::GetConfigValues(&configValues);
+            HocClkConfigValueList configValues;
+            config::GetConfigValues(&configValues);
 
-        CustomizeTable table;
-        if (!cust_read_and_cache("sdmc:/atmosphere/kips/rcu.kip", &table)) {
-            fileUtils::LogLine("[kip] Failed to read KIP file for GetKipData");
-            notification::writeNotification("Ryazha CLK\nKip read failed");
-            return;
-        }
+            CustomizeTable table;
+            if (!cust_read_and_cache("sdmc:/atmosphere/kips/rcu.kip", &table)) {
+                fileUtils::LogLine("[kip] Failed to read KIP file for GetKipData");
+                notification::writeNotification("Ryazha CLK\nKip read failed");
+                return;
+            }
 
-        // if(cust_get_cust_rev(&table) != CUST_REV) {
-        //     notification::writeNotification("Ryazha CLK\nKip version mismatch\nPlease reinstall Ryazha CLK");
-        //     return;
-        // }
+            // if(cust_get_cust_rev(&table) != CUST_REV) {
+            //     notification::writeNotification("Ryazha CLK\nKip version mismatch\nPlease reinstall Ryazha CLK");
+            //     return;
+            // }
 
-        if ((u64)crc32::checksum_file("sdmc:/atmosphere/kips/rcu.kip") != config::GetConfigValue(KipCrc32) && !config::GetConfigValue(HocClkConfigValue_IsFirstLoad)) {
-            MigrateKipData(cust_get_cust_rev(&table), cust_get_kip_version(&table));
-            SetKipData();
-            notification::writeNotification("Ryazha CLK\nKIP has been updated\nPlease reboot your console");
-            return;
-        }
-        if (config::GetConfigValue(HocClkConfigValue_IsFirstLoad) == true) {
-            configValues.values[HocClkConfigValue_IsFirstLoad] = (u64)false;
-            notification::writeNotification("Ryazha CLK has been installed");
-        }
+            if ((u64)crc32::checksum_file("sdmc:/atmosphere/kips/rcu.kip") != config::GetConfigValue(KipCrc32) && !config::GetConfigValue(HocClkConfigValue_IsFirstLoad)) {
+                SetKipData();
+                notification::writeNotification("Ryazha CLK\nKIP has been updated\nPlease reboot your console");
+                return;
+            }
+            if (config::GetConfigValue(HocClkConfigValue_IsFirstLoad) == true) {
+                configValues.values[HocClkConfigValue_IsFirstLoad] = (u64)false;
+                notification::writeNotification("Ryazha CLK has been installed");
+            }
 
-        configValues.values[KipCrc32] = (u64)crc32::checksum_file("sdmc:/atmosphere/kips/rcu.kip"); // write checksum
-        // configValues.values[KipConfigValue_mtcConf] = cust_get_mtc_conf(&table);
-        clockManager::gContext.custRev    = cust_get_cust_rev(&table);
+            configValues.values[KipCrc32] = (u64)crc32::checksum_file("sdmc:/atmosphere/kips/rcu.kip"); // write checksum
+            // configValues.values[KipConfigValue_mtcConf] = cust_get_mtc_conf(&table);
+            clockManager::gContext.custRev    = cust_get_cust_rev(&table);
 
-        u32 custRev    = cust_get_cust_rev(&table);
-        u32 kipVersion = cust_get_kip_version(&table);
-        if (custRev < CUST_REV || kipVersion < KIP_VERSION) {
-            notification::writeNotification("Ryazha CLK\nOutdated kip detected!\nPlease update Ryazha CLK");
-            fileUtils::LogLine("Cust revision: %u", custRev);
-            fileUtils::LogLine("Kip version: %u", kipVersion);
-            return;
-        } else if (custRev > CUST_REV || kipVersion > KIP_VERSION) {
-            notification::writeNotification("Ryazha CLK\nOutdated sysmodule detected!\nPlease update Ryazha CLK");
-            fileUtils::LogLine("Cust revision: %u", custRev);
-            fileUtils::LogLine("Kip version: %u", kipVersion);
-            return;
-        }
+            u16 kipVersion = cust_get_kip_version(&table);
+            if (kipVersion != KIP_VERSION) {
+                notification::writeNotification("Ryazha CLK\nKip version mismatch detected!");
+            }
 
-        clockManager::gContext.kipVersion = kipVersion;
-        configValues.values[KipConfigValue_custRev] = cust_get_cust_rev(&table);
-        configValues.values[KipConfigValue_KipVersion] = cust_get_kip_version(&table); // Run this after the check so we can do migration process
-        configValues.values[KipConfigValue_hpMode] = cust_get_hp_mode(&table);
+            clockManager::gContext.kipVersion = kipVersion;
+            configValues.values[KipConfigValue_hpMode] = cust_get_hp_mode(&table);
 
-        configValues.values[KipConfigValue_commonEmcMemVolt] = cust_get_common_emc_volt(&table);
-        configValues.values[KipConfigValue_eristaEmcMaxClock] = cust_get_erista_emc_max(&table);
-        configValues.values[KipConfigValue_marikoEmcMaxClock] = cust_get_mariko_emc_max(&table);
-        configValues.values[KipConfigValue_marikoEmcVddqVolt] = cust_get_mariko_emc_vddq(&table);
-        configValues.values[KipConfigValue_emcDvbShift] = cust_get_emc_dvb_shift(&table);
-        configValues.values[KipConfigValue_marikoSocVmax] = cust_get_marikoSocVmax(&table);
+            configValues.values[KipConfigValue_commonEmcMemVolt] = cust_get_common_emc_volt(&table);
+            configValues.values[KipConfigValue_eristaEmcMaxClock] = cust_get_erista_emc_max(&table);
+            configValues.values[KipConfigValue_eristaEmcMaxClock1] = cust_get_erista_emc_max1(&table);
+            configValues.values[KipConfigValue_eristaEmcMaxClock2] = cust_get_erista_emc_max2(&table);
+            configValues.values[KipConfigValue_marikoEmcMaxClock] = cust_get_mariko_emc_max(&table);
+            configValues.values[KipConfigValue_marikoEmcVddqVolt] = cust_get_mariko_emc_vddq(&table);
+            configValues.values[KipConfigValue_emcDvbShift] = cust_get_emc_dvb_shift(&table);
+            configValues.values[KipConfigValue_marikoSocVmax] = cust_get_marikoSocVmax(&table);
 
-        configValues.values[KipConfigValue_t1_tRCD] = cust_get_tRCD(&table);
-        configValues.values[KipConfigValue_t2_tRP] = cust_get_tRP(&table);
-        configValues.values[KipConfigValue_t3_tRAS] = cust_get_tRAS(&table);
-        configValues.values[KipConfigValue_t4_tRRD] = cust_get_tRRD(&table);
-        configValues.values[KipConfigValue_t5_tRFC] = cust_get_tRFC(&table);
-        configValues.values[KipConfigValue_t6_tRTW] = cust_get_tRTW(&table);
-        configValues.values[KipConfigValue_t7_tWTR] = cust_get_tWTR(&table);
-        configValues.values[KipConfigValue_t8_tREFI] = cust_get_tREFI(&table);
-        configValues.values[KipConfigValue_stepMode] = cust_get_step_mode(&table);
+            configValues.values[KipConfigValue_t1_tRCD] = cust_get_tRCD(&table);
+            configValues.values[KipConfigValue_t2_tRP] = cust_get_tRP(&table);
+            configValues.values[KipConfigValue_t3_tRAS] = cust_get_tRAS(&table);
+            configValues.values[KipConfigValue_t4_tRRD] = cust_get_tRRD(&table);
+            configValues.values[KipConfigValue_t5_tRFC] = cust_get_tRFC(&table);
+            configValues.values[KipConfigValue_t6_tRTW] = cust_get_tRTW(&table);
+            configValues.values[KipConfigValue_t7_tWTR] = cust_get_tWTR(&table);
+            configValues.values[KipConfigValue_t8_tREFI] = cust_get_tREFI(&table);
+            configValues.values[KipConfigValue_stepMode] = cust_get_step_mode(&table);
 
-        configValues.values[KipConfigValue_timingEmcTbreak] = cust_get_timing_emc_tbreak(&table);
-        configValues.values[KipConfigValue_low_t6_tRTW] = cust_get_low_t6_tRTW(&table);
-        configValues.values[KipConfigValue_low_t7_tWTR] = cust_get_low_t7_tWTR(&table);
-        configValues.values[KipConfigValue_t2_tRP_cap] = cust_get_tRP_cap(&table);
+            configValues.values[KipConfigValue_timingEmcTbreak] = cust_get_timing_emc_tbreak(&table);
+            configValues.values[KipConfigValue_low_t6_tRTW] = cust_get_low_t6_tRTW(&table);
+            configValues.values[KipConfigValue_low_t7_tWTR] = cust_get_low_t7_tWTR(&table);
+            configValues.values[KipConfigValue_t2_tRP_cap] = cust_get_tRP_cap(&table);
 
-        configValues.values[KipConfigValue_read_latency_1333] = cust_get_read_latency_1333(&table);
-        configValues.values[KipConfigValue_read_latency_1600] = cust_get_read_latency_1600(&table);
-        configValues.values[KipConfigValue_read_latency_1866] = cust_get_read_latency_1866(&table);
-        configValues.values[KipConfigValue_read_latency_2133] = cust_get_read_latency_2133(&table);
+            configValues.values[KipConfigValue_read_latency_1333] = cust_get_read_latency_1333(&table);
+            configValues.values[KipConfigValue_read_latency_1600] = cust_get_read_latency_1600(&table);
+            configValues.values[KipConfigValue_read_latency_1866] = cust_get_read_latency_1866(&table);
+            configValues.values[KipConfigValue_read_latency_2133] = cust_get_read_latency_2133(&table);
 
-        configValues.values[KipConfigValue_write_latency_1333] = cust_get_write_latency_1333(&table);
-        configValues.values[KipConfigValue_write_latency_1600] = cust_get_write_latency_1600(&table);
-        configValues.values[KipConfigValue_write_latency_1866] = cust_get_write_latency_1866(&table);
-        configValues.values[KipConfigValue_write_latency_2133] = cust_get_write_latency_2133(&table);
+            configValues.values[KipConfigValue_write_latency_1333] = cust_get_write_latency_1333(&table);
+            configValues.values[KipConfigValue_write_latency_1600] = cust_get_write_latency_1600(&table);
+            configValues.values[KipConfigValue_write_latency_1866] = cust_get_write_latency_1866(&table);
+            configValues.values[KipConfigValue_write_latency_2133] = cust_get_write_latency_2133(&table);
 
-        configValues.values[KipConfigValue_eristaCpuUV] = cust_get_erista_cpu_uv(&table);
-        configValues.values[KipConfigValue_eristaCpuVmin] = cust_get_eristaCpuVmin(&table);
-        configValues.values[KipConfigValue_eristaCpuMaxVolt] = cust_get_erista_cpu_max_volt(&table);
-        configValues.values[KipConfigValue_eristaCpuUnlock] = cust_get_eristaCpuUnlock(&table);
+            configValues.values[KipConfigValue_mem_burst_read_latency] = cust_get_burst_read_lat(&table);
+            configValues.values[KipConfigValue_mem_burst_write_latency] = cust_get_burst_write_lat(&table);
 
-        configValues.values[KipConfigValue_marikoCpuUVLow] = cust_get_mariko_cpu_uv_low(&table);
-        configValues.values[KipConfigValue_marikoCpuUVHigh] = cust_get_mariko_cpu_uv_high(&table);
-        configValues.values[KipConfigValue_tableConf] = cust_get_table_conf(&table);
-        configValues.values[KipConfigValue_marikoCpuLowVmin] = cust_get_mariko_cpu_low_vmin(&table);
-        configValues.values[KipConfigValue_marikoCpuHighVmin] = cust_get_mariko_cpu_high_vmin(&table);
-        configValues.values[KipConfigValue_marikoCpuMaxVolt] = cust_get_mariko_cpu_max_volt(&table);
-        configValues.values[KipConfigValue_marikoCpuMaxClock] = cust_get_marikoCpuMaxClock(&table);
-        configValues.values[KipConfigValue_eristaCpuBoostClock] = cust_get_erista_cpu_boost(&table);
-        configValues.values[KipConfigValue_marikoCpuBoostClock] = cust_get_mariko_cpu_boost(&table);
+            configValues.values[KipConfigValue_eristaCpuUV] = cust_get_erista_cpu_uv(&table);
+            configValues.values[KipConfigValue_eristaCpuVmin] = cust_get_eristaCpuVmin(&table);
+            configValues.values[KipConfigValue_eristaCpuMaxVolt] = cust_get_erista_cpu_max_volt(&table);
+            configValues.values[KipConfigValue_eristaCpuUnlock] = cust_get_eristaCpuUnlock(&table);
 
-        configValues.values[KipConfigValue_eristaGpuUV] = cust_get_erista_gpu_uv(&table);
-        configValues.values[KipConfigValue_eristaGpuVmin] = cust_get_erista_gpu_vmin(&table);
-        configValues.values[KipConfigValue_marikoGpuUV] = cust_get_mariko_gpu_uv(&table);
-        configValues.values[KipConfigValue_marikoGpuVmin] = cust_get_mariko_gpu_vmin(&table);
-        configValues.values[KipConfigValue_marikoGpuVmax] = cust_get_mariko_gpu_vmax(&table);
-        configValues.values[KipConfigValue_commonGpuVoltOffset] = cust_get_common_gpu_offset(&table);
+            configValues.values[KipConfigValue_marikoCpuUVLow] = cust_get_mariko_cpu_uv_low(&table);
+            configValues.values[KipConfigValue_marikoCpuUVHigh] = cust_get_mariko_cpu_uv_high(&table);
+            configValues.values[KipConfigValue_tableConf] = cust_get_table_conf(&table);
+            configValues.values[KipConfigValue_marikoCpuLowVmin] = cust_get_mariko_cpu_low_vmin(&table);
+            configValues.values[KipConfigValue_marikoCpuHighVmin] = cust_get_mariko_cpu_high_vmin(&table);
+            configValues.values[KipConfigValue_marikoCpuMaxVolt] = cust_get_mariko_cpu_max_volt(&table);
+            configValues.values[KipConfigValue_marikoCpuMaxClock] = cust_get_marikoCpuMaxClock(&table);
+            configValues.values[KipConfigValue_eristaCpuBoostClock] = cust_get_erista_cpu_boost(&table);
+            configValues.values[KipConfigValue_marikoCpuBoostClock] = cust_get_mariko_cpu_boost(&table);
 
-        for (int i = 0; i < 24; i++) {
-            configValues.values[KipConfigValue_g_volt_76800 + i] = cust_get_mariko_gpu_volt(&table, i);
-        }
+            configValues.values[KipConfigValue_eristaGpuUV] = cust_get_erista_gpu_uv(&table);
+            configValues.values[KipConfigValue_eristaGpuVmin] = cust_get_erista_gpu_vmin(&table);
+            configValues.values[KipConfigValue_marikoGpuUV] = cust_get_mariko_gpu_uv(&table);
+            configValues.values[KipConfigValue_marikoGpuVmin] = cust_get_mariko_gpu_vmin(&table);
+            configValues.values[KipConfigValue_marikoGpuVmax] = cust_get_mariko_gpu_vmax(&table);
+            configValues.values[KipConfigValue_commonGpuVoltOffset] = cust_get_common_gpu_offset(&table);
+            configValues.values[KipConfigValue_gpuSpeedo] = board::GetFuseData()->gpuSpeedo; // cust_get_gpu_speedo(&table);
 
-        for (int i = 0; i < 27; i++) {
-            configValues.values[KipConfigValue_g_volt_e_76800 + i] = cust_get_erista_gpu_volt(&table, i);
-        }
+            for (int i = 0; i < 24; i++) {
+                configValues.values[KipConfigValue_g_volt_76800 + i] = cust_get_mariko_gpu_volt(&table, i);
+            }
 
-        configValues.values[KipConfigValue_t7_tWTR_fine_tune] = cust_get_tWTR_fine_tune(&table);
-        configValues.values[KipConfigValue_t6_tRTW_fine_tune] = cust_get_tRTW_fine_tune(&table);
+            for (int i = 0; i < 27; i++) {
+                configValues.values[KipConfigValue_g_volt_e_76800 + i] = cust_get_erista_gpu_volt(&table, i);
+            }
 
-        if (sizeof(HocClkConfigValueList) <= sizeof(configValues)) {
-            if (config::SetConfigValues(&configValues, false)) {
-                fileUtils::LogLine("[kip] KIP loaded. CRC32: %ld (Cust Rev %ld)", configValues.values[KipCrc32], configValues.values[KipConfigValue_custRev]);
-                for (u64 i = KipConfigValue_hpMode; i < HocClkConfigValue_EnumMax; i++) {
-                    fileUtils::LogLine("%s: %ld", rclkFormatConfigValue((HocClkConfigValue)i, false), configValues.values[i]);
+            configValues.values[KipConfigValue_t7_tWTR_fine_tune] = cust_get_tWTR_fine_tune(&table);
+            configValues.values[KipConfigValue_t6_tRTW_fine_tune] = cust_get_tRTW_fine_tune(&table);
+
+
+
+            // if(cust_get_cust_rev(&table) == KIP_CUST_REV)
+            //     return;
+
+            if (sizeof(HocClkConfigValueList) <= sizeof(configValues)) {
+                if (config::SetConfigValues(&configValues, false)) {
+                    fileUtils::LogLine("[kip] KIP loaded. CRC32: %ld (Cust Rev %ld)", configValues.values[KipCrc32], configValues.values[KipConfigValue_custRev]);
+                    for (u64 i = KipConfigValue_hpMode; i < HocClkConfigValue_EnumMax; i++) {
+                        fileUtils::LogLine("%s: %ld", rclkFormatConfigValue((HocClkConfigValue)i, false), configValues.values[i]);
+                    }
+                } else {
+                    fileUtils::LogLine("[kip] Warning: Failed to set config values from KIP");
+                    notification::writeNotification("Ryazha CLK\nKip config set failed");
                 }
             } else {
-                fileUtils::LogLine("[kip] Warning: Failed to set config values from KIP");
-                notification::writeNotification("Ryazha CLK\nKip config set failed");
+                fileUtils::LogLine("[kip] Error: Config value list buffer size mismatch");
+                notification::writeNotification("Ryazha CLK\nConfig Buffer Mismatch");
             }
         } else {
-            fileUtils::LogLine("[kip] Error: Config value list buffer size mismatch");
-            notification::writeNotification("Ryazha CLK\nConfig Buffer Mismatch");
+            fileUtils::LogLine("[kip] Config refresh error in GetKipData!");
+            notification::writeNotification("Ryazha CLK\nConfig refresh failed");
         }
-    }
-
-    void MigrateKipData(u32 custRev, u32 version) {
-        HocClkConfigValueList configValues;
-        config::GetConfigValues(&configValues);
-        u32 previousVersion = configValues.values[KipConfigValue_KipVersion];
-        if(previousVersion == 0) {
-            return; // We cannot migrate anything!
-        }
-
-        // This function cannot do anything at the moment. The capabilities will be expanded in the next release
     }
 }
-

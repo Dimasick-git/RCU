@@ -22,13 +22,13 @@
 #include <memmem.h>
 #include <registers.h>
 #include <cstring>
+#include <rgltr.h>
 #include <battery.h>
 #include "board.hpp"
 #include "board_freq.hpp"
 #include "board_volt.hpp"
 #include "../file/file_utils.hpp"
-#include "../i2c/i2cDrv.h"
-#include "../hos/rgltr.h"
+
 namespace board {
 
     GpuVoltData voltData = {};
@@ -50,8 +50,7 @@ namespace board {
             u32 tune1_high;
         };
 
-        EristaCpuUvEntry eristaCpuUvTable[6] = {
-            {0xFFEAD0FF, 0x0},
+        EristaCpuUvEntry eristaCpuUvTable[5] = {
             {0xffff, 0x27007ff},
             {0xefff, 0x27407ff},
             {0xdfff, 0x27807ff},
@@ -136,16 +135,19 @@ namespace board {
                 return;
             }
         } else {
-            // if (GetHz(HocClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
-            //     *tune0_ptr = cachedTune.tune0Low; // I think each erista has a different tune0/tune1?
-            //     *tune1_ptr = cachedTune.tune1Low;
-            //     return;
-            // } else {
-            //     if (levelLow) {
-                     *tune0_ptr = eristaCpuUvTable[levelLow].tune0;
-                     *tune1_ptr = eristaCpuUvTable[levelLow].tune1;
-            //     } else {
-            // }
+            if (GetHz(HocClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
+                *tune0_ptr = cachedTune.tune0Low; // I think each erista has a different tune0/tune1?
+                *tune1_ptr = cachedTune.tune1Low;
+                return;
+            } else {
+                if (levelLow) {
+                    *tune0_ptr = eristaCpuUvTable[levelLow-1].tune0;
+                    *tune1_ptr = eristaCpuUvTable[levelLow-1].tune1;
+                } else {
+                    *tune0_ptr = 0x0;
+                    *tune1_ptr = 0x0;
+                }
+            }
         }
     }
 
@@ -212,47 +214,60 @@ namespace board {
         PcvPowerDomainId_Max77812_Dram = 0x3A000005, // vddq
     } PowerDomainId;
     */
-   /*
-    Note: I think Nintendo's I2C driver (or my driver, but it looks correct to me)
-   */
     u32 GetVoltage(HocClkVoltage voltage) {
+        RgltrSession session;
+        Result rc = 0;
         u32 out = 0;
         BatteryChargeInfo info;
-        RgltrSession s;
+
         switch (voltage) {
             case HocClkVoltage_SOC:
-                out = I2c_BuckConverter_GetUvOut(&I2c_SOC);
+                rc = rgltrOpenSession(&session, PcvPowerDomainId_Max77620_Sd0);
+                ASSERT_RESULT_OK(rc, "rgltrOpenSession")
+                rgltrGetVoltage(&session, &out);
+                rgltrCloseSession(&session);
                 break;
             case HocClkVoltage_EMCVDD2:
-                out = I2c_BuckConverter_GetUvOut(&I2c_VDD2);
+                rc = rgltrOpenSession(&session, PcvPowerDomainId_Max77620_Sd1);
+                ASSERT_RESULT_OK(rc, "rgltrOpenSession")
+                rgltrGetVoltage(&session, &out);
+                rgltrCloseSession(&session);
                 break;
             case HocClkVoltage_CPU:
-                if(GetSocType() == HocClkSocType_Mariko) {
-                    out = I2c_BuckConverter_GetUvOut(&I2c_Mariko_CPU);
+                if (GetSocType() == HocClkSocType_Mariko) {
+                    rc = rgltrOpenSession(&session, PcvPowerDomainId_Max77621_Cpu);
                 } else {
-                    rgltrOpenSession(&s, PcvPowerDomainId_Max77621_Cpu);
-                    rgltrGetVoltage(&s, &out);
-                    rgltrCloseSession(&s);
+                    rc = rgltrOpenSession(&session, PcvPowerDomainId_Max77812_Cpu);
                 }
+                ASSERT_RESULT_OK(rc, "rgltrOpenSession")
+                rgltrGetVoltage(&session, &out);
+                rgltrCloseSession(&session);
                 break;
             case HocClkVoltage_GPU:
-                if(GetSocType() == HocClkSocType_Mariko) {
-                    out = I2c_BuckConverter_GetUvOut(&I2c_Mariko_GPU);
+                if (GetSocType() == HocClkSocType_Mariko) {
+                    rc = rgltrOpenSession(&session, PcvPowerDomainId_Max77621_Gpu);
                 } else {
-                    rgltrOpenSession(&s, PcvPowerDomainId_Max77621_Gpu);
-                    rgltrGetVoltage(&s, &out);
-                    rgltrCloseSession(&s);
-                }               
+                    rc = rgltrOpenSession(&session, PcvPowerDomainId_Max77812_Gpu);
+                }
+                ASSERT_RESULT_OK(rc, "rgltrOpenSession")
+                rgltrGetVoltage(&session, &out);
+                rgltrCloseSession(&session);
                 break;
             case HocClkVoltage_EMCVDDQ:
-                if(GetSocType() == HocClkSocType_Mariko) {
-                    out = I2c_BuckConverter_GetUvOut(&I2c_Mariko_DRAM_VDDQ);
+                if (GetSocType() == HocClkSocType_Mariko) {
+                    rc = rgltrOpenSession(&session, PcvPowerDomainId_Max77812_Dram);
+                    ASSERT_RESULT_OK(rc, "rgltrOpenSession")
+                    rgltrGetVoltage(&session, &out);
+                    rgltrCloseSession(&session);
                 } else {
-                    out = I2c_BuckConverter_GetUvOut(&I2c_VDD2);
+                    out = GetVoltage(HocClkVoltage_EMCVDD2); // VDD2 and VDDQ are always connected to the same rail on Erista
                 }
                 break;
             case HocClkVoltage_Display:
-                out = I2c_BuckConverter_GetUvOut(&I2c_Display);
+                rc = rgltrOpenSession(&session, PcvPowerDomainId_Max77620_Ldo0);
+                ASSERT_RESULT_OK(rc, "rgltrOpenSession")
+                rgltrGetVoltage(&session, &out);
+                rgltrCloseSession(&session);
                 break;
             case HocClkVoltage_Battery:
                 batteryInfoGetChargeInfo(&info);
@@ -459,4 +474,5 @@ namespace board {
 
         return baseVolt;
     }
+
 }

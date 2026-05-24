@@ -37,6 +37,7 @@
 #include <registers.h>
 #include <battery.h>
 #include "../display/display_refresh_rate.hpp"
+#include <rgltr.h>
 #include <notification.h>
 
 #include "board.hpp"
@@ -48,7 +49,6 @@
 #include "../tsensor/aotag.hpp"
 #include "../hos/integrations.hpp"
 #include "../file/file_utils.hpp"
-#include "../hos/rgltr.h"
 namespace board {
 
     u64 clkVirtAddr, dsiVirtAddr, apbVirtAddr, fuseVirtAddr;
@@ -135,11 +135,11 @@ namespace board {
         rc = tmp451Initialize();
         ASSERT_RESULT_OK(rc, "tmp451Initialize");
 
-        rc = pmdmntInitialize();
-        ASSERT_RESULT_OK(rc, "pmdmntInitialize");
-
         rc = rgltrInitialize();
         ASSERT_RESULT_OK(rc, "rgltrInitialize");
+
+        rc = pmdmntInitialize();
+        ASSERT_RESULT_OK(rc, "pmdmntInitialize");
 
         rc = QueryMemoryMapping(&clkVirtAddr, 0x60006000, 0x1000);
         ASSERT_RESULT_OK(rc, "QueryMemoryMapping (clk)");
@@ -205,7 +205,7 @@ namespace board {
 
         apmExtExit();
         psmExit();
-        rgltrExit();
+
         if (HOSSVC_HAS_TC) {
             tcExit();
         }
@@ -220,6 +220,7 @@ namespace board {
 
         pwmChannelSessionClose(&iCon);
         pwmExit();
+        rgltrExit();
         batteryInfoExit();
         pmdmntExit();
         nvExit();

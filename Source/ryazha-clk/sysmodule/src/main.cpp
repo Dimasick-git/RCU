@@ -38,7 +38,7 @@
 #include "ipc/ipc_service.hpp"
 #include "file/config.hpp"
 
-#define INNER_HEAP_SIZE 0x40000
+#define INNER_HEAP_SIZE 0x3A000
 
 extern "C"
 {
@@ -135,7 +135,6 @@ int main(int argc, char** argv)
         return 1;
     }
     config::Initialize();
-    config::Refresh(); // Get config from file
 
     board::Initialize();
     processManagement::Initialize();
@@ -145,6 +144,7 @@ int main(int argc, char** argv)
     clockManager::Initialize();
     ipcService::Initialize();
 
+    fileUtils::LogLine("Ready");
 
     clockManager::SetRunning(true);
     config::SetEnabled(true);
@@ -166,7 +166,7 @@ int main(int argc, char** argv)
     processManagement::Exit();
     board::Exit();
     config::Exit();
-    fileUtils::LogLine("Exiting ryazha-clk-clk");
+    fileUtils::LogLine("Exit");
     svcSleepThread(1000000ULL);
     fileUtils::Exit();
 
