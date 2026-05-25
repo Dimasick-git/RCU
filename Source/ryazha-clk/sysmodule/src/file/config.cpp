@@ -183,12 +183,31 @@ namespace config {
             Close();
             gMtime = CheckModificationTime();
             if (!gMtime) {
-                fileUtils::LogLine("[cfg] Error finding file");
-            } else if (!ini_browse(&BrowseIniFunc, nullptr, gPath.c_str())) {
-                fileUtils::LogLine("[cfg] Error loading file");
+                // File missing -- auto-create minimal scaffold so subsequent
+                // writes (SetConfigValues / SetProfiles) have somewhere to
+                // land, и чтобы overlay не получал ConfigNotLoaded на пустом
+                // SD. Дир мы не создаём -- путь /config/ryazha-clk/ создаёт
+                // сам HOS через filesystem_access (perms.json "*").
+                fileUtils::LogLine("[cfg] %s missing -- creating empty scaffold", gPath.c_str());
+                FILE* f = std::fopen(gPath.c_str(), "w");
+                if (f) {
+                    std::fputs("[config]\n", f);
+                    std::fclose(f);
+                    gMtime = CheckModificationTime();
+                } else {
+                    fileUtils::LogLine("[cfg] WARN cannot create %s (SD read-only?)", gPath.c_str());
+                }
+            }
+            if (gMtime && !ini_browse(&BrowseIniFunc, nullptr, gPath.c_str())) {
+                fileUtils::LogLine("[cfg] Error loading file (ini_browse failed)");
             }
 
+            // gLoaded = true ВСЕГДА после Load(): даже если файл пустой/битый,
+            // мы хотим, чтобы UI мог писать и тем самым лечил файл. Старое
+            // поведение "молча возвращать ConfigNotLoaded" заставляло юзера
+            // думать, что overlay не реагирует.
             gLoaded = true;
+            fileUtils::LogLine("[cfg] Loaded (mtime=%lld)", (long long)gMtime);
         }
 
     }

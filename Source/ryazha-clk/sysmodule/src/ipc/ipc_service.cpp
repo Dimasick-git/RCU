@@ -112,17 +112,15 @@ namespace ipcService {
         }
 
         Result GetConfigValuesHandler(RClkConfigValueList* out_configValues) {
-            if (!config::HasProfilesLoaded()) {
-                return RCLK_ERROR(ConfigNotLoaded);
-            }
+            // Гейтинг HasProfilesLoaded() снят -- config values живут
+            // независимо от profile-таблицы. При первом старте без
+            // config.ini Load() теперь создаёт пустой scaffold + ставит
+            // gLoaded=true, так что even fresh installs работают.
             config::GetConfigValues(out_configValues);
             return 0;
         }
 
         Result SetConfigValuesHandler(RClkConfigValueList* configValues) {
-            if (!config::HasProfilesLoaded()) {
-                return RCLK_ERROR(ConfigNotLoaded);
-            }
             RClkConfigValueList copy = *configValues;
             if (!config::SetConfigValues(&copy, true)) {
                 return RCLK_ERROR(ConfigSaveFailed);

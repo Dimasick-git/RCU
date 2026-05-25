@@ -190,8 +190,9 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
 void BaseMenuGui::refresh()
 {
     const u64 ticks = armGetSystemTick();
-    // Use cached comparison - 1 billion nanoseconds
-    if (armTicksToNs(ticks - this->lastContextUpdate) <= 1000000000UL) [[likely]] {
+    // 200ms gating -- юзер кликает -> видит изменение через ~1 кадр UI.
+    // Раньше было 1с (1e9ns) и казалось "overlay завис".
+    if (armTicksToNs(ticks - this->lastContextUpdate) <= 200000000UL) [[likely]] {
         return; // Early exit for most calls
     }
 
