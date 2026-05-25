@@ -1,98 +1,94 @@
-# RCU (Ryazha Clock Utility)
+# RCU — Ryazha Clock Utility
 
-RCU — это инструмент с открытым исходным кодом для разгона консолей Nintendo Switch под управлением кастомной прошивки Atmosphere. Он позволяет выполнять продвинутую настройку CPU, GPU и RAM с помощью интегрированных инструментов конфигурации.
+**EN:** Sysmodule + Tesla overlay for Nintendo Switch (Atmosphere CFW). Per-app CPU/GPU/RAM clock profiles, refresh-rate control, autonomous frequency ladder with FPS-aware VRR. Fork of Horizon-OC adapted to the Ryazha ecosystem (libryazhahand overlay, nx-ovlloader, custom IPC). Author: Dimasick-git. License: GPL-2.0.
 
-- Автор форка: **Dimasick-git**
-- Хостинг: **Dimanchikgshehsbshene/RCU**
-- Лицензия: **GPL-2.0** (см. `LICENSE`)
-- Подмодули: `libryazhahand` (форк libultrahand для overlay-части), `Ryazha-Status-Monitor` (мониторинг), `SaltyNX` (системные хуки).
+---
 
-## Дисклеймер
-> **ЭТОТ ИНСТРУМЕНТ МОЖЕТ БЫТЬ ОПАСЕН ПРИ НЕПРАВИЛЬНОМ ИСПОЛЬЗОВАНИИ. ДЕЙСТВУЙТЕ С ОСТОРОЖНОСТЬЮ.**
-> Из-за особенностей дизайна Horizon OS, разгон оперативной памяти может привести к повреждению данных на NAND или SD-карте.
-> Перед началом работы убедитесь, что у вас есть полные резервные копии (бэкапы) NAND, PROINFO, EMUMMC и SD-карты.
+## Что это
 
-## О проекте
-RCU предоставляет комплексный набор функций для настройки производительности Nintendo Switch. Он разработан для бесшовной работы с Atmosphere и предлагает детальный контроль над частотами и напряжениями системы.
+RCU — утилита для управления частотами Nintendo Switch (CPU, GPU, RAM, частота экрана) под Atmosphere CFW. Состоит из двух частей:
 
-## Стандартные частоты
-* **CPU:** До 1963 МГц (Mariko) / 1785 МГц (Erista)
-* **GPU:** До 1075 МГц (Mariko) / 921 МГц (Erista)
-* **RAM:** До 1866/2133 МГц (Mariko) / 1600 МГц (Erista)
-* Поддержка повышения (overvolting) и понижения (undervolting) напряжения
-* Встроенный конфигуратор
-* Совместимость с большинством homebrew-приложений
+- **sysmodule** `ryazha-clk.nsp` — фоновый сервис, применяющий частоты. Title ID `00FF0000636C6BFF`. Регистрирует IPC-сервис `rclk:clk` для overlay'я. Содержит автономный ladder-поток Ryazha-Авто, регулирующий CPU/GPU/RAM по FPS, и VRR-Авто, подстраивающий частоту экрана под игру.
+- **overlay** `ryazha-clk.ovl` — Tesla-меню. Per-app профили, временные переопределения, настройки. Открывается через любой Ultrahand-совместимый лаунчер (`nx-ovlloader`).
+
+## Состав фич
+
+- Per-application профили (Handheld / Docked / Handheld+Charging вариантах).
+- Глобальные временные overrides (на текущую сессию).
+- Inline ползунок Hz (Y = сброс на 60 Гц).
+- Ryazha-Авто: автономный ladder CPU/GPU/RAM с FPS-аware подстройкой, TDP-кэпом, термальным троттлингом. Конфиг в `/config/ryazha-clk/ryazha-auto.ini`.
+- VRR-Авто: governor-режим, при котором sysmodule сам поднимает Smart VRR для приложения. Доступен 4-м пунктом в Governor (Do Not Override / Disabled / Enabled / VRR-Auto).
+- 15 локалей (ru, en, uk, de, es, fr, it, nl, pl, pt, ja, ko, zh-cn, zh-tw, jp).
+- IPC API v3 для overlay'я: `rclkIpcGetCurrentContext`, `rclkIpcSetProfiles`, `rclkIpcSetOverride`, `rclkIpcGet/SetLadderConfig`, `rclkIpcGet/SetConfigValues`.
 
 ## Установка
-1. Убедитесь, что у вас установлены последние версии Atmosphere и [Ryzhand Overlay](https://github.com/Dimanchikgshehsbshene/Ryazhahand-Overlay) (или совместимый Ultrahand-форк). RCU поставляется как `.ovl` для libtesla и работает поверх любого ovlloader'а.
-2. Скачайте и распакуйте пакет RCU в корень вашей SD-карты.
-   В сборке overlay дублируется в `switch/.overlays/ryazha-clk.ovl` и `switch/overlays/ryazha-clk.ovl` для совместимости с разными лаунчерами/интеграциями.
-3. Если вы используете Hekate, отредактируйте `hekate_ipl.ini`, добавив строку:
-   ```
-   kip1=atmosphere/kips/rcu.kip
-   ```
-   При использовании fusee никаких изменений не требуется.
+
+1. Установить актуальную Atmosphere CFW.
+2. Установить `nx-ovlloader` (https://github.com/Dimanchikgshehsbshene/nx-ovlloader или совместимый).
+3. Установить Tesla-меню (https://github.com/Dimanchikgshehsbshene/Ryazhahand-Overlay или Ultrahand).
+4. Скачать релиз RCU и распаковать `sdout.zip` в корень SD-карты. Содержимое:
+   - `atmosphere/contents/00FF0000636C6BFF/` — sysmodule + manifest;
+   - `switch/.overlays/ryazha-clk.ovl` — overlay для Tesla;
+   - `config/ryazha-clk/` — шаблон конфига и языковые файлы.
+5. Запустить консоль. RCU стартует автоматически.
+
+## Использование
+
+- Открыть Tesla-меню (`L + ↓ + R-stick` по умолчанию или назначенный hotkey).
+- Выбрать `ryazha-clk.ovl`.
+- Главное меню:
+  - **Edit App Profile** — профиль для запущенного приложения.
+  - **Edit Global Profile** — глобальный профиль (применяется если для приложения нет).
+  - **Temporary Overrides** — overrides на текущую сессию (исчезают при перезагрузке).
+  - **Settings** — общие настройки + языки.
+- **X-кнопка** в главном меню — скрытый экран Ryazha-Авто / VRR, ladder-настройки.
 
 ## Конфигурация
-1. Откройте оверлей RCU.
-2. Перейдите в меню настроек.
-3. Отрегулируйте параметры разгона по вашему желанию.
-4. Выберите "Save KIP Settings", чтобы применить конфигурацию.
 
-## Сборка из исходного кода
-Подробные инструкции по сборке приведены в файле `COMPILING.md`.
+- `/config/ryazha-clk/config.ini` — глобальные настройки (создаётся автоматически при первом запуске).
+- `/config/ryazha-clk/ryazha-auto.ini` — конфиг авто-ladder'а (CPU/GPU min/max границы, TDP-cap, VRR диапазон, predictor).
+- `/config/ryazha-clk/lang/*.json` — переводы. Активный язык в config.ini → `[config] language=ru`.
+- `/config/ryazha-clk/log.flag` — пустой файл-маркер для включения детального лога в `log.txt`.
 
-Также актуальный CI-конвейер находится в `.github/workflows/build.yml`.
+## Сборка из исходников
 
-## Таблица частот
+Требуется devkitPro switch-dev окружение.
 
-### Частоты оперативной памяти (MEM Clocks, МГц)
-* 3200: Максимум на Mariko, JEDEC.
-* 2933: JEDEC.
-* 2666: JEDEC.
-* 2400: Максимум на Erista, JEDEC.
-* 2133: Стандартный максимум Mariko JEDEC (модули 4266).
-* 1996: Стандарт JEDEC.
-* 1866: Стандартный максимум Mariko JEDEC (модули 3733).
-* 1600: Официальный режим док-станции, boost mode, безопасный максимум Erista, JEDEC.
-* 1331: Официальный портативный режим, JEDEC.
-* 1065, 800, 665.
+```sh
+# Установить devkitPro: https://devkitpro.org/wiki/Getting_Started
 
-### Частоты процессора (CPU Clocks, МГц)
-* 2703: Абсолютный максимум Mariko (опасно).
-* 2601: Небезопасно.
-* 2499, 2397, 2295, 2193, 2091.
-* 1963: Максимальная частота Mariko без понижения напряжения (UV).
-* 1887.
-* 1785: Максимальная частота Erista без понижения напряжения (UV), boost mode.
-* 1683, 1581, 1428, 1326, 1224, 1122.
-* 1020: Официальный режим в доке и портативе.
-* 918, 816, 714, 612.
+git clone --recurse-submodules https://github.com/Dimanchikgshehsbshene/RCU.git
+cd RCU
 
-### Частоты графического ядра (GPU Clocks, МГц)
-* 1536: Абсолютный максимум на Mariko (очень опасно).
-* 1459, 1382, 1305.
-* 1267: Номинал NVIDIA T214 (Mariko).
-* 1228: Безопасная частота Mariko HiOPT.
-* 1152: Максимальная частота Mariko SLT.
-* 1075: Максимальная частота Mariko без UV; абсолютный максимум на Erista (очень опасно).
-* 998: Номинал NVIDIA T210 (Erista).
-* 960: Безопасный максимум Erista SLT/HiOPT.
-* 921: Максимальная частота Erista без UV.
-* 844, 768, 691, 614, 537, 460, 384, 307, 230, 153, 76.
+export DEVKITPRO=/opt/devkitpro
+./Source/ryazha-clk/build.sh
+```
 
-## Авторы и благодарности
-* **Souldbminer** — разработка hoc-clk и loader
-* **Lightos** — разработка патчей лоадера, разработка ryazha-clk, руководства
-* **SciresM** — Atmosphere CFW
-* **CTCaer** — L4T, Hekate, правильные тайминги оперативной памяти
-* **KazushiMe** — Switch OC Suite
-* **Hanai3bi (Meha)** — Switch OC Suite, EOS, sys-clk-eos
-* **NaGaa95** — ядро L4T-OC, форк Status Monitor
-* **B3711 (halop)** — EOS
-* **sys-clk team** — sys-clk
-* **Dominatorul** — драйвер Soctherm, руководства, общая помощь
-* **ppkantorski** — Ultrahand sys-clk и форк Status Monitor; через [libryazhahand](https://github.com/Dimanchikgshehsbshene/libryazhahand) overlay-часть RCU собирается на форке его libultrahand
-* **MasaGratoR and ZachyCatGames** — общая помощь
-* **MasaGratoR** — Status Monitor и драйвер Display Refresh Rate
-* **Nvidia** — Tegra X1 Technical Reference Manual, драйвер soctherm, L4T
+Результат — `dist/atmosphere/contents/00FF0000636C6BFF/exefs.nsp` (sysmodule) и `dist/switch/.overlays/ryazha-clk.ovl` (overlay).
+
+CI workflow: `.github/workflows/build.yml`. Релизные артефакты собираются в `dist/` и пакуются в `sdout.zip`.
+
+## Архитектура
+
+```
+overlay (ryazha-clk.ovl)
+  └─ Tesla GUI (libryazhahand submodule)
+     └─ IPC client (common/src/client/ipc.c)
+        ↓ rclk:clk service (8-char limit)
+sysmodule (ryazha-clk.nsp)
+  ├─ clockManager (Tick loop, applies profile freqs)
+  ├─ ipcService (request dispatcher, RClkIpcCmd_* enum)
+  ├─ autoRyazha (Ryazha-Авто tick thread, 200ms интервал)
+  ├─ governor (CPU/GPU/VRR per-component on/off, включая VrrAuto)
+  └─ board (Erista/Mariko/Aula board-specific clocks)
+```
+
+## Опасность
+
+Разгон RAM может повредить данные на NAND/SD. Делайте полный бэкап NAND + emuMMC + SD перед использованием. Дефолтные значения консервативны. Превышение паспортных частот — на свой риск.
+
+## Лицензия
+
+GPL-2.0. См. `LICENSE`. Историческое происхождение — sys-clk (m4xw, natinusala, p-sam) → Horizon-OC → Ryazha-CLK.
+
+Авторы: m4xw, natinusala, p-sam, Souldbminer, Lightos_, Dominatorul, Dimasick-git.
