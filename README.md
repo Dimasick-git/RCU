@@ -24,8 +24,8 @@ RCU — утилита для управления частотами Nintendo S
 ## Установка
 
 1. Установить актуальную Atmosphere CFW.
-2. Установить `nx-ovlloader` (https://github.com/Dimanchikgshehsbshene/nx-ovlloader или совместимый).
-3. Установить Tesla-меню (https://github.com/Dimanchikgshehsbshene/Ryazhahand-Overlay или Ultrahand).
+2. Установить `nx-ovlloader` (https://github.com/Dimasick-git/nx-ovlloader или совместимый).
+3. Установить Tesla-меню (https://github.com/Dimasick-git/Ryazhahand-Overlay или Ultrahand).
 4. Скачать релиз RCU и распаковать `sdout.zip` в корень SD-карты. Содержимое:
    - `atmosphere/contents/00FF0000636C6BFF/` — sysmodule + manifest;
    - `switch/.overlays/ryazha-clk.ovl` — overlay для Tesla;
@@ -57,7 +57,7 @@ RCU — утилита для управления частотами Nintendo S
 ```sh
 # Установить devkitPro: https://devkitpro.org/wiki/Getting_Started
 
-git clone --recurse-submodules https://github.com/Dimanchikgshehsbshene/RCU.git
+git clone --recurse-submodules https://github.com/Dimasick-git/RCU.git
 cd RCU
 
 export DEVKITPRO=/opt/devkitpro

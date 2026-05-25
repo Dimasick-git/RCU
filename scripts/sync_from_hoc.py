@@ -114,9 +114,9 @@ CONTENT_REPLACEMENTS: list[tuple[str, str]] = [
 
     # repo URLs
     (r"github\.com/Horizon-OC/Horizon-OC",
-     "github.com/Dimanchikgshehsbshene/RCU"),
+     "github.com/Dimasick-git/RCU"),
     (r"github\.com/Horizon-OC/",
-     "github.com/Dimanchikgshehsbshene/"),
+     "github.com/Dimasick-git/"),
 
     # user-facing brand strings
     (r"\bHorizon-OC\b", "Ryazha-CLK"),
