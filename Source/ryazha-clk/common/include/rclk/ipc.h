@@ -31,7 +31,9 @@
 #include "board.h"
 #include "clock_manager.h"
 
-#define RCLK_IPC_API_VERSION 2
+// v3 (2026-05): добавили ComponentGovernor_VrrAuto, GetLadderConfig/SetLadderConfig
+// уже в v2, теперь bump для phase-4 enum extension.
+#define RCLK_IPC_API_VERSION 3
 // HOS limits service names to 8 chars (smEncodeName truncates).
 // Раньше тут лежало "ryazha-clk:clk" -- 14 chars, sm регистрацию
 // дропал, overlay получал "не запущен". 8-char fit + matches npdm.

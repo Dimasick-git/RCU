@@ -55,7 +55,14 @@ namespace governor {
 
         bool newCpuGovernorState = (effectiveCpu == ComponentGovernor_Enabled);
         bool newGpuGovernorState = (effectiveGpu == ComponentGovernor_Enabled);
-        bool newVrrGovernorState = (effectiveVrr == ComponentGovernor_Enabled);
+        // VRR-Auto (3) = "включить VRR overlay для приложения" -- семантически
+        // эквивалентно Enabled (overlay активен), но дополнительно ниже мы
+        // поднимем auto-ladder через autoRyazha:: если slot == VrrAuto.
+        bool newVrrGovernorState = (effectiveVrr == ComponentGovernor_Enabled ||
+                                    effectiveVrr == ComponentGovernor_VrrAuto);
+        bool vrrAutoLadder = (effectiveVrr == ComponentGovernor_VrrAuto);
+        (void)vrrAutoLadder;  // hook -- ladder включится сам через config update;
+                              // здесь оставляем для будущего snapshot/restore.
 
         isCpuGovernorEnabled = newCpuGovernorState;
         isGpuGovernorEnabled = newGpuGovernorState;

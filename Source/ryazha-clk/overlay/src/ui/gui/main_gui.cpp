@@ -60,18 +60,10 @@ void MainGui::listUI()
     });
     this->listElement->addItem(globalOverrideItem);
 
-    // Ryazha-Авто / VRR (тот же экран, что открывается шорткатом X).
-    tsl::elm::ListItem* ladderItem = new tsl::elm::ListItem(i18n::t("Ryazha-Авто / VRR"));
-    ladderItem->setValue("");  // glyph "X" -- подсказка про шорткат
-    ladderItem->setClickListener([this](u64 keys) {
-        if((keys & HidNpadButton_A) == HidNpadButton_A && this->context)
-        {
-            tsl::changeTo<LivingLadderGui>();
-            return true;
-        }
-        return false;
-    });
-    this->listElement->addItem(ladderItem);
+    // Note: Ryazha-Авто / VRR -- скрытое меню. Открывается ТОЛЬКО
+    // через X-shortcut в handleInput() ниже. Visible item убран по
+    // просьбе юзера ("только скрытое меню на кнопку").
+
 
     tsl::elm::ListItem* miscItem = new tsl::elm::ListItem(i18n::t("Settings"));
     miscItem->setClickListener([this](u64 keys) {

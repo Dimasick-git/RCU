@@ -308,10 +308,17 @@ public:
         int count = configList.values[RClkConfigValue_OverwriteRefreshRate] || this->context->isUsingRetroSuper ? 3 : 2;
 
         for (int i = 0; i < count; i++) {
+            const bool isVrrSlot = (kAll[i].shift == 16);
             u8 cur = (this->profileList->mhzMap[this->profile][RClkModule_Governor] >> kAll[i].shift) & 0xFF;
+            // У VRR-слота 4 опции (включая VRR-Auto), у CPU/GPU -- 3.
+            std::vector<std::string> steps = {
+                i18n::t("Do Not Override"),
+                i18n::t("Disabled"),
+                i18n::t("Enabled"),
+            };
+            if (isVrrSlot) steps.push_back(i18n::t("VRR-Auto"));
             auto* bar = new tsl::elm::NamedStepTrackBar(
-                "", {"Do Not Override", "Disabled", "Enabled"},
-                true, kAll[i].label
+                "", steps, true, kAll[i].label
             );
             bar->setProgress(cur);
             int shift = kAll[i].shift;

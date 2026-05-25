@@ -155,6 +155,9 @@ typedef enum {
     ComponentGovernor_DoNotOverride = 0,
     ComponentGovernor_Disabled      = 1,
     ComponentGovernor_Enabled       = 2,
+    ComponentGovernor_VrrAuto       = 3,   // NEW: для VRR-слота -- включает VRR
+                                           // overlay для приложения (sysmodule
+                                           // поднимает auto-ladder + Smart VRR).
     ComponentGovernor_EnumMax,
 } ComponentGovernorState;
 typedef enum {
