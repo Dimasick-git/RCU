@@ -321,15 +321,20 @@ public:
         for (int i = 0; i < count; i++) {
             const bool isVrrSlot = (kAll[i].shift == 16);
             u8 cur = (this->packed >> kAll[i].shift) & 0xFF;
-            std::vector<std::string> steps = {
-                i18n::t("Do Not Override"),
-                i18n::t("Disabled"),
-                i18n::t("Enabled"),
-            };
-            if (isVrrSlot) steps.push_back(i18n::t("VRR-Auto"));
-            auto* bar = new tsl::elm::NamedStepTrackBar(
-                "", steps, true, kAll[i].label
-            );
+            tsl::elm::NamedStepTrackBar* bar;
+            if (isVrrSlot) {
+                bar = new tsl::elm::NamedStepTrackBar(
+                    "",
+                    { i18n::t("Do Not Override"), i18n::t("Disabled"),
+                      i18n::t("Enabled"),         i18n::t("VRR-Auto") },
+                    true, kAll[i].label);
+            } else {
+                bar = new tsl::elm::NamedStepTrackBar(
+                    "",
+                    { i18n::t("Do Not Override"), i18n::t("Disabled"),
+                      i18n::t("Enabled") },
+                    true, kAll[i].label);
+            }
             bar->setProgress(cur);
             int shift = kAll[i].shift;
             bar->setValueChangedListener([this, shift](u8 value) {
