@@ -151,7 +151,7 @@ namespace kip {
         if (config::SetConfigValues(&configValues, true)) {
             fileUtils::LogLine("[kip] KIP data set. CRC32: %ld (Cust Rev %ld)", configValues.values[KipCrc32], configValues.values[KipConfigValue_custRev]);
             for (u64 i = KipConfigValue_hpMode; i < RyazhaClkConfigValue_EnumMax; i++) {
-                fileUtils::LogLine("%s: %ld", hocclkFormatConfigValue((RyazhaClkConfigValue)i, false), configValues.values[i]);
+                fileUtils::LogLine("%s: %ld", rclkFormatConfigValue((RyazhaClkConfigValue)i, false), configValues.values[i]);
             }
         } else {
             fileUtils::LogLine("[kip] Warning: Failed to set config values from KIP");
@@ -294,7 +294,7 @@ namespace kip {
             if (config::SetConfigValues(&configValues, true)) {
                 fileUtils::LogLine("[kip] KIP loaded. CRC32: %ld (Cust Rev %ld)", configValues.values[KipCrc32], configValues.values[KipConfigValue_custRev]);
                 for (u64 i = KipConfigValue_hpMode; i < RyazhaClkConfigValue_EnumMax; i++) {
-                    fileUtils::LogLine("%s: %ld", hocclkFormatConfigValue((RyazhaClkConfigValue)i, false), configValues.values[i]);
+                    fileUtils::LogLine("%s: %ld", rclkFormatConfigValue((RyazhaClkConfigValue)i, false), configValues.values[i]);
                 }
             } else {
                 fileUtils::LogLine("[kip] Warning: Failed to set config values from KIP");

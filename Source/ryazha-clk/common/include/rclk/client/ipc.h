@@ -48,8 +48,8 @@ Result rclkIpcSetProfiles(u64 tid, RyazhaClkTitleProfileList* profiles);
 Result rclkIpcGetConfigValues(RyazhaClkConfigValueList* out_configValues);
 Result rclkIpcSetConfigValues(RyazhaClkConfigValueList* configValues);
 Result rclkIpcGetFreqList(RyazhaClkModule module, u32* list, u32 maxCount, u32* outCount);
-Result hocClkIpcSetKipData();
-Result hocClkIpcGetKipData();
+Result rclkIpcSetKipData();
+Result rclkIpcGetKipData();
 
 static inline Result rclkIpcRemoveOverride(RyazhaClkModule module)
 {

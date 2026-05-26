@@ -45,8 +45,8 @@
 namespace board {
     #define MIDDLE_FREQ_TABLE_START_POINT 1228800000
     static u32 currentInjectedHz = 0;
-    PcvModule GetPcvModule(RyazhaClkModule hocclkModule) {
-        switch (hocclkModule) {
+    PcvModule GetPcvModule(RyazhaClkModule rclkModule) {
+        switch (rclkModule) {
             case RyazhaClkModule_CPU:
                 return PcvModule_CpuBus;
             case RyazhaClkModule_GPU:
@@ -54,15 +54,15 @@ namespace board {
             case RyazhaClkModule_MEM:
                 return PcvModule_EMC;
             default:
-                ASSERT_ENUM_VALID(RyazhaClkModule, hocclkModule);
+                ASSERT_ENUM_VALID(RyazhaClkModule, rclkModule);
         }
 
         return static_cast<PcvModule>(0);
     }
 
-    PcvModuleId GetPcvModuleId(RyazhaClkModule hocclkModule) {
+    PcvModuleId GetPcvModuleId(RyazhaClkModule rclkModule) {
         PcvModuleId pcvModuleId;
-        Result rc = pcvGetModuleId(&pcvModuleId, GetPcvModule(hocclkModule));
+        Result rc = pcvGetModuleId(&pcvModuleId, GetPcvModule(rclkModule));
         ASSERT_RESULT_OK(rc, "pcvGetModuleId");
 
         return pcvModuleId;

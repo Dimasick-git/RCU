@@ -203,7 +203,7 @@ typedef struct {
     uint64_t values[RyazhaClkConfigValue_EnumMax];
 } RyazhaClkConfigValueList;
 
-static inline const char* hocclkFormatConfigValue(RyazhaClkConfigValue val, bool pretty)
+static inline const char* rclkFormatConfigValue(RyazhaClkConfigValue val, bool pretty)
 {
     switch(val)
     {
@@ -475,7 +475,7 @@ static inline const char* hocclkFormatConfigValue(RyazhaClkConfigValue val, bool
     }
 }
 
-static inline uint64_t hocclkDefaultConfigValue(RyazhaClkConfigValue val)
+static inline uint64_t rclkDefaultConfigValue(RyazhaClkConfigValue val)
 {
     switch(val)
     {
@@ -527,7 +527,7 @@ static inline uint64_t hocclkDefaultConfigValue(RyazhaClkConfigValue val)
     }
 }
 
-static inline uint64_t hocclkValidConfigValue(RyazhaClkConfigValue val, uint64_t input)
+static inline uint64_t rclkValidConfigValue(RyazhaClkConfigValue val, uint64_t input)
 {
     switch(val)
     {

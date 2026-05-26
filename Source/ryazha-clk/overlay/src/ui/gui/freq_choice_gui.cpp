@@ -113,7 +113,7 @@ void FreqChoiceGui::listUI()
     rclkIpcGetConfigValues(this->configList);
 
     // Header based on CPU/GPU/MEM module
-    std::string moduleName = hocclkFormatModule(this->module, false);
+    std::string moduleName = rclkFormatModule(this->module, false);
     this->listElement->addItem(new tsl::elm::CategoryHeader(moduleName));
 
     // Default option

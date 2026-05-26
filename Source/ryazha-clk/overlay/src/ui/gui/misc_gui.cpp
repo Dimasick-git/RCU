@@ -27,7 +27,7 @@
 
 // This workaround *may* not be nessasary, but it seems to help with reducing stutter
 static void kipDataThreadFunc(void*) {
-    hocClkIpcSetKipData();
+    rclkIpcSetKipData();
 }
 
 static Thread s_kipThread;
@@ -87,7 +87,7 @@ MiscGui::~MiscGui()
 }
 
 void MiscGui::addConfigToggle(RyazhaClkConfigValue configVal, const char* altName, bool kip) {
-    const char* configName = altName ? altName : hocclkFormatConfigValue(configVal, true);
+    const char* configName = altName ? altName : rclkFormatConfigValue(configVal, true);
     auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
 
     struct YAwareToggle : tsl::elm::ToggleListItem {
@@ -150,7 +150,7 @@ void MiscGui::addConfigTrackbar(RyazhaClkConfigValue configVal, const char* altN
             return tsl::elm::NamedStepTrackBar::handleInput(keysDown, keysHeld, touchPos, leftJoyStick, rightJoyStick);
         }
     };
-    const char* name = altName ? altName : hocclkFormatConfigValue(configVal, true);
+    const char* name = altName ? altName : rclkFormatConfigValue(configVal, true);
     auto* bar = new IndexedBar(name, range, name, std::move(infoStrings));
     u32 cur = (u32)this->configList->values[configVal];
     u16 curStep = 0;
@@ -169,7 +169,7 @@ void MiscGui::addConfigTrackbar(RyazhaClkConfigValue configVal, const char* altN
 void MiscGui::addMappedConfigTrackbar(RyazhaClkConfigValue configVal, const char* altName,
                                        std::vector<u32> vals,
                                        std::initializer_list<std::string> names, bool kip) {
-    const char* name = altName ? altName : hocclkFormatConfigValue(configVal, true);
+    const char* name = altName ? altName : rclkFormatConfigValue(configVal, true);
     auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
 
     struct YAwareTrackBar : tsl::elm::NamedStepTrackBar {
@@ -216,7 +216,7 @@ void MiscGui::addConfigButton(RyazhaClkConfigValue configVal,
     bool showDefaultValue,
     bool kip)
 {
-    const char* configName = altName ? altName : hocclkFormatConfigValue(configVal, true);
+    const char* configName = altName ? altName : rclkFormatConfigValue(configVal, true);
     auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
 
     tsl::elm::ListItem* listItem = new tsl::elm::ListItem(configName);
@@ -341,7 +341,7 @@ void MiscGui::addConfigButtonS(RyazhaClkConfigValue configVal,
     const char* subText,
     bool kip)
 {
-    const char* configName = altName ? altName : hocclkFormatConfigValue(configVal, true);
+    const char* configName = altName ? altName : rclkFormatConfigValue(configVal, true);
     auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
     tsl::elm::ListItem* listItem = new tsl::elm::ListItem("");
     if (!kip)
@@ -471,7 +471,7 @@ void MiscGui::addFreqButton(RyazhaClkConfigValue configVal,
                             RyazhaClkModule module,
                             const std::map<uint32_t, std::string>& labels)
 {
-    const char* configName = altName ? altName : hocclkFormatConfigValue(configVal, true);
+    const char* configName = altName ? altName : rclkFormatConfigValue(configVal, true);
     auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
 
     tsl::elm::ListItem* listItem = new tsl::elm::ListItem(configName);
@@ -2224,9 +2224,9 @@ protected:
             // tsl::elm::ListItem* vminCalcBtn = new tsl::elm::ListItem("Calculate GPU Vmin");
             // vminCalcBtn->setClickListener([this](u64 keys) {
             //     if (keys & HidNpadButton_A) {
-            //         Result rc = hocClkIpcCalculateGpuVmin();
+            //         Result rc = rclkIpcCalculateGpuVmin();
             //         if (R_FAILED(rc)) {
-            //             FatalGui::openWithResultCode("hocClkIpcCalculateGpuVmin", rc);
+            //             FatalGui::openWithResultCode("rclkIpcCalculateGpuVmin", rc);
             //             return false;
             //         }
             //         return true;

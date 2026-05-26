@@ -105,7 +105,7 @@ void AppProfileGui::openValueChoiceGui(
 
 void AppProfileGui::addModuleListItem(RyazhaClkProfile profile, RyazhaClkModule module)
 {
-    tsl::elm::ListItem* listItem = new tsl::elm::ListItem(hocclkFormatModule(module, true));
+    tsl::elm::ListItem* listItem = new tsl::elm::ListItem(rclkFormatModule(module, true));
     RamDisplayUnit memUnit = (RamDisplayUnit)configList.values[RyazhaClkConfigValue_RamDisplayUnit];
     std::uint32_t mhz = this->profileList->mhzMap[profile][module];
     listItem->setValue(module == RyazhaClkModule_MEM ? formatListFreqMem(mhz, memUnit) : formatListFreqMHz(mhz));
@@ -136,7 +136,7 @@ void AppProfileGui::addModuleListItem(RyazhaClkProfile profile, RyazhaClkModule 
 
 void AppProfileGui::addModuleListItemToggle(RyazhaClkProfile profile, RyazhaClkModule module)
 {
-    const char* moduleName = hocclkFormatModule(module, true);
+    const char* moduleName = rclkFormatModule(module, true);
     std::uint32_t currentValue = this->profileList->mhzMap[profile][module];
     
     tsl::elm::ToggleListItem* toggle = new tsl::elm::ToggleListItem(moduleName, currentValue != 0);
@@ -200,7 +200,7 @@ void AppProfileGui::addModuleListItemValue(
 )
 {
     tsl::elm::ListItem* listItem =
-        new tsl::elm::ListItem(hocclkFormatModule(module, true));
+        new tsl::elm::ListItem(rclkFormatModule(module, true));
     std::uint32_t storedValue = this->profileList->mhzMap[profile][module];
     
     listItem->setValue(this->formatValueDisplay(storedValue, namedValues, suffix, divisor, decimalPlaces));
@@ -351,7 +351,7 @@ void AppProfileGui::addProfileUI(RyazhaClkProfile profile)
     }
     if((profile == RyazhaClkProfile_Docked && IsHoag()) || profile == RyazhaClkProfile_HandheldCharging)
         return;
-    this->listElement->addItem(new tsl::elm::CategoryHeader(hocclkFormatProfile(profile, true) + std::string(" ") + ult::DIVIDER_SYMBOL + " \ue0e3 Reset"));
+    this->listElement->addItem(new tsl::elm::CategoryHeader(rclkFormatProfile(profile, true) + std::string(" ") + ult::DIVIDER_SYMBOL + " \ue0e3 Reset"));
     this->addModuleListItem(profile, RyazhaClkModule_CPU);
     this->addModuleListItem(profile, RyazhaClkModule_GPU);
     this->addModuleListItem(profile, RyazhaClkModule_MEM);

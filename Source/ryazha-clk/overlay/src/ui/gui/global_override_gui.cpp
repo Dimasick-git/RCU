@@ -115,7 +115,7 @@ void GlobalOverrideGui::addModuleListItemValue(
     }
 
     tsl::elm::ListItem* listItem =
-        new tsl::elm::ListItem(hocclkFormatModule(module, true));
+        new tsl::elm::ListItem(rclkFormatModule(module, true));
     
     listItem->setValue(FREQ_DEFAULT_TEXT);
     
@@ -245,7 +245,7 @@ void GlobalOverrideGui::addModuleListItemValue(
 void GlobalOverrideGui::addModuleListItem(RyazhaClkModule module)
 {
     tsl::elm::ListItem *listItem =
-    new tsl::elm::ListItem(hocclkFormatModule(module, true));
+    new tsl::elm::ListItem(rclkFormatModule(module, true));
     RamDisplayUnit memUnit = (RamDisplayUnit)configList.values[RyazhaClkConfigValue_RamDisplayUnit];
     listItem->setValue(module == RyazhaClkModule_MEM ? formatListFreqMem(0, memUnit) : formatListFreqMHz(0));
     listItem->setClickListener([this, module](u64 keys) {
@@ -276,7 +276,7 @@ void GlobalOverrideGui::addModuleListItem(RyazhaClkModule module)
 
 void GlobalOverrideGui::addModuleToggleItem(RyazhaClkModule module)
 {
-    const char *moduleName = hocclkFormatModule(module, true);
+    const char *moduleName = rclkFormatModule(module, true);
     bool isOn = this->listHz[module];
 
     tsl::elm::ToggleListItem *toggle =

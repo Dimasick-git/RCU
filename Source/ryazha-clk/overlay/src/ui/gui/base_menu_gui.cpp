@@ -220,7 +220,7 @@ void BaseMenuGui::refresh()
     sprintf(displayStrings[0], "%016lX", context->applicationId);
 
     // Profile
-    strcpy(displayStrings[1], hocclkFormatProfile(context->profile, true));
+    strcpy(displayStrings[1], rclkFormatProfile(context->profile, true));
 
     // Current frequencies
     u32 hz = context->freqs[RyazhaClkModule_CPU]; // CPU

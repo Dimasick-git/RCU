@@ -103,10 +103,10 @@ namespace config {
             std::uint64_t input;
             if (!strcmp(section, CONFIG_VAL_SECTION)) {
                 for (unsigned int kval = 0; kval < RyazhaClkConfigValue_EnumMax; kval++) {
-                    if (!strcmp(key, hocclkFormatConfigValue((RyazhaClkConfigValue)kval, false))) {
+                    if (!strcmp(key, rclkFormatConfigValue((RyazhaClkConfigValue)kval, false))) {
                         input = strtoul(value, NULL, 0);
-                        if (!hocclkValidConfigValue((RyazhaClkConfigValue)kval, input)) {
-                            input = hocclkDefaultConfigValue((RyazhaClkConfigValue)kval);
+                        if (!rclkValidConfigValue((RyazhaClkConfigValue)kval, input)) {
+                            input = rclkDefaultConfigValue((RyazhaClkConfigValue)kval);
                             fileUtils::LogLine("[cfg] Invalid value for key '%s' in section '%s': using default %d", key, section, input);
                         }
                         configValues[kval] = input;
@@ -173,7 +173,7 @@ namespace config {
             gProfileMHzMap.clear();
             gProfileCountMap.clear();
             for (unsigned int i = 0; i < RyazhaClkConfigValue_EnumMax; i++) {
-                configValues[i] = hocclkDefaultConfigValue((RyazhaClkConfigValue)i);
+                configValues[i] = rclkDefaultConfigValue((RyazhaClkConfigValue)i);
             }
         }
 
@@ -204,7 +204,7 @@ namespace config {
             gOverrideFreqs[i] = 0;
         }
         for (unsigned int i = 0; i < RyazhaClkConfigValue_EnumMax; i++) {
-            configValues[i] = hocclkDefaultConfigValue((RyazhaClkConfigValue)i);
+            configValues[i] = rclkDefaultConfigValue((RyazhaClkConfigValue)i);
         }
     }
 
@@ -355,7 +355,7 @@ namespace config {
 
     const char* GetConfigValueName(RyazhaClkConfigValue kval, bool pretty) {
         ASSERT_ENUM_VALID(RyazhaClkConfigValue, kval);
-        return hocclkFormatConfigValue(kval, pretty);
+        return rclkFormatConfigValue(kval, pretty);
     }
 
     void GetConfigValues(RyazhaClkConfigValueList* out_configValues) {
@@ -374,12 +374,12 @@ namespace config {
         iniValues.reserve(RyazhaClkConfigValue_EnumMax);
 
         for (unsigned int kval = 0; kval < RyazhaClkConfigValue_EnumMax; kval++) {
-            if (!hocclkValidConfigValue((RyazhaClkConfigValue)kval, configValues->values[kval]) ||
-               configValues->values[kval] == hocclkDefaultConfigValue((RyazhaClkConfigValue)kval)) {
+            if (!rclkValidConfigValue((RyazhaClkConfigValue)kval, configValues->values[kval]) ||
+               configValues->values[kval] == rclkDefaultConfigValue((RyazhaClkConfigValue)kval)) {
                 continue;
             }
             iniValues.push_back(std::to_string(configValues->values[kval]));
-            iniKeys.push_back(hocclkFormatConfigValue((RyazhaClkConfigValue)kval, false));
+            iniKeys.push_back(rclkFormatConfigValue((RyazhaClkConfigValue)kval, false));
         }
 
         iniKeys.push_back(NULL);
@@ -397,10 +397,10 @@ namespace config {
 
         if (immediate) {
             for (unsigned int kval = 0; kval < RyazhaClkConfigValue_EnumMax; kval++) {
-                if (hocclkValidConfigValue((RyazhaClkConfigValue)kval, configValues->values[kval])) {
+                if (rclkValidConfigValue((RyazhaClkConfigValue)kval, configValues->values[kval])) {
                     config::configValues[kval] = configValues->values[kval];
                 } else {
-                    config::configValues[kval] = hocclkDefaultConfigValue((RyazhaClkConfigValue)kval);
+                    config::configValues[kval] = rclkDefaultConfigValue((RyazhaClkConfigValue)kval);
                 }
             }
         }
@@ -416,14 +416,14 @@ namespace config {
 
         std::scoped_lock lock{gConfigMutex};
 
-        std::uint64_t defaultValue = hocclkDefaultConfigValue(kval);
+        std::uint64_t defaultValue = rclkDefaultConfigValue(kval);
 
         std::vector<const char*> iniKeys;
         std::vector<std::string> iniValues;
         iniKeys.reserve(2);
         iniValues.reserve(1);
 
-        iniKeys.push_back(hocclkFormatConfigValue(kval, false));
+        iniKeys.push_back(rclkFormatConfigValue(kval, false));
         iniValues.push_back("");
         iniKeys.push_back(NULL);
 
@@ -449,7 +449,7 @@ namespace config {
         if (!RCLK_ENUM_VALID(RyazhaClkConfigValue, kval)) {
             return false;
         }
-        if (!hocclkValidConfigValue(kval, value)) {
+        if (!rclkValidConfigValue(kval, value)) {
             return false;
         }
 
@@ -460,7 +460,7 @@ namespace config {
         iniKeys.reserve(2);
         iniValues.reserve(1);
 
-        iniKeys.push_back(hocclkFormatConfigValue(kval, false));
+        iniKeys.push_back(rclkFormatConfigValue(kval, false));
         iniValues.push_back(std::to_string(value));
         iniKeys.push_back(NULL);
 

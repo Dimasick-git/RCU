@@ -242,7 +242,7 @@ inline u8 GovernorStateVrr(u32 p) {
     return (u8)((p >> 16) & 0xFF);
 }
 
-static inline const char* hocclkFormatModule(RyazhaClkModule module, bool pretty)
+static inline const char* rclkFormatModule(RyazhaClkModule module, bool pretty)
 {
     switch(module)
     {
@@ -261,7 +261,7 @@ static inline const char* hocclkFormatModule(RyazhaClkModule module, bool pretty
     }
 }
 
-static inline const char* hocclkFormatThermalSensor(RyazhaClkThermalSensor thermSensor, bool pretty)
+static inline const char* rclkFormatThermalSensor(RyazhaClkThermalSensor thermSensor, bool pretty)
 {
     switch(thermSensor) {
         case RyazhaClkThermalSensor_SOC:
@@ -291,7 +291,7 @@ static inline const char* hocclkFormatThermalSensor(RyazhaClkThermalSensor therm
     }
 }
 
-static inline const char* hocclkFormatPowerSensor(RyazhaClkPowerSensor powSensor, bool pretty)
+static inline const char* rclkFormatPowerSensor(RyazhaClkPowerSensor powSensor, bool pretty)
 {
     switch(powSensor)
     {
@@ -304,7 +304,7 @@ static inline const char* hocclkFormatPowerSensor(RyazhaClkPowerSensor powSensor
     }
 }
 
-static inline const char* hocclkFormatProfile(RyazhaClkProfile profile, bool pretty)
+static inline const char* rclkFormatProfile(RyazhaClkProfile profile, bool pretty)
 {
     switch(profile)
     {
@@ -324,7 +324,7 @@ static inline const char* hocclkFormatProfile(RyazhaClkProfile profile, bool pre
 }
 
 
-static inline const char* hocClkFormatVoltage(RyazhaClkVoltage voltage, bool pretty)
+static inline const char* rclkFormatVoltage(RyazhaClkVoltage voltage, bool pretty)
 {
     switch(voltage)
     {
@@ -345,7 +345,7 @@ static inline const char* hocClkFormatVoltage(RyazhaClkVoltage voltage, bool pre
     }
 }
 
-static inline const char* hocClkFormatConsoleType(RyazhaClkConsoleType consoleType, bool pretty)
+static inline const char* rclkFormatConsoleType(RyazhaClkConsoleType consoleType, bool pretty)
 {
     switch(consoleType)
     {
@@ -362,7 +362,7 @@ static inline const char* hocClkFormatConsoleType(RyazhaClkConsoleType consoleTy
     }
 }
 
-// static inline const char* hocClkFormatPanel(RyazhaClkDisplayPanel panel, bool pretty)
+// static inline const char* rclkFormatPanel(RyazhaClkDisplayPanel panel, bool pretty)
 // {
 //     switch(panel)
 //     {
