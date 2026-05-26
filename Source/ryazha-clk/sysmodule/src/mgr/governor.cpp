@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer and Horizon OC Contributors
+ * Copyright (c) Souldbminer and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -17,6 +17,7 @@
 
 #include "governor.hpp"
 #include "../hos/process_management.hpp"
+#include "../auto_ryazha.hpp"
 #include <rclk/clock_manager.h>
 namespace governor {
 
@@ -36,11 +37,11 @@ namespace governor {
     Thread governorTHREAD;
 
     void HandleGovernor(uint32_t targetHz) {
-        u32 tempTargetHz = clockManager::gContext.overrideFreqs[RyazhaClkModule_Governor];
+        u32 tempTargetHz = clockManager::gContext.overrideFreqs[RClkModule_Governor];
         if (!tempTargetHz) {
-            tempTargetHz = config::GetAutoClockHz(clockManager::gContext.applicationId, RyazhaClkModule_Governor, clockManager::gContext.profile, true);
+            tempTargetHz = config::GetAutoClockHz(clockManager::gContext.applicationId, RClkModule_Governor, clockManager::gContext.profile, true);
             if (!tempTargetHz)
-                tempTargetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, RyazhaClkModule_Governor, clockManager::gContext.profile, true);
+                tempTargetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, RClkModule_Governor, clockManager::gContext.profile, true);
         }
 
         auto resolve = [](u8 app, u8 temp) -> u8 {
@@ -55,7 +56,30 @@ namespace governor {
 
         bool newCpuGovernorState = (effectiveCpu == ComponentGovernor_Enabled);
         bool newGpuGovernorState = (effectiveGpu == ComponentGovernor_Enabled);
-        bool newVrrGovernorState = (effectiveVrr == ComponentGovernor_Enabled);
+        // VRR-Auto (3) = "включить VRR overlay для приложения".
+        // Семантически: VRR governor активен + auto-ladder режим Smart.
+        bool newVrrGovernorState = (effectiveVrr == ComponentGovernor_Enabled ||
+                                    effectiveVrr == ComponentGovernor_VrrAuto);
+        bool wantVrrAutoLadder   = (effectiveVrr == ComponentGovernor_VrrAuto);
+
+        // Edge-trigger переключение auto-ladder режима. Делаем только при
+        // смене состояния, чтобы не bомбить SetConfig() каждый tick'а.
+        static bool s_lastWantVrrAuto = false;
+        if (wantVrrAutoLadder != s_lastWantVrrAuto) {
+            RClkLadderConfig cfg{};
+            autoRyazha::GetConfig(&cfg);
+            if (wantVrrAutoLadder) {
+                cfg.vrrMode = RClkLadderVrr_Smart;
+                cfg.enabled = 1;
+            } else {
+                // Возврат: оставляем enabled как есть, отключаем только
+                // VRR-mode чтобы ladder не дёргал refresh rate без явного
+                // запроса юзера.
+                cfg.vrrMode = RClkLadderVrr_Off;
+            }
+            autoRyazha::SetConfig(&cfg);
+            s_lastWantVrrAuto = wantVrrAutoLadder;
+        }
 
         isCpuGovernorEnabled = newCpuGovernorState;
         isGpuGovernorEnabled = newGpuGovernorState;
@@ -88,7 +112,7 @@ namespace governor {
         return table.count - 1;
     }
 
-    u32 ResolveTargetHz(RyazhaClkModule module) {
+    u32 ResolveTargetHz(RClkModule module) {
         u32 hz = clockManager::gContext.overrideFreqs[module];
         if (!hz)
             hz = config::GetAutoClockHz(
@@ -135,14 +159,14 @@ namespace governor {
                 } else {
                     isCpuGovernorInBoostMode = false;
 
-                    auto& table = clockManager::gFreqTable[RyazhaClkModule_CPU];
+                    auto& table = clockManager::gFreqTable[RClkModule_CPU];
                     std::scoped_lock lock{clockManager::gContextMutex};
 
-                    u32 cpuLoad = board::GetPartLoad(RyazhaClkPartLoad_CPUMax);
+                    u32 cpuLoad = board::GetPartLoad(RClkPartLoad_CPUMax);
                     u32 tableMaxHz = table.list[table.count - 1];
                     u32 desiredHz = SchedutilTargetHz(cpuLoad, tableMaxHz);
-                    u32 targetHz = ResolveTargetHz(RyazhaClkModule_CPU);
-                    u32 maxHz = clockManager::GetMaxAllowedHz(RyazhaClkModule_CPU, clockManager::gContext.profile);
+                    u32 targetHz = ResolveTargetHz(RClkModule_CPU);
+                    u32 maxHz = clockManager::GetMaxAllowedHz(RClkModule_CPU, clockManager::gContext.profile);
 
                     if (targetHz && desiredHz > targetHz)
                         desiredHz = targetHz;
@@ -161,17 +185,17 @@ namespace governor {
                         cpuDownHoldRemaining--;
 
                     if (++cpuTick > 50) {
-                        minHz = config::GetConfigValue(RyazhaClkConfigValue_CpuGovernorMinimumFreq);
+                        minHz = config::GetConfigValue(RClkConfigValue_CpuGovernorMinimumFreq);
                         cpuTick = 0;
                     }
 
                     if (newHz < minHz)
                         newHz = minHz;
 
-                    if ((!goingDown || (cpuDownHoldRemaining == 0)) && clockManager::IsAssignableHz(RyazhaClkModule_CPU, newHz)) {
-                        board::SetHz(RyazhaClkModule_CPU, newHz);
-                        clockManager::gContext.freqs[RyazhaClkModule_CPU] = newHz;
-                        clockManager::gContext.stable.freqs[RyazhaClkModule_CPU] = newHz;
+                    if ((!goingDown || (cpuDownHoldRemaining == 0)) && clockManager::IsAssignableHz(RClkModule_CPU, newHz)) {
+                        board::SetHz(RClkModule_CPU, newHz);
+                        clockManager::gContext.freqs[RClkModule_CPU] = newHz;
+                        clockManager::gContext.stable.freqs[RClkModule_CPU] = newHz;
                         cpuLastHz = newHz;
                     }
                 }
@@ -182,14 +206,14 @@ namespace governor {
             }
 
             if (isGpuGovernorEnabled) {
-                auto& table = clockManager::gFreqTable[RyazhaClkModule_GPU];
+                auto& table = clockManager::gFreqTable[RClkModule_GPU];
                 std::scoped_lock lock{clockManager::gContextMutex};
 
-                u32 gpuLoad = board::GetPartLoad(RyazhaClkPartLoad_GPU);
+                u32 gpuLoad = board::GetPartLoad(RClkPartLoad_GPU);
                 u32 tableMaxHz = table.list[table.count - 1];
                 u32 desiredHz = SchedutilTargetHz(gpuLoad, tableMaxHz);
-                u32 targetHz = ResolveTargetHz(RyazhaClkModule_GPU);
-                u32 maxHz = clockManager::GetMaxAllowedHz(RyazhaClkModule_GPU, clockManager::gContext.profile);
+                u32 targetHz = ResolveTargetHz(RClkModule_GPU);
+                u32 maxHz = clockManager::GetMaxAllowedHz(RClkModule_GPU, clockManager::gContext.profile);
 
                 if (targetHz && desiredHz > targetHz)
                     desiredHz = targetHz;
@@ -207,10 +231,10 @@ namespace governor {
                 if (gpuDownHoldRemaining > 0)
                     gpuDownHoldRemaining--;
 
-                if ((!goingDown || (gpuDownHoldRemaining == 0)) && clockManager::IsAssignableHz(RyazhaClkModule_GPU, newHz)) {
-                    board::SetHz(RyazhaClkModule_GPU, newHz);
-                    clockManager::gContext.freqs[RyazhaClkModule_GPU] = newHz;
-                    clockManager::gContext.stable.freqs[RyazhaClkModule_GPU] = newHz;
+                if ((!goingDown || (gpuDownHoldRemaining == 0)) && clockManager::IsAssignableHz(RClkModule_GPU, newHz)) {
+                    board::SetHz(RClkModule_GPU, newHz);
+                    clockManager::gContext.freqs[RClkModule_GPU] = newHz;
+                    clockManager::gContext.stable.freqs[RClkModule_GPU] = newHz;
                     gpuLastHz = newHz;
                 }
             } else {
@@ -218,7 +242,7 @@ namespace governor {
                 gpuLastHz = 0;
             }
 
-            if (isVRREnabled && clockManager::gContext.profile != RyazhaClkProfile_Docked && clockManager::gContext.isSaltyNXInstalled) {
+            if (isVRREnabled && clockManager::gContext.profile != RClkProfile_Docked && clockManager::gContext.isSaltyNXInstalled) {
                 bool skipVrr = false;
 
                 if (++vrrFocusTick > 100) {
@@ -237,32 +261,32 @@ namespace governor {
                     if (fps != 254) {
                         std::scoped_lock lock{clockManager::gContextMutex};
 
-                        u32 targetHz = clockManager::gContext.overrideFreqs[RyazhaClkModule_Display];
+                        u32 targetHz = clockManager::gContext.overrideFreqs[RClkModule_Display];
                         if (!targetHz) {
-                            targetHz = config::GetAutoClockHz(clockManager::gContext.applicationId, RyazhaClkModule_Display, clockManager::gContext.profile, false);
+                            targetHz = config::GetAutoClockHz(clockManager::gContext.applicationId, RClkModule_Display, clockManager::gContext.profile, false);
                             if (!targetHz)
-                                targetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, RyazhaClkModule_Display, clockManager::gContext.profile, false);
+                                targetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, RClkModule_Display, clockManager::gContext.profile, false);
                         }
 
                         u8 maxDisplay = targetHz ? (u8)targetHz : 60;
-                        u8 minDisplay = board::GetConsoleType() == RyazhaClkConsoleType_Aula ? 45 : 40;
+                        u8 minDisplay = board::GetConsoleType() == RClkConsoleType_Aula ? 45 : 40;
 
                         if (maxDisplay != minDisplay) {
                             if (fps >= minDisplay && fps <= maxDisplay) {
-                                board::SetHz(RyazhaClkModule_Display, fps);
-                                clockManager::gContext.freqs[RyazhaClkModule_Display] = fps;
-                                clockManager::gContext.realFreqs[RyazhaClkModule_Display] = fps;
-                                clockManager::gContext.stable.freqs[RyazhaClkModule_Display] = fps;
-                                clockManager::gContext.stable.realFreqs[RyazhaClkModule_Display] = fps;
+                                board::SetHz(RClkModule_Display, fps);
+                                clockManager::gContext.freqs[RClkModule_Display] = fps;
+                                clockManager::gContext.realFreqs[RClkModule_Display] = fps;
+                                clockManager::gContext.stable.freqs[RClkModule_Display] = fps;
+                                clockManager::gContext.stable.realFreqs[RClkModule_Display] = fps;
                             } else {
                                 for (u32 i = 0; i < 10; i++) {
                                     u32 compareHz = fps * i;
                                     if (compareHz >= minDisplay && compareHz <= maxDisplay) {
-                                        board::SetHz(RyazhaClkModule_Display, compareHz);
-                                        clockManager::gContext.freqs[RyazhaClkModule_Display] = compareHz;
-                                        clockManager::gContext.realFreqs[RyazhaClkModule_Display] = compareHz;
-                                        clockManager::gContext.stable.freqs[RyazhaClkModule_Display] = compareHz;
-                                        clockManager::gContext.stable.realFreqs[RyazhaClkModule_Display] = compareHz;
+                                        board::SetHz(RClkModule_Display, compareHz);
+                                        clockManager::gContext.freqs[RClkModule_Display] = compareHz;
+                                        clockManager::gContext.realFreqs[RClkModule_Display] = compareHz;
+                                        clockManager::gContext.stable.freqs[RClkModule_Display] = compareHz;
+                                        clockManager::gContext.stable.realFreqs[RClkModule_Display] = compareHz;
                                         break;
                                     }
                                 }
@@ -270,7 +294,7 @@ namespace governor {
 
                             if (++vrrTick > 50) {
                                 vrrTick = 0;
-                                board::SetHz(RyazhaClkModule_Display, maxDisplay);
+                                board::SetHz(RClkModule_Display, maxDisplay);
                                 svcSleepThread(50'000'000);
                             }
                         }

@@ -27,19 +27,20 @@ INCLUDES	:=	../common/include
 EXEFS_SRC	:=	exefs_src
 IS_MINIMAL	:=	0
 
-APP_TITLE	:=	Ryazha-CLK Overlay
+APP_TITLE	:=	Ryazha-CLK
 NO_ICON		:=	1
 
 
-# This location should reflect where you place the libultrahand directory (lib can vary between projects).
-include ${TOPDIR}/lib/libultrahand/ultrahand.mk
+# libryazhahand is our rebranded fork of libultrahand. The mk file is also
+# renamed (ryazhahand.mk) but its include API is identical to upstream.
+include ${TOPDIR}/lib/libryazhahand/ryazhahand.mk
 
 
 #---------------------------------------------------------------------------------
 # version control constants
 #---------------------------------------------------------------------------------
 #TARGET_VERSION	:= $(shell git describe --dirty --always --tags)
-APP_VERSION		:= 2.4.0 # ensure to set KIP_VERSION and CUST_REV in sysmodule Makefile when updating this
+APP_VERSION		:= 3.0.0 # ensure to set KIP_VERSION and CUST_REV in sysmodule Makefile when updating this
 TARGET_VERSION := $(APP_VERSION)
 
 #---------------------------------------------------------------------------------
@@ -69,7 +70,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-exceptions -std=gnu++23
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS := -lcurl -lz -lzzip -lmbedtls -lmbedx509 -lmbedcrypto -ljansson -lnx
+LIBS := -lcurl -lpng -lz -lzzip -lmbedtls -lmbedx509 -lmbedcrypto -ljansson -lnx
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

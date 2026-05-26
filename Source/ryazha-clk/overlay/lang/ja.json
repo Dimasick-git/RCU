@@ -55,7 +55,7 @@
   "Compiling with minimal features": "最小限の機能でコンパイルする",
   "Console Type:": "Console Type:",
   "Contributors": "貢献者",
-  "Could not connect to ryazha-clk sysmodule.\\n\\n": "ryazha-clk sysmodule に接続できませんでした。\\n\\n",
+  "Could not connect to hoc-clk sysmodule.\\n\\n": "hoc-clk sysmodule に接続できませんでした。\\n\\n",
   "Credits": "クレジット",
   "CtCaer - Hekate, L4T and Proper Timings": "CtCaer - Hekate, L4T and Proper Timings",
   "DRAM Module: ": "DRAM Module: ",

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -28,9 +28,11 @@
 #include "app_profile_gui.h"
 
 #include "../format.h"
+#include "../../i18n.hpp"
 #include "fatal_gui.h"
 #include "labels.h"
-AppProfileGui::AppProfileGui(std::uint64_t applicationId, RyazhaClkTitleProfileList* profileList)
+#include "display_hz_trackbar.hpp"
+AppProfileGui::AppProfileGui(std::uint64_t applicationId, RClkTitleProfileList* profileList)
 {
     this->applicationId = applicationId;
     this->profileList = profileList;
@@ -41,7 +43,7 @@ AppProfileGui::~AppProfileGui()
     delete this->profileList;
 }
 
-void AppProfileGui::openFreqChoiceGui(tsl::elm::ListItem* listItem, RyazhaClkProfile profile, RyazhaClkModule module)
+void AppProfileGui::openFreqChoiceGui(tsl::elm::ListItem* listItem, RClkProfile profile, RClkModule module)
 {
     std::uint32_t hzList[RCLK_FREQ_LIST_MAX];
     std::uint32_t hzCount;
@@ -53,17 +55,17 @@ void AppProfileGui::openFreqChoiceGui(tsl::elm::ListItem* listItem, RyazhaClkPro
     }
     std::map<uint32_t, std::string> labels = {};
 
-    if (module == RyazhaClkModule_CPU) {
+    if (module == RClkModule_CPU) {
         bool isUsingUv = IsMariko() ? configList.values[KipConfigValue_marikoCpuUVHigh] : configList.values[KipConfigValue_eristaCpuUV];
         labels = IsMariko() ? (isUsingUv ? cpu_freq_label_m_uv : cpu_freq_label_m) : (isUsingUv ? cpu_freq_label_e_uv : cpu_freq_label_e);
-    } else if (module == RyazhaClkModule_GPU) {
+    } else if (module == RClkModule_GPU) {
         labels = IsMariko() ? *(marikoUV[configList.values[KipConfigValue_marikoGpuUV]]) : *(eristaUV[configList.values[KipConfigValue_eristaGpuUV]]);
     }
-    RamDisplayUnit memUnit = (RamDisplayUnit)configList.values[RyazhaClkConfigValue_RamDisplayUnit];
+    RamDisplayUnit memUnit = (RamDisplayUnit)configList.values[RClkConfigValue_RamDisplayUnit];
     tsl::changeTo<FreqChoiceGui>(this->profileList->mhzMap[profile][module] * 1000000, hzList, hzCount, module, [this, listItem, profile, module, memUnit](std::uint32_t hz) {
         this->profileList->mhzMap[profile][module] = hz / 1000000;
         std::uint32_t mhz = this->profileList->mhzMap[profile][module];
-        listItem->setValue(module == RyazhaClkModule_MEM ? formatListFreqMem(mhz, memUnit) : formatListFreqMHz(mhz));
+        listItem->setValue(module == RClkModule_MEM ? formatListFreqMem(mhz, memUnit) : formatListFreqMHz(mhz));
         Result rc = rclkIpcSetProfiles(this->applicationId, this->profileList);
         if(R_FAILED(rc))
         {
@@ -103,12 +105,12 @@ void AppProfileGui::openValueChoiceGui(
     );
 }
 
-void AppProfileGui::addModuleListItem(RyazhaClkProfile profile, RyazhaClkModule module)
+void AppProfileGui::addModuleListItem(RClkProfile profile, RClkModule module)
 {
-    tsl::elm::ListItem* listItem = new tsl::elm::ListItem(hocclkFormatModule(module, true));
-    RamDisplayUnit memUnit = (RamDisplayUnit)configList.values[RyazhaClkConfigValue_RamDisplayUnit];
+    tsl::elm::ListItem* listItem = new tsl::elm::ListItem(rclkFormatModule(module, true));
+    RamDisplayUnit memUnit = (RamDisplayUnit)configList.values[RClkConfigValue_RamDisplayUnit];
     std::uint32_t mhz = this->profileList->mhzMap[profile][module];
-    listItem->setValue(module == RyazhaClkModule_MEM ? formatListFreqMem(mhz, memUnit) : formatListFreqMHz(mhz));
+    listItem->setValue(module == RClkModule_MEM ? formatListFreqMem(mhz, memUnit) : formatListFreqMHz(mhz));
     listItem->setClickListener([this, listItem, profile, module, memUnit](u64 keys) {
         if((keys & HidNpadButton_A) == HidNpadButton_A)
         {
@@ -119,7 +121,7 @@ void AppProfileGui::addModuleListItem(RyazhaClkProfile profile, RyazhaClkModule 
         {
             // Reset to "Default" (0 MHz)
             this->profileList->mhzMap[profile][module] = 0;
-            listItem->setValue(module == RyazhaClkModule_MEM ? formatListFreqMem(0, memUnit) : formatListFreqMHz(0));
+            listItem->setValue(module == RClkModule_MEM ? formatListFreqMem(0, memUnit) : formatListFreqMHz(0));
             
             Result rc = rclkIpcSetProfiles(this->applicationId, this->profileList);
             if(R_FAILED(rc))
@@ -134,9 +136,9 @@ void AppProfileGui::addModuleListItem(RyazhaClkProfile profile, RyazhaClkModule 
     this->listElement->addItem(listItem);
 }
 
-void AppProfileGui::addModuleListItemToggle(RyazhaClkProfile profile, RyazhaClkModule module)
+void AppProfileGui::addModuleListItemToggle(RClkProfile profile, RClkModule module)
 {
-    const char* moduleName = hocclkFormatModule(module, true);
+    const char* moduleName = rclkFormatModule(module, true);
     std::uint32_t currentValue = this->profileList->mhzMap[profile][module];
     
     tsl::elm::ToggleListItem* toggle = new tsl::elm::ToggleListItem(moduleName, currentValue != 0);
@@ -185,8 +187,8 @@ std::string AppProfileGui::formatValueDisplay(
 }
 
 void AppProfileGui::addModuleListItemValue(
-    RyazhaClkProfile profile,
-    RyazhaClkModule module,
+    RClkProfile profile,
+    RClkModule module,
     const std::string& categoryName,
     std::uint32_t min,
     std::uint32_t max,
@@ -200,7 +202,7 @@ void AppProfileGui::addModuleListItemValue(
 )
 {
     tsl::elm::ListItem* listItem =
-        new tsl::elm::ListItem(hocclkFormatModule(module, true));
+        new tsl::elm::ListItem(rclkFormatModule(module, true));
     std::uint32_t storedValue = this->profileList->mhzMap[profile][module];
     
     listItem->setValue(this->formatValueDisplay(storedValue, namedValues, suffix, divisor, decimalPlaces));
@@ -283,10 +285,10 @@ void AppProfileGui::addModuleListItemValue(
 
 class GovernorProfileSubMenuGui : public BaseMenuGui {
     uint64_t applicationId;
-    RyazhaClkTitleProfileList* profileList;
-    RyazhaClkProfile profile;
+    RClkTitleProfileList* profileList;
+    RClkProfile profile;
 public:
-    GovernorProfileSubMenuGui(uint64_t appId, RyazhaClkTitleProfileList* pList, RyazhaClkProfile prof)
+    GovernorProfileSubMenuGui(uint64_t appId, RClkTitleProfileList* pList, RClkProfile prof)
         : applicationId(appId), profileList(pList), profile(prof) {}
 
     void listUI() override {
@@ -298,23 +300,37 @@ public:
             FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
             return;
         }
-        this->listElement->addItem(new tsl::elm::CategoryHeader("Governor"));
+        this->listElement->addItem(new tsl::elm::CategoryHeader(i18n::t("Governor")));
 
         static constexpr struct { const char* label; int shift; } kAll[] = {
             {"CPU", 0}, {"GPU", 8}, {"VRR", 16}
         };
-        int count = configList.values[RyazhaClkConfigValue_OverwriteRefreshRate] || this->context->isUsingRetroSuper ? 3 : 2;
+        int count = configList.values[RClkConfigValue_OverwriteRefreshRate] || this->context->isUsingRetroSuper ? 3 : 2;
 
         for (int i = 0; i < count; i++) {
-            u8 cur = (this->profileList->mhzMap[this->profile][RyazhaClkModule_Governor] >> kAll[i].shift) & 0xFF;
-            auto* bar = new tsl::elm::NamedStepTrackBar(
-                "", {"Do Not Override", "Disabled", "Enabled"},
-                true, kAll[i].label
-            );
+            const bool isVrrSlot = (kAll[i].shift == 16);
+            u8 cur = (this->profileList->mhzMap[this->profile][RClkModule_Governor] >> kAll[i].shift) & 0xFF;
+            // NamedStepTrackBar требует std::initializer_list<std::string>
+            // (compile-time fixed list). Branch'имся: VRR-слот = 4 опции,
+            // CPU/GPU = 3.
+            tsl::elm::NamedStepTrackBar* bar;
+            if (isVrrSlot) {
+                bar = new tsl::elm::NamedStepTrackBar(
+                    "",
+                    { i18n::t("Do Not Override"), i18n::t("Disabled"),
+                      i18n::t("Enabled"),         i18n::t("VRR-Auto") },
+                    true, kAll[i].label);
+            } else {
+                bar = new tsl::elm::NamedStepTrackBar(
+                    "",
+                    { i18n::t("Do Not Override"), i18n::t("Disabled"),
+                      i18n::t("Enabled") },
+                    true, kAll[i].label);
+            }
             bar->setProgress(cur);
             int shift = kAll[i].shift;
             bar->setValueChangedListener([this, shift](u8 value) {
-                u32& packed = this->profileList->mhzMap[this->profile][RyazhaClkModule_Governor];
+                u32& packed = this->profileList->mhzMap[this->profile][RClkModule_Governor];
                 packed = (packed & ~(0xFFu << shift)) | ((u32)value << shift);
                 Result rc = rclkIpcSetProfiles(this->applicationId, this->profileList);
                 if (R_FAILED(rc)) FatalGui::openWithResultCode("rclkIpcSetProfiles", rc);
@@ -324,8 +340,34 @@ public:
     }
 };
 
-void AppProfileGui::addGovernorSection(RyazhaClkProfile profile) {
-    auto* item = new tsl::elm::ListItem("Governor");
+void AppProfileGui::addDisplayHzTrackBar(RClkProfile profile,
+                                         std::uint32_t minHz,
+                                         std::uint32_t maxHz,
+                                         std::uint32_t stepHz)
+{
+    std::string label = rclkFormatModule(RClkModule_Display, true);
+    auto* bar = new ryazha_ui::DisplayHzTrackBar(minHz, maxHz, stepHz, label);
+    u32 curHz = ryazha_ui::displayHzOrDefault(
+        this->profileList->mhzMap[profile][RClkModule_Display]);
+    bar->setProgress(ryazha_ui::displayHzToProgress(
+        curHz, bar->minHz(), bar->maxHz(), bar->stepHz()));
+    // Throttle apply -- иначе rapid slider drag шлёт rclkIpcSetProfiles
+    // каждый кадр (~60/сек), сериализация RClkTitleProfileList тяжёлая,
+    // UI зависает. Throttle 50ms = ~20 IPC/сек, плавно и без задержек.
+    auto apply = ryazha_ui::throttleApply([this, profile](u32 hz) {
+        this->profileList->mhzMap[profile][RClkModule_Display] = hz;
+        Result rc = rclkIpcSetProfiles(this->applicationId, this->profileList);
+        if (R_FAILED(rc)) FatalGui::openWithResultCode("rclkIpcSetProfiles", rc);
+        ryazha_ui::syncLadderVrrMaxToPanelHz(hz);
+    });
+    bar->setValueChangedListener([bar, apply = std::move(apply)](u16 progress) mutable {
+        apply(bar->minHz() + (u32)progress * bar->stepHz());
+    });
+    this->listElement->addItem(bar);
+}
+
+void AppProfileGui::addGovernorSection(RClkProfile profile) {
+    auto* item = new tsl::elm::ListItem(i18n::t("Governor"));
     item->setValue("\u2192"); // Right arrow
     item->setClickListener([this, profile](u64 keys) {
         if (keys & HidNpadButton_A) {
@@ -339,7 +381,7 @@ void AppProfileGui::addGovernorSection(RyazhaClkProfile profile) {
     this->listElement->addItem(item);
 }
 
-void AppProfileGui::addProfileUI(RyazhaClkProfile profile)
+void AppProfileGui::addProfileUI(RClkProfile profile)
 {    
     BaseMenuGui::refresh();
     if(!this->context)
@@ -349,85 +391,29 @@ void AppProfileGui::addProfileUI(RyazhaClkProfile profile)
         FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
         return;
     }
-    if((profile == RyazhaClkProfile_Docked && IsHoag()) || profile == RyazhaClkProfile_HandheldCharging)
+    if((profile == RClkProfile_Docked && IsHoag()) || profile == RClkProfile_HandheldCharging)
         return;
-    this->listElement->addItem(new tsl::elm::CategoryHeader(hocclkFormatProfile(profile, true) + std::string(" ") + ult::DIVIDER_SYMBOL + " \ue0e3 Reset"));
-    this->addModuleListItem(profile, RyazhaClkModule_CPU);
-    this->addModuleListItem(profile, RyazhaClkModule_GPU);
-    this->addModuleListItem(profile, RyazhaClkModule_MEM);
+    this->listElement->addItem(new tsl::elm::CategoryHeader(rclkFormatProfile(profile, true) + std::string(" ") + ult::DIVIDER_SYMBOL + " \ue0e3 Reset"));
+    this->addModuleListItem(profile, RClkModule_CPU);
+    this->addModuleListItem(profile, RClkModule_GPU);
+    this->addModuleListItem(profile, RClkModule_MEM);
     #if IS_MINIMAL == 0
-        ValueThresholds lcdThresholds(60, 65);
-        ValueThresholds DThresholdsOLED(120, 500); // nothing is dangerous, past 120hz you can get applet crashes
-
-        if(configList.values[RyazhaClkConfigValue_OverwriteRefreshRate]) {
-            if(profile != RyazhaClkProfile_Docked) {
-                this->addModuleListItemValue(profile, RyazhaClkModule_Display, "Display", IsAula() ? 45 : 40, configList.values[RyazhaClkConfigValue_MaxDisplayClockH], this->context->isUsingRetroSuper ? 5 : 1, " Hz", 1, 0, lcdThresholds);
+        // Inline Hz slider вместо табличного picker'а. Юзер сказал
+        // "верни ползунок" -- DisplayHzTrackBar поддерживает Y=reset 60,
+        // динамически адаптирует step под 101 шаг StepTrackBar лимит.
+        if(configList.values[RClkConfigValue_OverwriteRefreshRate]) {
+            if(profile != RClkProfile_Docked) {
+                u32 minHz  = IsAula() ? 45u : 40u;
+                u32 maxHz  = configList.values[RClkConfigValue_MaxDisplayClockH];
+                u32 stepHz = this->context->isUsingRetroSuper ? 5u : 1u;
+                this->addDisplayHzTrackBar(profile, minHz, maxHz, stepHz);
             } else {
                 if(IsAula() && this->context->isSysDockInstalled) {
-                    std::vector<NamedValue> dockedFreqs = {
-                        NamedValue("40 Hz", 40),
-                        NamedValue("45 Hz", 45),
-                        NamedValue("50 Hz", 50),
-                        NamedValue("55 Hz", 55),
-                        NamedValue("60 Hz", 60),
-                        NamedValue("70 Hz", 70),
-                        NamedValue("72 Hz", 72),
-                        NamedValue("75 Hz", 75),
-                        NamedValue("80 Hz", 80),
-                        NamedValue("90 Hz", 90),
-                        NamedValue("95 Hz", 95),
-                        NamedValue("100 Hz", 100),
-                        NamedValue("110 Hz", 110),
-                        NamedValue("120 Hz", 120),
-                        NamedValue("130 Hz", 130),
-                        NamedValue("140 Hz", 140),
-                        NamedValue("144 Hz", 144),
-                        NamedValue("150 Hz", 150),
-                        NamedValue("160 Hz", 160),
-                        NamedValue("165 Hz", 165),
-                        NamedValue("170 Hz", 170),
-                        NamedValue("180 Hz", 180),
-                        NamedValue("190 Hz", 190),
-                        NamedValue("200 Hz", 200),
-                        NamedValue("210 Hz", 210),
-                        NamedValue("220 Hz", 220),
-                        NamedValue("230 Hz", 230),
-                        NamedValue("240 Hz", 240)
-                    };
-                    
-                    this->addModuleListItemValue(profile, RyazhaClkModule_Display, "Display", 40, 240, 1, " Hz", 1, 0, DThresholdsOLED, dockedFreqs);
+                    this->addDisplayHzTrackBar(profile, 40, 240, 1);
                 } else if (IsAula() && !this->context->isSysDockInstalled) {
-                    std::vector<NamedValue> dockedFreqsLimited = {
-                        NamedValue("50 Hz", 50),
-                        NamedValue("55 Hz", 55),
-                        NamedValue("60 Hz", 60),
-                        NamedValue("65 Hz", 65),
-                        NamedValue("70 Hz", 70),
-                        NamedValue("72 Hz", 72),
-                        NamedValue("75 Hz", 75)
-                    };
-                    
-                    this->addModuleListItemValue(profile, RyazhaClkModule_Display, "Display", 50, 75, 1, " Hz", 1, 0, DThresholdsOLED, dockedFreqsLimited);
+                    this->addDisplayHzTrackBar(profile, 50, 75, 1);
                 } else {
-                    std::vector<NamedValue> dockedFreqsStandard = {
-                        NamedValue("50 Hz", 50),
-                        NamedValue("55 Hz", 55),
-                        NamedValue("60 Hz", 60),
-                        NamedValue("65 Hz", 65),
-                        NamedValue("70 Hz", 70),
-                        NamedValue("72 Hz", 72),
-                        NamedValue("75 Hz", 75),
-                        NamedValue("80 Hz", 80),
-                        NamedValue("85 Hz", 85),
-                        NamedValue("90 Hz", 90),
-                        NamedValue("95 Hz", 95),
-                        NamedValue("100 Hz", 100),
-                        NamedValue("105 Hz", 105),
-                        NamedValue("110 Hz", 110),
-                        NamedValue("115 Hz", 115),
-                        NamedValue("120 Hz", 120)
-                    };
-                    this->addModuleListItemValue(profile, RyazhaClkModule_Display, "Display", 50, 120, 1, " Hz", 1, 0, ValueThresholds(), dockedFreqsStandard);
+                    this->addDisplayHzTrackBar(profile, 50, 120, 1);
                 }
             }
         }
@@ -437,16 +423,16 @@ void AppProfileGui::addProfileUI(RyazhaClkProfile profile)
 
 void AppProfileGui::listUI()
 {
-    this->addProfileUI(RyazhaClkProfile_Docked);
-    this->addProfileUI(RyazhaClkProfile_Handheld);
-    this->addProfileUI(RyazhaClkProfile_HandheldCharging);
-    this->addProfileUI(RyazhaClkProfile_HandheldChargingOfficial);
-    this->addProfileUI(RyazhaClkProfile_HandheldChargingUSB);
+    this->addProfileUI(RClkProfile_Docked);
+    this->addProfileUI(RClkProfile_Handheld);
+    this->addProfileUI(RClkProfile_HandheldCharging);
+    this->addProfileUI(RClkProfile_HandheldChargingOfficial);
+    this->addProfileUI(RClkProfile_HandheldChargingUSB);
 }
 
 void AppProfileGui::changeTo(std::uint64_t applicationId)
 {
-    RyazhaClkTitleProfileList* profileList = new RyazhaClkTitleProfileList;
+    RClkTitleProfileList* profileList = new RClkTitleProfileList;
     Result rc = rclkIpcGetProfiles(applicationId, profileList);
     if(R_FAILED(rc))
     {

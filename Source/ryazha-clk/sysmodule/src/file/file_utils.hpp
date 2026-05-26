@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -48,6 +48,6 @@ namespace fileUtils {
     bool IsLogEnabled();
     void InitializeAsync();
     void LogLine(const char* format, ...);
-    void WriteContextToCsv(const RyazhaClkContext* context);
+    void WriteContextToCsv(const RClkContext* context);
 
 }

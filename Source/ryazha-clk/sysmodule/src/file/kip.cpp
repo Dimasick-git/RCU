@@ -1,5 +1,8 @@
+/* RCU build trigger: re-run CI after collab access added
+ *
+ */
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -21,24 +24,58 @@
 #include "file_utils.hpp"
 #include "../mgr/clock_manager.hpp"
 
+#include <cstdio>
+#include <cstring>
+
 namespace kip {
 
     bool kipAvailable = false;
+
+    // Auto-probe пути к KIP. Старые пакеты (Switchcraft, hoc-clk) ставили
+    // loader.kip / hoc.kip. RCU собирает rcu.kip. Если юзер обновился с
+    // legacy установки, на boot Atmosphere грузит loader.kip, а мы писали
+    // только в rcu.kip -- настройки "не применялись". Теперь пишем в тот
+    // файл, который реально лежит на SD (и существенно -- который Atmosphere
+    // загрузит при следующем boot).
+    static const char* ProbeKipPath()
+    {
+        static const char* cached = nullptr;
+        if (cached) return cached;
+        // Order matters: rcu.kip (наш канонический) первый, потом legacy.
+        static constexpr const char* kCandidates[] = {
+            "sdmc:/atmosphere/kips/rcu.kip",
+            "sdmc:/atmosphere/kips/hoc.kip",
+            "sdmc:/atmosphere/kips/loader.kip",
+        };
+        for (const char* p : kCandidates) {
+            FILE* fp = fopen(p, "r");
+            if (fp) {
+                fclose(fp);
+                cached = p;
+                fileUtils::LogLine("[kip] Using KIP path: %s", p);
+                return cached;
+            }
+        }
+        // Ничего не нашли -- по умолчанию rcu.kip (для записи нового файла).
+        cached = kCandidates[0];
+        fileUtils::LogLine("[kip] No KIP found, defaulting to: %s", cached);
+        return cached;
+    }
     void SetKipData()
     {
         // TODO: figure out if this REALLY causes issues (i doubt it)
-        // if(board::GetSocType() == RyazhaClkSocType_Mariko) {
+        // if(board::GetSocType() == RClkSocType_Mariko) {
         //     if(R_FAILED(I2c_BuckConverter_SetMvOut(&I2c_Mariko_DRAM_VDDQ, config::GetConfigValue(KipConfigValue_marikoEmcVddqVolt) / 1000))) {
         //         fileUtils::LogLine("[clock_manager] Failed set i2c vddq");
-        //         notification::writeNotification("Horizon OC\nFailed to write I2C\nwhile setting vddq");
+        //         notification::writeNotification("Ryazha CLK\nFailed to write I2C\nwhile setting vddq");
         //     }
         // }
         CustomizeTable table;
         FILE* fp;
-        fp = fopen("sdmc:/atmosphere/kips/hoc.kip", "r");
+        fp = fopen(ProbeKipPath(), "r");
 
         if (fp == NULL) {
-            notification::writeNotification("Horizon OC\nKip opening failed");
+            notification::writeNotification("Ryazha CLK\nKip opening failed");
             kipAvailable = false;
             return;
         } else {
@@ -46,24 +83,28 @@ namespace kip {
             fclose(fp);
         }
 
-        if (!cust_read_and_cache("sdmc:/atmosphere/kips/hoc.kip", &table)) {
+        if (!cust_read_and_cache(ProbeKipPath(), &table)) {
             fileUtils::LogLine("[kip] Failed to read KIP file");
-            notification::writeNotification("Horizon OC\nKip read failed");
+            notification::writeNotification("Ryazha CLK\nKip read failed");
             return;
         }
 
         u32 custRev    = cust_get_cust_rev(&table);
         u32 kipVersion = cust_get_kip_version(&table);
-        if (custRev < CUST_REV || kipVersion < KIP_VERSION) {
-            notification::writeNotification("Horizon OC\nOutdated kip detected!\nPlease update Horizon OC");
-            fileUtils::LogLine("Cust revision: %u", custRev);
-            fileUtils::LogLine("Kip version: %u", kipVersion);
-            return;
-        } else if (custRev > CUST_REV || kipVersion > KIP_VERSION) {
-            notification::writeNotification("Horizon OC\nOutdated sysmodule detected!\nPlease update Horizon OC");
-            fileUtils::LogLine("Cust revision: %u", custRev);
-            fileUtils::LogLine("Kip version: %u", kipVersion);
-            return;
+        // Раньше mismatch версий kip/sysmodule вызывал hard-return
+        // (no write), и юзер видел только всплывающую нотификацию --
+        // легко пропустить. Настройки писались в config.ini, но НЕ
+        // в kip, поэтому на reboot Atmosphere грузил старые значения.
+        // Теперь: только warn + лог, пишем что можем. cust_write_table
+        // сам отфильтрует поля которые в старом layout'е отсутствуют.
+        if (custRev != CUST_REV || kipVersion != KIP_VERSION) {
+            fileUtils::LogLine("[kip] WARN version mismatch: kip cust=%u ver=%u, sysmodule expects cust=%u ver=%u -- writing anyway",
+                               custRev, kipVersion, CUST_REV, KIP_VERSION);
+            if (custRev < CUST_REV || kipVersion < KIP_VERSION) {
+                notification::writeNotification("Ryazha CLK\nKip older than sysmodule\n(written best-effort)");
+            } else {
+                notification::writeNotification("Ryazha CLK\nKip newer than sysmodule\n(written best-effort)");
+            }
         }
 
         // CUST_WRITE_FIELD_BATCH(&table, mtcConf, config::GetConfigValue(KipConfigValue_mtcConf));
@@ -128,34 +169,47 @@ namespace kip {
         CUST_WRITE_FIELD_BATCH(&table, commonGpuVoltOffset, config::GetConfigValue(KipConfigValue_commonGpuVoltOffset));
 
         for (int i = 0; i < 24; i++) {
-            table.marikoGpuVoltArray[i] = config::GetConfigValue((RyazhaClkConfigValue)(KipConfigValue_g_volt_76800 + i));
+            table.marikoGpuVoltArray[i] = config::GetConfigValue((RClkConfigValue)(KipConfigValue_g_volt_76800 + i));
         }
 
         for (int i = 0; i < 27; i++) {
-            table.eristaGpuVoltArray[i] = config::GetConfigValue((RyazhaClkConfigValue)(KipConfigValue_g_volt_e_76800 + i));
+            table.eristaGpuVoltArray[i] = config::GetConfigValue((RClkConfigValue)(KipConfigValue_g_volt_e_76800 + i));
         }
 
         CUST_WRITE_FIELD_BATCH(&table, t6_tRTW_fine_tune, config::GetConfigValue(KipConfigValue_t6_tRTW_fine_tune));
         CUST_WRITE_FIELD_BATCH(&table, t7_tWTR_fine_tune, config::GetConfigValue(KipConfigValue_t7_tWTR_fine_tune));
 
-        if (!cust_write_table("sdmc:/atmosphere/kips/hoc.kip", &table)) {
-            fileUtils::LogLine("[kip] Failed to write KIP file");
-            notification::writeNotification("Horizon OC\nKip write failed");
+        const char* kipPath = ProbeKipPath();
+        if (!cust_write_table(kipPath, &table)) {
+            fileUtils::LogLine("[kip] FAILED to write KIP file: %s", kipPath);
+            notification::writeNotification("Ryazha CLK\nKip write failed!");
+            return;
         }
 
-        RyazhaClkConfigValueList configValues;
+        RClkConfigValueList configValues;
         config::GetConfigValues(&configValues);
 
-        configValues.values[KipCrc32] = (u64)crc32::checksum_file("sdmc:/atmosphere/kips/hoc.kip"); // write checksum
+        u64 newCrc = (u64)crc32::checksum_file(kipPath);
+        u64 oldCrc = configValues.values[KipCrc32];
+        configValues.values[KipCrc32] = newCrc; // write checksum
 
+        // immediate=true: сразу обновить in-memory configValues, иначе
+        // runtime[KipCrc32] остаётся со старым значением, и следующий
+        // SetKipData()/GetKipData() будет работать с устаревшим CRC --
+        // что в Horizon-OC всегда делалось как true, а в RCU когда-то
+        // случайно поменяли на false и всё посыпалось.
         if (config::SetConfigValues(&configValues, true)) {
-            fileUtils::LogLine("[kip] KIP data set. CRC32: %ld (Cust Rev %ld)", configValues.values[KipCrc32], configValues.values[KipConfigValue_custRev]);
-            for (u64 i = KipConfigValue_hpMode; i < RyazhaClkConfigValue_EnumMax; i++) {
-                fileUtils::LogLine("%s: %ld", hocclkFormatConfigValue((RyazhaClkConfigValue)i, false), configValues.values[i]);
+            fileUtils::LogLine("[kip] OK wrote %s: CRC32 %lu -> %lu (cust=%lu)",
+                               kipPath, oldCrc, newCrc, configValues.values[KipConfigValue_custRev]);
+            for (u64 i = KipConfigValue_hpMode; i < RClkConfigValue_EnumMax; i++) {
+                fileUtils::LogLine("  %s: %ld", rclkFormatConfigValue((RClkConfigValue)i, false), configValues.values[i]);
             }
+            // Подтверждение для юзера -- без этого было непонятно
+            // действительно ли запись прошла, или провалилась тихо.
+            notification::writeNotification("Ryazha CLK\nKIP saved (reboot)");
         } else {
-            fileUtils::LogLine("[kip] Warning: Failed to set config values from KIP");
-            notification::writeNotification("Horizon OC\nKip config set failed");
+            fileUtils::LogLine("[kip] WARN failed to update config CRC after kip write");
+            notification::writeNotification("Ryazha CLK\nKip saved\nbut CRC not updated");
         }
     }
 
@@ -164,10 +218,10 @@ namespace kip {
     void GetKipData()
     {
         FILE* fp;
-        fp = fopen("sdmc:/atmosphere/kips/hoc.kip", "r");
+        fp = fopen(ProbeKipPath(), "r");
 
         if (fp == NULL) {
-            notification::writeNotification("Horizon OC\nKip opening failed");
+            notification::writeNotification("Ryazha CLK\nKip opening failed");
             kipAvailable = false;
             return;
         } else {
@@ -175,45 +229,45 @@ namespace kip {
             fclose(fp);
         }
 
-        RyazhaClkConfigValueList configValues;
+        RClkConfigValueList configValues;
         config::GetConfigValues(&configValues);
 
         CustomizeTable table;
-        if (!cust_read_and_cache("sdmc:/atmosphere/kips/hoc.kip", &table)) {
+        if (!cust_read_and_cache(ProbeKipPath(), &table)) {
             fileUtils::LogLine("[kip] Failed to read KIP file for GetKipData");
-            notification::writeNotification("Horizon OC\nKip read failed");
+            notification::writeNotification("Ryazha CLK\nKip read failed");
             return;
         }
 
         // if(cust_get_cust_rev(&table) != CUST_REV) {
-        //     notification::writeNotification("Horizon OC\nKip version mismatch\nPlease reinstall Horizon OC");
+        //     notification::writeNotification("Ryazha CLK\nKip version mismatch\nPlease reinstall Ryazha CLK");
         //     return;
         // }
 
-        if ((u64)crc32::checksum_file("sdmc:/atmosphere/kips/hoc.kip") != config::GetConfigValue(KipCrc32) && !config::GetConfigValue(RyazhaClkConfigValue_IsFirstLoad)) {
+        if ((u64)crc32::checksum_file(ProbeKipPath()) != config::GetConfigValue(KipCrc32) && !config::GetConfigValue(RClkConfigValue_IsFirstLoad)) {
             MigrateKipData(cust_get_cust_rev(&table), cust_get_kip_version(&table));
             SetKipData();
-            notification::writeNotification("Horizon OC\nKIP has been updated\nPlease reboot your console");
+            notification::writeNotification("Ryazha CLK\nKIP has been updated\nPlease reboot your console");
             return;
         }
-        if (config::GetConfigValue(RyazhaClkConfigValue_IsFirstLoad) == true) {
-            configValues.values[RyazhaClkConfigValue_IsFirstLoad] = (u64)false;
-            notification::writeNotification("Horizon OC has been installed");
+        if (config::GetConfigValue(RClkConfigValue_IsFirstLoad) == true) {
+            configValues.values[RClkConfigValue_IsFirstLoad] = (u64)false;
+            notification::writeNotification("Ryazha CLK has been installed");
         }
 
-        configValues.values[KipCrc32] = (u64)crc32::checksum_file("sdmc:/atmosphere/kips/hoc.kip"); // write checksum
+        configValues.values[KipCrc32] = (u64)crc32::checksum_file(ProbeKipPath()); // write checksum
         // configValues.values[KipConfigValue_mtcConf] = cust_get_mtc_conf(&table);
         clockManager::gContext.custRev    = cust_get_cust_rev(&table);
 
         u32 custRev    = cust_get_cust_rev(&table);
         u32 kipVersion = cust_get_kip_version(&table);
         if (custRev < CUST_REV || kipVersion < KIP_VERSION) {
-            notification::writeNotification("Horizon OC\nOutdated kip detected!\nPlease update Horizon OC");
+            notification::writeNotification("Ryazha CLK\nOutdated kip detected!\nPlease update Ryazha CLK");
             fileUtils::LogLine("Cust revision: %u", custRev);
             fileUtils::LogLine("Kip version: %u", kipVersion);
             return;
         } else if (custRev > CUST_REV || kipVersion > KIP_VERSION) {
-            notification::writeNotification("Horizon OC\nOutdated sysmodule detected!\nPlease update Horizon OC");
+            notification::writeNotification("Ryazha CLK\nOutdated sysmodule detected!\nPlease update Ryazha CLK");
             fileUtils::LogLine("Cust revision: %u", custRev);
             fileUtils::LogLine("Kip version: %u", kipVersion);
             return;
@@ -290,24 +344,30 @@ namespace kip {
         configValues.values[KipConfigValue_t7_tWTR_fine_tune] = cust_get_tWTR_fine_tune(&table);
         configValues.values[KipConfigValue_t6_tRTW_fine_tune] = cust_get_tRTW_fine_tune(&table);
 
-        if (sizeof(RyazhaClkConfigValueList) <= sizeof(configValues)) {
+        if (sizeof(RClkConfigValueList) <= sizeof(configValues)) {
+            // immediate=true: KIP-значения, прочитанные с файла, должны
+            // сразу попасть в runtime configValues -- иначе sysmodule
+            // продолжит использовать что-то ещё (default/stale из .ini
+            // initial load), и реальные частоты/напряжения не сойдутся
+            // с тем, что юзер видит в overlay. Horizon-OC всегда писал
+            // здесь true.
             if (config::SetConfigValues(&configValues, true)) {
                 fileUtils::LogLine("[kip] KIP loaded. CRC32: %ld (Cust Rev %ld)", configValues.values[KipCrc32], configValues.values[KipConfigValue_custRev]);
-                for (u64 i = KipConfigValue_hpMode; i < RyazhaClkConfigValue_EnumMax; i++) {
-                    fileUtils::LogLine("%s: %ld", hocclkFormatConfigValue((RyazhaClkConfigValue)i, false), configValues.values[i]);
+                for (u64 i = KipConfigValue_hpMode; i < RClkConfigValue_EnumMax; i++) {
+                    fileUtils::LogLine("%s: %ld", rclkFormatConfigValue((RClkConfigValue)i, false), configValues.values[i]);
                 }
             } else {
                 fileUtils::LogLine("[kip] Warning: Failed to set config values from KIP");
-                notification::writeNotification("Horizon OC\nKip config set failed");
+                notification::writeNotification("Ryazha CLK\nKip config set failed");
             }
         } else {
             fileUtils::LogLine("[kip] Error: Config value list buffer size mismatch");
-            notification::writeNotification("Horizon OC\nConfig Buffer Mismatch");
+            notification::writeNotification("Ryazha CLK\nConfig Buffer Mismatch");
         }
     }
 
     void MigrateKipData(u32 custRev, u32 version) {
-        RyazhaClkConfigValueList configValues;
+        RClkConfigValueList configValues;
         config::GetConfigValues(&configValues);
         u32 previousVersion = configValues.values[KipConfigValue_KipVersion];
         if(previousVersion < 240 && version >= 240) {

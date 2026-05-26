@@ -25,59 +25,55 @@
  */
 
 
-#include "apm_ext.h"
+#pragma once
 
-#include <stdatomic.h>
-
-static Service g_apmSrv;
-static Service g_apmSysSrv;
-static atomic_size_t g_refCnt;
-
-Result apmExtInitialize(void)
+#ifdef __cplusplus
+extern "C"
 {
-    g_refCnt++;
+#endif
 
-    if (serviceIsActive(&g_apmSrv))
+#include <switch.h>
+
+#define IPC_SERVER_EXT_RESPONSE_MAX_DATA_SIZE (0x100 - 0x10 - sizeof(IpcServerRawHeader))
+
+typedef struct
+{
+    u64 magic;
+    union
     {
-        return 0;
-    }
+        u64 cmdId;
+        u64 result;
+    };
+} IpcServerRawHeader;
 
-    Result rc = 0;
-
-    rc = smGetService(&g_apmSrv, "apm");
-    if(R_SUCCEEDED(rc))
-    {
-        rc = smGetService(&g_apmSysSrv, "apm:sys");
-    }
-
-    if (R_FAILED(rc))
-    {
-        apmExtExit();
-    }
-
-    return rc;
-}
-
-void apmExtExit(void)
+typedef struct
 {
-    if (--g_refCnt == 0)
-    {
-        serviceClose(&g_apmSrv);
-        serviceClose(&g_apmSysSrv);
-    }
-}
+    SmServiceName srvName;
+    Handle handles[MAX_WAIT_OBJECTS];
+    u32 max;
+    u32 count;
+} IpcServer;
 
-Result apmExtGetPerformanceMode(u32* out_mode)
+typedef struct
 {
-    return serviceDispatchOut(&g_apmSrv, 1, *out_mode);
-}
+    u64 cmdId;
+    void* ptr;
+    size_t size;
+} IpcServerRequestData;
 
-Result apmExtSysRequestPerformanceMode(u32 mode)
+typedef struct
 {
-    return serviceDispatchIn(&g_apmSysSrv, 0, mode);
-}
+    HipcParsedRequest hipc;
+    IpcServerRequestData data;
+} IpcServerRequest;
 
-Result apmExtGetCurrentPerformanceConfiguration(u32* out_conf)
-{
-    return serviceDispatchOut(&g_apmSysSrv, 7, *out_conf);
+typedef Result (*IpcServerRequestHandler)(void* userdata, const IpcServerRequest* r, u8* out_data, size_t* out_dataSize);
+
+Result ipcServerInit(IpcServer* server, const char* name, u32 max_sessions);
+Result ipcServerExit(IpcServer* server);
+Result ipcServerProcess(IpcServer* server, IpcServerRequestHandler handler, void* userdata);
+Result ipcServerParseCommand(const IpcServerRequest* r, size_t* out_datasize, void** out_data, u64* out_cmd);
+
+#ifdef __cplusplus
 }
+#endif

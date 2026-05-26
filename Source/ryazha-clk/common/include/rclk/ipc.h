@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -31,42 +31,52 @@
 #include "board.h"
 #include "clock_manager.h"
 
-#define RCLK_IPC_API_VERSION 2
+// v3 (2026-05): добавили ComponentGovernor_VrrAuto, GetLadderConfig/SetLadderConfig
+// уже в v2, теперь bump для phase-4 enum extension.
+#define RCLK_IPC_API_VERSION 3
+// HOS limits service names to 8 chars (smEncodeName truncates).
+// Раньше тут лежало "ryazha-clk:clk" -- 14 chars, sm регистрацию
+// дропал, overlay получал "не запущен". 8-char fit + matches npdm.
 #define RCLK_IPC_SERVICE_NAME "rclk:clk"
 
-enum RyazhaClkIpcCmd
+enum RClkIpcCmd
 {
-    RyazhaClkIpcCmd_GetApiVersion = 0,
-    RyazhaClkIpcCmd_GetVersionString = 1,
-    RyazhaClkIpcCmd_GetCurrentContext = 2,
-    RyazhaClkIpcCmd_Exit = 3,
-    RyazhaClkIpcCmd_GetProfileCount = 4,
-    RyazhaClkIpcCmd_GetProfiles = 5,
-    RyazhaClkIpcCmd_SetProfiles = 6,
-    RyazhaClkIpcCmd_SetEnabled = 7,
-    RyazhaClkIpcCmd_SetOverride = 8,
-    RyazhaClkIpcCmd_GetConfigValues = 9,
-    RyazhaClkIpcCmd_SetConfigValues = 10,
-    RyazhaClkIpcCmd_GetFreqList = 11,
-    RyazhaClkIpcCmd_SetKipData = 12,
-    RyazhaClkIpcCmd_GetKipData = 13,
+    RClkIpcCmd_GetApiVersion = 0,
+    RClkIpcCmd_GetVersionString = 1,
+    RClkIpcCmd_GetCurrentContext = 2,
+    RClkIpcCmd_Exit = 3,
+    RClkIpcCmd_GetProfileCount = 4,
+    RClkIpcCmd_GetProfiles = 5,
+    RClkIpcCmd_SetProfiles = 6,
+    RClkIpcCmd_SetEnabled = 7,
+    RClkIpcCmd_SetOverride = 8,
+    RClkIpcCmd_GetConfigValues = 9,
+    RClkIpcCmd_SetConfigValues = 10,
+    RClkIpcCmd_GetFreqList = 11,
+    RClkIpcCmd_SetKipData = 12,
+    RClkIpcCmd_GetKipData = 13,
+
+    // Ryazha-Авто (auto_ryazha) IPC -- snapshot/replace RClkLadderConfig.
+    // Используется overlay'ем для отображения и UI-конфига auto-ladder.
+    RClkIpcCmd_GetLadderConfig = 14,
+    RClkIpcCmd_SetLadderConfig = 15,
 };
 
 
 typedef struct
 {
     uint64_t tid;
-    RyazhaClkTitleProfileList profiles;
-} RyazhaClkIpc_SetProfiles_Args;
+    RClkTitleProfileList profiles;
+} RClkIpc_SetProfiles_Args;
 
 typedef struct
 {
-    RyazhaClkModule module;
+    RClkModule module;
     uint32_t hz;
-} RyazhaClkIpc_SetOverride_Args;
+} RClkIpc_SetOverride_Args;
 
 typedef struct
 {
-    RyazhaClkModule module;
+    RClkModule module;
     uint32_t maxCount;
-} RyazhaClkIpc_GetFreqList_Args;
+} RClkIpc_GetFreqList_Args;

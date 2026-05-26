@@ -22,8 +22,8 @@
  *
  */
 
-#include "max17050.h"
-#include "i2c.h"
+#include "nxExt/max17050.h"
+#include "nxExt/i2c.h"
 
 #define MAX17050_WAIT_NS 1000000000UL
 

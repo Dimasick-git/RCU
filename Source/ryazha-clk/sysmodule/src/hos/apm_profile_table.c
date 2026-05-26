@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -25,9 +25,9 @@
  */
 
 
-#include <hocclk/apm.h>
+#include <rclk/apm.h>
 
-HocClkApmConfiguration rclk_g_apm_configurations[] = {
+RClkApmConfiguration hocclk_g_apm_configurations[] = {
     {0x00010000, 1020000000, 384000000, 1600000000},
     {0x00010001, 1020000000, 768000000, 1600000000},
     {0x00010002, 1224000000, 691200000, 1600000000},
