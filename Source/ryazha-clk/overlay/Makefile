@@ -32,7 +32,7 @@ NO_ICON		:=	1
 
 
 # This location should reflect where you place the libryazhahand directory (lib can vary between projects).
-include ${TOPDIR}/lib/libryazhahand/ultrahand.mk
+include ${TOPDIR}/lib/libryazhahand/ryazhahand.mk
 
 
 #---------------------------------------------------------------------------------
