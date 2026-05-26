@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -27,13 +27,13 @@
 
 #pragma once
 
-#define RCLK_ERROR_MODULE 388
-#define RCLK_ERROR(desc) ((RCLK_ERROR_MODULE & 0x1FF) | (RClkError_##desc & 0x1FFF)<<9)
+#define HOCCLK_ERROR_MODULE 388
+#define HOCCLK_ERROR(desc) ((HOCCLK_ERROR_MODULE & 0x1FF) | (RyazhaClkError_##desc & 0x1FFF)<<9)
 
 typedef enum
 {
-    RClkError_Generic = 0,
-    RClkError_ConfigNotLoaded = 1,
-    RClkError_ConfigSaveFailed = 2,
-    // RClkError_SocThermFail = 3,
-} RClkError;
+    RyazhaClkError_Generic = 0,
+    RyazhaClkError_ConfigNotLoaded = 1,
+    RyazhaClkError_ConfigSaveFailed = 2,
+    // RyazhaClkError_SocThermFail = 3,
+} RyazhaClkError;

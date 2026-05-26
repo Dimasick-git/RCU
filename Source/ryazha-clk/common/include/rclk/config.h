@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -31,64 +31,57 @@
 #include <stddef.h>
 #include "board.h"
 typedef enum {
-    RClkConfigValue_PollingIntervalMs = 0,
-    RClkConfigValue_TempLogIntervalMs,
-    RClkConfigValue_FreqLogIntervalMs,
-    RClkConfigValue_PowerLogIntervalMs,
-    RClkConfigValue_CsvWriteIntervalMs,
+    RyazhaClkConfigValue_PollingIntervalMs = 0,
+    RyazhaClkConfigValue_TempLogIntervalMs,
+    RyazhaClkConfigValue_FreqLogIntervalMs,
+    RyazhaClkConfigValue_PowerLogIntervalMs,
+    RyazhaClkConfigValue_CsvWriteIntervalMs,
 
-    RClkConfigValue_UncappedClocks,
-    RClkConfigValue_OverwriteBoostMode,
+    RyazhaClkConfigValue_UncappedClocks,
+    RyazhaClkConfigValue_OverwriteBoostMode,
 
-    RClkConfigValue_EristaMaxCpuClock,
-    RClkConfigValue_MarikoMaxCpuClock,
+    RyazhaClkConfigValue_EristaMaxCpuClock,
+    RyazhaClkConfigValue_MarikoMaxCpuClock,
 
-    RClkConfigValue_ThermalThrottle,
-    RClkConfigValue_ThermalThrottleThreshold,
+    RyazhaClkConfigValue_ThermalThrottle,
+    RyazhaClkConfigValue_ThermalThrottleThreshold,
 
-    RClkConfigValue_HandheldTDP,
-    RClkConfigValue_HandheldTDPLimit,
+    RyazhaClkConfigValue_HandheldTDP,
+    RyazhaClkConfigValue_HandheldTDPLimit,
 
-    RClkConfigValue_LiteTDPLimit,
+    RyazhaClkConfigValue_LiteTDPLimit,
 
-    RClkConfigValue_BatteryChargeCurrent,
+    RyazhaClkConfigValue_BatteryChargeCurrent,
 
-    RClkConfigValue_OverwriteRefreshRate,
-    RClkConfigValue_MaxDisplayClockH,
+    RyazhaClkConfigValue_OverwriteRefreshRate,
+    RyazhaClkConfigValue_MaxDisplayClockH,
 
-    RClkConfigValue_DVFSMode,
-    RClkConfigValue_DVFSOffset,
-    RClkConfigValue_LiveCpuUv,
-    RClkConfigValue_EnableExperimentalSettings,
+    RyazhaClkConfigValue_DVFSMode,
+    RyazhaClkConfigValue_DVFSOffset,
+    RyazhaClkConfigValue_LiveCpuUv,
+    RyazhaClkConfigValue_EnableExperimentalSettings,
 
-    RClkConfigValue_GPUScheduling,
-    RClkConfigValue_GPUSchedulingMethod,
+    RyazhaClkConfigValue_GPUScheduling,
+    RyazhaClkConfigValue_GPUSchedulingMethod,
 
-    RClkConfigValue_RAMVoltDisplayMode,
-    RClkConfigValue_CpuGovernorMinimumFreq,
-    RClkConfigValue_DisplayVoltage,
+    RyazhaClkConfigValue_RAMVoltDisplayMode,
+    RyazhaClkConfigValue_CpuGovernorMinimumFreq,
+    RyazhaClkConfigValue_DisplayVoltage,
 
-    RClkConfigValue_MemoryFrequencyMeasurementMode,
-    RClkConfigValue_RamDisplayUnit,
-    RClkConfigValue_IsFirstLoad,
+    RyazhaClkConfigValue_MemoryFrequencyMeasurementMode,
+    RyazhaClkConfigValue_RamDisplayUnit,
+    RyazhaClkConfigValue_IsFirstLoad,
 
-    RClkConfigValue_AulaDisplayColorPreset,
-    RClkConfigValue_MarikoMiddleFreqs,
+    RyazhaClkConfigValue_AulaDisplayColorPreset,
+    RyazhaClkConfigValue_MarikoMiddleFreqs,
 
     KipConfigValue_custRev,
     KipConfigValue_KipVersion,
-    // GPU speedo (fuse): hekate-style calibration value, x5 scale (см. fuse.cpp).
-    KipConfigValue_gpuSpeedo,
     // KipConfigValue_mtcConf,
     KipConfigValue_hpMode,
 
     KipConfigValue_commonEmcMemVolt,
     KipConfigValue_eristaEmcMaxClock,
-    // Erista отдельные клоки для двух dimm-slots (sysmodule kip.cpp пишет/читает
-    // эти поля как cust_get_erista_emc_max1 / max2). Добавлены при HOC sync,
-    // но header'у запоздал.
-    KipConfigValue_eristaEmcMaxClock1,
-    KipConfigValue_eristaEmcMaxClock2,
 
     KipConfigValue_stepMode,
     KipConfigValue_marikoEmcMaxClock,
@@ -110,10 +103,6 @@ typedef enum {
     KipConfigValue_low_t7_tWTR,
 
     KipConfigValue_t2_tRP_cap,
-
-    // RAM burst latency overrides -- доп. поля от HOC patch'а.
-    KipConfigValue_mem_burst_read_latency,
-    KipConfigValue_mem_burst_write_latency,
 
     KipConfigValue_read_latency_1333,
     KipConfigValue_read_latency_1600,
@@ -207,97 +196,97 @@ typedef enum {
     KipConfigValue_t7_tWTR_fine_tune,
 
     KipCrc32,
-    RClkConfigValue_EnumMax,
-} RClkConfigValue;
+    RyazhaClkConfigValue_EnumMax,
+} RyazhaClkConfigValue;
 
 typedef struct {
-    uint64_t values[RClkConfigValue_EnumMax];
-} RClkConfigValueList;
+    uint64_t values[RyazhaClkConfigValue_EnumMax];
+} RyazhaClkConfigValueList;
 
-static inline const char* rclkFormatConfigValue(RClkConfigValue val, bool pretty)
+static inline const char* hocclkFormatConfigValue(RyazhaClkConfigValue val, bool pretty)
 {
     switch(val)
     {
-        case RClkConfigValue_PollingIntervalMs:
+        case RyazhaClkConfigValue_PollingIntervalMs:
             return pretty ? "Polling Interval (ms)" : "poll_interval_ms";
-        case RClkConfigValue_TempLogIntervalMs:
+        case RyazhaClkConfigValue_TempLogIntervalMs:
             return pretty ? "Temperature logging interval (ms)" : "temp_log_interval_ms";
-        case RClkConfigValue_FreqLogIntervalMs:
+        case RyazhaClkConfigValue_FreqLogIntervalMs:
             return pretty ? "Frequency logging interval (ms)" : "freq_log_interval_ms";
-        case RClkConfigValue_PowerLogIntervalMs:
+        case RyazhaClkConfigValue_PowerLogIntervalMs:
             return pretty ? "Power logging interval (ms)" : "power_log_interval_ms";
-        case RClkConfigValue_CsvWriteIntervalMs:
+        case RyazhaClkConfigValue_CsvWriteIntervalMs:
             return pretty ? "CSV write interval (ms)" : "csv_write_interval_ms";
 
-        case RClkConfigValue_UncappedClocks:
+        case RyazhaClkConfigValue_UncappedClocks:
             return pretty ? "Uncapped Clocks" : "uncapped_clocks";
-        case RClkConfigValue_OverwriteBoostMode:
+        case RyazhaClkConfigValue_OverwriteBoostMode:
             return pretty ? "Overwrite Boost Mode" : "ow_boost";
 
-        case RClkConfigValue_EristaMaxCpuClock:
+        case RyazhaClkConfigValue_EristaMaxCpuClock:
             return pretty ? "CPU Max Clock" : "cpu_max_e";
 
-        case RClkConfigValue_MarikoMaxCpuClock:
+        case RyazhaClkConfigValue_MarikoMaxCpuClock:
             return pretty ? "CPU Max Display Clock" : "cpu_max_m";
 
-        case RClkConfigValue_ThermalThrottle:
+        case RyazhaClkConfigValue_ThermalThrottle:
             return pretty ? "Thermal Throttle" : "thermal_throttle";
 
-        case RClkConfigValue_ThermalThrottleThreshold:
+        case RyazhaClkConfigValue_ThermalThrottleThreshold:
             return pretty ? "Thermal Throttle Threshold" : "thermal_throttle_threshold";
 
-        case RClkConfigValue_HandheldTDP:
+        case RyazhaClkConfigValue_HandheldTDP:
             return pretty ? "Handheld TDP" : "handheld_tdp";
 
-        case RClkConfigValue_HandheldTDPLimit:
+        case RyazhaClkConfigValue_HandheldTDPLimit:
             return pretty ? "Handheld TDP Limit" : "tdp_limit";
 
-        case RClkConfigValue_LiteTDPLimit:
+        case RyazhaClkConfigValue_LiteTDPLimit:
             return pretty ? "Handheld TDP Limit" : "tdp_limit_l";
 
-        case RClkConfigValue_BatteryChargeCurrent:
+        case RyazhaClkConfigValue_BatteryChargeCurrent:
             return pretty ? "Battery Charge Current" : "bat_charge_current";
 
-        case RClkConfigValue_OverwriteRefreshRate:
+        case RyazhaClkConfigValue_OverwriteRefreshRate:
             return pretty ? "Display Refresh Rate Changing" : "drr_changing";
 
-        case RClkConfigValue_MaxDisplayClockH:
+        case RyazhaClkConfigValue_MaxDisplayClockH:
             return pretty ? "Max Display Clock (Handheld)" : "drr_max_clock";
 
-        case RClkConfigValue_DVFSMode:
+        case RyazhaClkConfigValue_DVFSMode:
             return pretty ? "DVFS Mode" : "dvfs_mode";
 
-        case RClkConfigValue_DVFSOffset:
+        case RyazhaClkConfigValue_DVFSOffset:
             return pretty ? "DVFS Offset" : "dvfs_offset";
 
-        case RClkConfigValue_GPUScheduling:
+        case RyazhaClkConfigValue_GPUScheduling:
             return pretty ? "GPU Scheduling" : "gpu_scheduling";
 
-        case RClkConfigValue_GPUSchedulingMethod:
+        case RyazhaClkConfigValue_GPUSchedulingMethod:
             return pretty ? "GPU Scheduling Method" : "gpu_sched_method";
 
-        case RClkConfigValue_LiveCpuUv:
+        case RyazhaClkConfigValue_LiveCpuUv:
             return pretty ? "Live CPU Undervolt" : "live_cpu_uv";
 
-        case RClkConfigValue_EnableExperimentalSettings:
+        case RyazhaClkConfigValue_EnableExperimentalSettings:
             return pretty ? "Enable Experimental Settings" : "enable_experimental_settings";
 
-        case RClkConfigValue_RAMVoltDisplayMode:
+        case RyazhaClkConfigValue_RAMVoltDisplayMode:
             return pretty ? "RAM Voltage / Usage Display Mode" : "ram_volt_usage_display_mode";
-        case RClkConfigValue_CpuGovernorMinimumFreq:
+        case RyazhaClkConfigValue_CpuGovernorMinimumFreq:
             return pretty ? "CPU Governor Minimum Frequency" : "cpu_gov_min_freq";
 
-        case RClkConfigValue_DisplayVoltage:
+        case RyazhaClkConfigValue_DisplayVoltage:
             return pretty ? "Display Voltage" : "display_voltage";
 
-        case RClkConfigValue_MemoryFrequencyMeasurementMode:
+        case RyazhaClkConfigValue_MemoryFrequencyMeasurementMode:
             return pretty ? "RAM Frequency Measurement Mode" : "mem_freq_measurement_mode";
 
-        case RClkConfigValue_RamDisplayUnit:
+        case RyazhaClkConfigValue_RamDisplayUnit:
             return pretty ? "RAM Frequency Display Unit" : "RAM_display_unit";
-        case RClkConfigValue_AulaDisplayColorPreset:
+        case RyazhaClkConfigValue_AulaDisplayColorPreset:
             return pretty ? "Aula Display Color Preset" : "aula_color_preset";
-        case RClkConfigValue_MarikoMiddleFreqs:
+        case RyazhaClkConfigValue_MarikoMiddleFreqs:
             return pretty ? "Mariko Middle Clocks" : "mariko_middle_freqs";
         // KIP config values
         case KipConfigValue_custRev:
@@ -306,8 +295,6 @@ static inline const char* rclkFormatConfigValue(RClkConfigValue val, bool pretty
             return pretty ? "KIP Version" : "kip_version";
         // case KipConfigValue_mtcConf:
         //     return pretty ? "MTC Config" : "kip_mtc_conf";
-        case KipConfigValue_gpuSpeedo:
-            return pretty ? "GPU Speedo" : "gpu_speedo";
         case KipConfigValue_hpMode:
             return pretty ? "HP Mode" : "kip_hp_mode";
 
@@ -315,11 +302,7 @@ static inline const char* rclkFormatConfigValue(RClkConfigValue val, bool pretty
         case KipConfigValue_commonEmcMemVolt:
             return pretty ? "Common EMC/MEM Voltage" : "common_emc_mem_volt";
         case KipConfigValue_eristaEmcMaxClock:
-            return pretty ? "Erista EMC Max Clock" : "erista_emc_max_clock";
-        case KipConfigValue_eristaEmcMaxClock1:
-            return pretty ? "Erista EMC Max Clock (1)" : "erista_emc_max_clock_1";
-        case KipConfigValue_eristaEmcMaxClock2:
-            return pretty ? "Erista EMC Max Clock (2)" : "erista_emc_max_clock_2";
+            return pretty ? "Erista EMC Max Clock" : "erista_emc_max_clock2";
         case KipConfigValue_stepMode:
             return pretty ? "Step Mode:" : "step_mode";
         case KipConfigValue_marikoEmcMaxClock:
@@ -357,11 +340,6 @@ static inline const char* rclkFormatConfigValue(RClkConfigValue val, bool pretty
 
         case KipConfigValue_t2_tRP_cap:
             return pretty ? "t2 - trp 1333WL Cap" : "t2_tRP_cap";
-
-        case KipConfigValue_mem_burst_read_latency:
-            return pretty ? "Mem Burst Read Latency" : "mem_burst_read_latency";
-        case KipConfigValue_mem_burst_write_latency:
-            return pretty ? "Mem Burst Write Latency" : "mem_burst_write_latency";
 
         case KipConfigValue_read_latency_1333:
             return pretty ? "1333 Read Latency" : "read_latency_1333";
@@ -490,93 +468,94 @@ static inline const char* rclkFormatConfigValue(RClkConfigValue val, bool pretty
         case KipConfigValue_t7_tWTR_fine_tune: return pretty ? "t7 - tWTR Fine Tune" : "t7_tWTR_fine_tune";
         case KipCrc32:
             return pretty ? "CRC32" : "crc32";
-        case RClkConfigValue_IsFirstLoad:
+        case RyazhaClkConfigValue_IsFirstLoad:
             return pretty ? "Is First Load" : "is_first_load";
         default:
             return pretty ? "[cfg] no enum format string" : "err_no_format_string";
     }
 }
 
-static inline uint64_t rclkDefaultConfigValue(RClkConfigValue val)
+static inline uint64_t hocclkDefaultConfigValue(RyazhaClkConfigValue val)
 {
     switch(val)
     {
-        case RClkConfigValue_PollingIntervalMs:
+        case RyazhaClkConfigValue_PollingIntervalMs:
             return 300ULL;
-        case RClkConfigValue_TempLogIntervalMs:
-        case RClkConfigValue_FreqLogIntervalMs:
-        case RClkConfigValue_PowerLogIntervalMs:
-        case RClkConfigValue_CsvWriteIntervalMs:
-        case RClkConfigValue_UncappedClocks:
-        case RClkConfigValue_OverwriteBoostMode:
-        case RClkConfigValue_BatteryChargeCurrent:
-        case RClkConfigValue_OverwriteRefreshRate:
-        case RClkConfigValue_GPUScheduling:
-        case RClkConfigValue_LiveCpuUv:
-        case RClkConfigValue_GPUSchedulingMethod:
-        case RClkConfigValue_MemoryFrequencyMeasurementMode:
-        case RClkConfigValue_MarikoMiddleFreqs:
+        case RyazhaClkConfigValue_TempLogIntervalMs:
+        case RyazhaClkConfigValue_FreqLogIntervalMs:
+        case RyazhaClkConfigValue_PowerLogIntervalMs:
+        case RyazhaClkConfigValue_CsvWriteIntervalMs:
+        case RyazhaClkConfigValue_UncappedClocks:
+        case RyazhaClkConfigValue_OverwriteBoostMode:
+        case RyazhaClkConfigValue_BatteryChargeCurrent:
+        case RyazhaClkConfigValue_OverwriteRefreshRate:
+        case RyazhaClkConfigValue_GPUScheduling:
+        case RyazhaClkConfigValue_LiveCpuUv:
+        case RyazhaClkConfigValue_GPUSchedulingMethod:
+        case RyazhaClkConfigValue_MemoryFrequencyMeasurementMode:
+        case RyazhaClkConfigValue_MarikoMiddleFreqs:
             return 0ULL;
-        case RClkConfigValue_RamDisplayUnit:
+        case RyazhaClkConfigValue_RamDisplayUnit:
             return (uint64_t)RamDisplayUnit_MHz;
-        case RClkConfigValue_EristaMaxCpuClock:
+        case RyazhaClkConfigValue_EristaMaxCpuClock:
             return 1785ULL;
 
-        case RClkConfigValue_MarikoMaxCpuClock:
+        case RyazhaClkConfigValue_MarikoMaxCpuClock:
             return 1963ULL;
 
-        case RClkConfigValue_ThermalThrottle:
-        case RClkConfigValue_HandheldTDP:
-        case RClkConfigValue_IsFirstLoad:
-        case RClkConfigValue_DVFSMode:
+        case RyazhaClkConfigValue_ThermalThrottle:
+        case RyazhaClkConfigValue_HandheldTDP:
+        case RyazhaClkConfigValue_IsFirstLoad:
+        case RyazhaClkConfigValue_DVFSMode:
             return 1ULL;
-        case RClkConfigValue_ThermalThrottleThreshold:
+        case RyazhaClkConfigValue_ThermalThrottleThreshold:
             return 70ULL;
-        case RClkConfigValue_HandheldTDPLimit:
+        case RyazhaClkConfigValue_HandheldTDPLimit:
             return 9600ULL; // 8600mW will trigger on erista stock, so raise it a bit
-        case RClkConfigValue_LiteTDPLimit:
+        case RyazhaClkConfigValue_LiteTDPLimit:
             return 6400ULL; // 0.5C
-        case RClkConfigValue_CpuGovernorMinimumFreq:
+        case RyazhaClkConfigValue_CpuGovernorMinimumFreq:
             return 612000000ULL; // 612MHz
-        case RClkConfigValue_MaxDisplayClockH:
+        case RyazhaClkConfigValue_MaxDisplayClockH:
             return 60ULL;
-        case RClkConfigValue_DisplayVoltage:
+        case RyazhaClkConfigValue_DisplayVoltage:
             return 1200ULL; // Auto
-        case RClkConfigValue_AulaDisplayColorPreset:
+        case RyazhaClkConfigValue_AulaDisplayColorPreset:
             return AulaDisplayColorMode_DoNotOverride;
         default:
             return 0ULL;
     }
 }
 
-static inline uint64_t rclkValidConfigValue(RClkConfigValue val, uint64_t input)
+static inline uint64_t hocclkValidConfigValue(RyazhaClkConfigValue val, uint64_t input)
 {
     switch(val)
     {
-        case RClkConfigValue_EristaMaxCpuClock:
-        case RClkConfigValue_MarikoMaxCpuClock:
-        case RClkConfigValue_ThermalThrottleThreshold:
-        case RClkConfigValue_HandheldTDPLimit:
-        case RClkConfigValue_LiteTDPLimit:
-        case RClkConfigValue_PollingIntervalMs:
-        case RClkConfigValue_MaxDisplayClockH:
+        case RyazhaClkConfigValue_EristaMaxCpuClock:
+        case RyazhaClkConfigValue_MarikoMaxCpuClock:
+        case RyazhaClkConfigValue_ThermalThrottleThreshold:
+        case RyazhaClkConfigValue_HandheldTDPLimit:
+        case RyazhaClkConfigValue_LiteTDPLimit:
+        case RyazhaClkConfigValue_PollingIntervalMs:
+        case RyazhaClkConfigValue_MaxDisplayClockH:
             return input > 0;
 
-        case RClkConfigValue_TempLogIntervalMs:
-        case RClkConfigValue_FreqLogIntervalMs:
-        case RClkConfigValue_PowerLogIntervalMs:
-        case RClkConfigValue_CsvWriteIntervalMs:
-        case RClkConfigValue_UncappedClocks:
-        case RClkConfigValue_OverwriteBoostMode:
-        case RClkConfigValue_ThermalThrottle:
-        case RClkConfigValue_HandheldTDP:
-        case RClkConfigValue_OverwriteRefreshRate:
-        case RClkConfigValue_IsFirstLoad:
-        case RClkConfigValue_EnableExperimentalSettings:
-        case RClkConfigValue_LiveCpuUv:
-        case RClkConfigValue_GPUSchedulingMethod:
-        case RClkConfigValue_MarikoMiddleFreqs:
+        case RyazhaClkConfigValue_TempLogIntervalMs:
+        case RyazhaClkConfigValue_FreqLogIntervalMs:
+        case RyazhaClkConfigValue_PowerLogIntervalMs:
+        case RyazhaClkConfigValue_CsvWriteIntervalMs:
+        case RyazhaClkConfigValue_UncappedClocks:
+        case RyazhaClkConfigValue_OverwriteBoostMode:
+        case RyazhaClkConfigValue_ThermalThrottle:
+        case RyazhaClkConfigValue_HandheldTDP:
+        case RyazhaClkConfigValue_OverwriteRefreshRate:
+        case RyazhaClkConfigValue_IsFirstLoad:
+        case RyazhaClkConfigValue_EnableExperimentalSettings:
+        case RyazhaClkConfigValue_LiveCpuUv:
+        case RyazhaClkConfigValue_GPUSchedulingMethod:
+        case RyazhaClkConfigValue_MarikoMiddleFreqs:
             return (input & 0x1) == input;
+            
         case KipConfigValue_KipVersion:
         case KipConfigValue_custRev:
         // case KipConfigValue_mtcConf:
@@ -682,18 +661,18 @@ static inline uint64_t rclkValidConfigValue(RClkConfigValue val, uint64_t input)
         case KipConfigValue_t6_tRTW_fine_tune:
         case KipConfigValue_t7_tWTR_fine_tune:
         case KipCrc32:
-        case RClkConfigValue_DVFSMode:
-        case RClkConfigValue_DVFSOffset:
-        case RClkConfigValue_GPUScheduling:
-        case RClkConfigValue_RAMVoltDisplayMode:
-        case RClkConfigValue_CpuGovernorMinimumFreq:
-        case RClkConfigValue_MemoryFrequencyMeasurementMode:
-        case RClkConfigValue_RamDisplayUnit:
-        case RClkConfigValue_AulaDisplayColorPreset:
+        case RyazhaClkConfigValue_DVFSMode:
+        case RyazhaClkConfigValue_DVFSOffset:
+        case RyazhaClkConfigValue_GPUScheduling:
+        case RyazhaClkConfigValue_RAMVoltDisplayMode:
+        case RyazhaClkConfigValue_CpuGovernorMinimumFreq:
+        case RyazhaClkConfigValue_MemoryFrequencyMeasurementMode:
+        case RyazhaClkConfigValue_RamDisplayUnit:
+        case RyazhaClkConfigValue_AulaDisplayColorPreset:
             return true;
-        case RClkConfigValue_BatteryChargeCurrent:
+        case RyazhaClkConfigValue_BatteryChargeCurrent:
             return ((input >= 1024) && (input <= 3072)) || !input;
-        case RClkConfigValue_DisplayVoltage:
+        case RyazhaClkConfigValue_DisplayVoltage:
             return ((input >= 800) && (input <= 1325));
 
         default:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -37,7 +37,7 @@
         ERROR_RESULT_THROW(rc, "ASSERT_RESULT_OK: " format, ##__VA_ARGS__); \
     }
 #define ASSERT_ENUM_VALID(n, v)               \
-    if (!RCLK_ENUM_VALID(n, v)) {           \
+    if (!HOCCLK_ENUM_VALID(n, v)) {           \
         ERROR_THROW("No such %s: %u", #n, v); \
     }
 

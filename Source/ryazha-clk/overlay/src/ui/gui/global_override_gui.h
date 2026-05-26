@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -30,21 +30,16 @@
 #include "freq_choice_gui.h"
 #include <string>
 #include "value_choice_gui.h"
-#include "display_hz_trackbar.hpp"
 class GlobalOverrideGui : public BaseMenuGui
 {
     protected:
-        std::map<RClkModule, std::tuple<std::string, std::uint32_t, int>> customFormatModules;
-        tsl::elm::ListItem* listItems[RClkModule_EnumMax];
-        std::uint32_t listHz[RClkModule_EnumMax];
-        // Side-table для DisplayHzTrackBar -- live, не ListItem, поэтому
-        // не лезет в listItems[]. refresh() синкает его отдельно.
-        ryazha_ui::DisplayHzTrackBar* displayHzBar = nullptr;
-        std::uint32_t lastDisplayHz = 0;
-        void openFreqChoiceGui(RClkModule module);
+        std::map<RyazhaClkModule, std::tuple<std::string, std::uint32_t, int>> customFormatModules;
+        tsl::elm::ListItem* listItems[RyazhaClkModule_EnumMax];
+        std::uint32_t listHz[RyazhaClkModule_EnumMax];
+        void openFreqChoiceGui(RyazhaClkModule module);
         void addGovernorSection();
-        void addModuleListItem(RClkModule module);
-        void addModuleToggleItem(RClkModule module);
+        void addModuleListItem(RyazhaClkModule module);
+        void addModuleToggleItem(RyazhaClkModule module);
         void openValueChoiceGui(
             tsl::elm::ListItem* listItem,
             std::uint32_t currentValue,
@@ -58,7 +53,7 @@ class GlobalOverrideGui : public BaseMenuGui
             bool showDefaultValue
         );
         void addModuleListItemValue(
-            RClkModule module,
+            RyazhaClkModule module,
             const std::string& categoryName,
             std::uint32_t min,
             std::uint32_t max,
@@ -75,5 +70,5 @@ class GlobalOverrideGui : public BaseMenuGui
         ~GlobalOverrideGui() {}
         void listUI() override;
         void refresh() override;
-        void setModuleCustomFormat(RClkModule module, const std::string& suffix, std::uint32_t divisor, int decimalPlaces);
+        void setModuleCustomFormat(RyazhaClkModule module, const std::string& suffix, std::uint32_t divisor, int decimalPlaces);
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -34,35 +34,35 @@ typedef struct {
 
     /*
      * This "stable struct" must never be modified. It provides a fixed memory layout so external clients can safely read the expected fields even
-     * if RClkContext changes in newer versions and the client is not recompiled.
+     * if RyazhaClkContext changes in newer versions and the client is not recompiled.
      */
     struct {
-        #define RClkModuleStable_EnumMax 5
-        #define RClkThermalSensorStable_EnumMax 11
-        #define RClkPowerSensorStable_EnumMax 2
-        #define RClkPartLoadStable_EnumMax 10
-        #define RClkVoltageStable_EnumMax 7
+        #define RyazhaClkModuleStable_EnumMax 5
+        #define RyazhaClkThermalSensorStable_EnumMax 11
+        #define RyazhaClkPowerSensorStable_EnumMax 2
+        #define RyazhaClkPartLoadStable_EnumMax 10
+        #define RyazhaClkVoltageStable_EnumMax 7
 
-        u32 freqs[RClkModuleStable_EnumMax];
-        u32 realFreqs[RClkModuleStable_EnumMax];
-        u32 overrideFreqs[RClkModuleStable_EnumMax];
-        s32 temps[RClkThermalSensorStable_EnumMax];
-        s32 power[RClkPowerSensorStable_EnumMax];
-        u32 partLoad[RClkPartLoadStable_EnumMax];
-        u32 voltages[RClkVoltageStable_EnumMax];
+        u32 freqs[RyazhaClkModuleStable_EnumMax];
+        u32 realFreqs[RyazhaClkModuleStable_EnumMax];
+        u32 overrideFreqs[RyazhaClkModuleStable_EnumMax];
+        s32 temps[RyazhaClkThermalSensorStable_EnumMax];
+        s32 power[RyazhaClkPowerSensorStable_EnumMax];
+        u32 partLoad[RyazhaClkPartLoadStable_EnumMax];
+        u32 voltages[RyazhaClkVoltageStable_EnumMax];
     } stable;
 
     uint64_t applicationId;
-    RClkProfile profile;
-    uint32_t freqs[RClkModule_EnumMax];
-    uint32_t realFreqs[RClkModule_EnumMax];
-    uint32_t overrideFreqs[RClkModule_EnumMax];
-    int32_t temps[RClkThermalSensor_EnumMax];
-    int32_t power[RClkPowerSensor_EnumMax];
-    uint32_t partLoad[RClkPartLoad_EnumMax];
-    uint32_t voltages[RClkVoltage_EnumMax];
-    u16 speedos[RClkSpeedo_EnumMax];
-    u16 iddq[RClkSpeedo_EnumMax];
+    RyazhaClkProfile profile;
+    uint32_t freqs[RyazhaClkModule_EnumMax];
+    uint32_t realFreqs[RyazhaClkModule_EnumMax];
+    uint32_t overrideFreqs[RyazhaClkModule_EnumMax];
+    int32_t temps[RyazhaClkThermalSensor_EnumMax];
+    int32_t power[RyazhaClkPowerSensor_EnumMax];
+    uint32_t partLoad[RyazhaClkPartLoad_EnumMax];
+    uint32_t voltages[RyazhaClkVoltage_EnumMax];
+    u16 speedos[RyazhaClkSpeedo_EnumMax];
+    u16 iddq[RyazhaClkSpeedo_EnumMax];
     s16 waferX;
     s16 waferY;
 
@@ -74,7 +74,7 @@ typedef struct {
     u8 maxDisplayFreq;
     u8 dramID;
     bool isDram8GB;
-    RClkConsoleType consoleType;
+    RyazhaClkConsoleType consoleType;
 
     // FPS / Resolution
     u8 fps;
@@ -84,18 +84,18 @@ typedef struct {
 
     // Reserved for future use
     u8 reserved[0x35B];
-} RClkContext;
+} RyazhaClkContext;
 
 typedef struct
 {
     union {
-        uint32_t mhz[+RClkProfile_EnumMax * +RClkModule_EnumMax];
-        uint32_t mhzMap[+RClkProfile_EnumMax][+RClkModule_EnumMax];
+        uint32_t mhz[+RyazhaClkProfile_EnumMax * +RyazhaClkModule_EnumMax];
+        uint32_t mhzMap[+RyazhaClkProfile_EnumMax][+RyazhaClkModule_EnumMax];
     };
-} RClkTitleProfileList;
+} RyazhaClkTitleProfileList;
 
-#define RCLK_FREQ_LIST_MAX 48
+#define HOCCLK_FREQ_LIST_MAX 48
 
-#define RCLK_GLOBAL_PROFILE_TID 0xA111111111111111
+#define HOCCLK_GLOBAL_PROFILE_TID 0xA111111111111111
 
-static_assert(sizeof(RClkContext) == 0x500);
+static_assert(sizeof(RyazhaClkContext) == 0x500);

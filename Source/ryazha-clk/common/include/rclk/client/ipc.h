@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -31,32 +31,27 @@
 #include "../config.h"
 #include "../board.h"
 #include "../ipc.h"
-#include "../auto_ryazha.h"
 
-bool rclkIpcRunning();
-Result rclkIpcInitialize(void);
-void rclkIpcExit(void);
+bool hocclkIpcRunning();
+Result hocclkIpcInitialize(void);
+void hocclkIpcExit(void);
 
-Result rclkIpcGetAPIVersion(u32* out_ver);
-Result rclkIpcGetVersionString(char* out, size_t len);
-Result rclkIpcGetCurrentContext(RClkContext* out_context);
-Result rclkIpcGetProfileCount(u64 tid, u8* out_count);
-Result rclkIpcSetEnabled(bool enabled);
-Result rclkIpcExitCmd();
-Result rclkIpcSetOverride(RClkModule module, u32 hz);
-Result rclkIpcGetProfiles(u64 tid, RClkTitleProfileList* out_profiles);
-Result rclkIpcSetProfiles(u64 tid, RClkTitleProfileList* profiles);
-Result rclkIpcGetConfigValues(RClkConfigValueList* out_configValues);
-Result rclkIpcSetConfigValues(RClkConfigValueList* configValues);
-Result rclkIpcGetFreqList(RClkModule module, u32* list, u32 maxCount, u32* outCount);
+Result hocclkIpcGetAPIVersion(u32* out_ver);
+Result hocclkIpcGetVersionString(char* out, size_t len);
+Result hocclkIpcGetCurrentContext(RyazhaClkContext* out_context);
+Result hocclkIpcGetProfileCount(u64 tid, u8* out_count);
+Result hocclkIpcSetEnabled(bool enabled);
+Result hocclkIpcExitCmd();
+Result hocclkIpcSetOverride(RyazhaClkModule module, u32 hz);
+Result hocclkIpcGetProfiles(u64 tid, RyazhaClkTitleProfileList* out_profiles);
+Result hocclkIpcSetProfiles(u64 tid, RyazhaClkTitleProfileList* profiles);
+Result hocclkIpcGetConfigValues(RyazhaClkConfigValueList* out_configValues);
+Result hocclkIpcSetConfigValues(RyazhaClkConfigValueList* configValues);
+Result hocclkIpcGetFreqList(RyazhaClkModule module, u32* list, u32 maxCount, u32* outCount);
 Result hocClkIpcSetKipData();
 Result hocClkIpcGetKipData();
 
-// Ryazha-Авто (auto_ryazha) IPC -- snapshot/replace RClkLadderConfig.
-Result rclkIpcGetLadderConfig(RClkLadderConfig* out_cfg);
-Result rclkIpcSetLadderConfig(const RClkLadderConfig* cfg);
-
-static inline Result rclkIpcRemoveOverride(RClkModule module)
+static inline Result hocclkIpcRemoveOverride(RyazhaClkModule module)
 {
-    return rclkIpcSetOverride(module, 0);
+    return hocclkIpcSetOverride(module, 0);
 }

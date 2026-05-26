@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -45,7 +45,7 @@
 
 namespace board {
 
-    s32 GetTemperatureMilli(RClkThermalSensor sensor) {
+    s32 GetTemperatureMilli(RyazhaClkThermalSensor sensor) {
         s32 millis = 0;
         BatteryChargeInfo info;
 
@@ -53,15 +53,15 @@ namespace board {
         tsensor::ReadTSensors(temps);
 
         switch(sensor) {
-            case RClkThermalSensor_SOC: {
+            case RyazhaClkThermalSensor_SOC: {
                 millis = tmp451TempSoc();
                 break;
             }
-            case RClkThermalSensor_PCB: {
+            case RyazhaClkThermalSensor_PCB: {
                 millis = tmp451TempPcb();
                 break;
             }
-            case RClkThermalSensor_Skin: {
+            case RyazhaClkThermalSensor_Skin: {
                 if (HOSSVC_HAS_TC) {
                     Result rc;
                     rc = tcGetSkinTemperatureMilliC(&millis);
@@ -69,59 +69,59 @@ namespace board {
                 }
                 break;
             }
-            case RClkThermalSensor_Battery: {
+            case RyazhaClkThermalSensor_Battery: {
                 batteryInfoGetChargeInfo(&info);
                 millis = batteryInfoGetTemperatureMiliCelsius(&info);
                 break;
             }
-            case RClkThermalSensor_PMIC: {
+            case RyazhaClkThermalSensor_PMIC: {
                 millis = 50000;
                 break;
             }
-            case RClkThermalSensor_CPU: {
+            case RyazhaClkThermalSensor_CPU: {
                 millis = temps.cpu;
                 break;
             }
-            case RClkThermalSensor_GPU: {
+            case RyazhaClkThermalSensor_GPU: {
                 millis = temps.gpu;
                 break;
             }
-            case RClkThermalSensor_MEM: {
-                if (board::GetSocType() == RClkSocType_Mariko && tsensor::IsInitialized() && tsensor::ReadAotag() > 0) {
+            case RyazhaClkThermalSensor_MEM: {
+                if (board::GetSocType() == RyazhaClkSocType_Mariko && tsensor::IsInitialized() && tsensor::ReadAotag() > 0) {
                     millis = (temps.pllx * 0.10f) + (tsensor::ReadAotag() * 0.90f);
                 } else {
-                    millis = board::GetSocType() == RClkSocType_Mariko ? temps.pllx : temps.mem;
+                    millis = board::GetSocType() == RyazhaClkSocType_Mariko ? temps.pllx : temps.mem;
                 }
                 break;
             }
-            case RClkThermalSensor_PLLX: {
+            case RyazhaClkThermalSensor_PLLX: {
                 millis = temps.pllx;
                 break;
             }
-            case RClkThermalSensor_BQ24193: {
+            case RyazhaClkThermalSensor_BQ24193: {
                 millis = bq24193::getBQTemp();
                 break;
             }
-            case RClkThermalSensor_AO: {
+            case RyazhaClkThermalSensor_AO: {
                 millis = tsensor::ReadAotag();
                 break;
             }
             default: {
-                ASSERT_ENUM_VALID(RClkThermalSensor, sensor);
+                ASSERT_ENUM_VALID(RyazhaClkThermalSensor, sensor);
             }
         }
 
         return std::max(0, millis);
     }
 
-    s32 GetPowerMw(RClkPowerSensor sensor) {
+    s32 GetPowerMw(RyazhaClkPowerSensor sensor) {
         switch (sensor) {
-            case RClkPowerSensor_Now:
+            case RyazhaClkPowerSensor_Now:
                 return max17050PowerNow();
-            case RClkPowerSensor_Avg:
+            case RyazhaClkPowerSensor_Avg:
                 return max17050PowerAvg();
             default:
-                ASSERT_ENUM_VALID(RClkPowerSensor, sensor);
+                ASSERT_ENUM_VALID(RyazhaClkPowerSensor, sensor);
         }
 
         return 0;

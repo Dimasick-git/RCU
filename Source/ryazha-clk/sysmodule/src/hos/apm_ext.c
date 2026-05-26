@@ -25,55 +25,59 @@
  */
 
 
-#pragma once
+#include "apm_ext.h"
 
-#ifdef __cplusplus
-extern "C"
+#include <stdatomic.h>
+
+static Service g_apmSrv;
+static Service g_apmSysSrv;
+static atomic_size_t g_refCnt;
+
+Result apmExtInitialize(void)
 {
-#endif
+    g_refCnt++;
 
-#include <switch.h>
-
-#define IPC_SERVER_EXT_RESPONSE_MAX_DATA_SIZE (0x100 - 0x10 - sizeof(IpcServerRawHeader))
-
-typedef struct
-{
-    u64 magic;
-    union
+    if (serviceIsActive(&g_apmSrv))
     {
-        u64 cmdId;
-        u64 result;
-    };
-} IpcServerRawHeader;
+        return 0;
+    }
 
-typedef struct
-{
-    SmServiceName srvName;
-    Handle handles[MAX_WAIT_OBJECTS];
-    u32 max;
-    u32 count;
-} IpcServer;
+    Result rc = 0;
 
-typedef struct
-{
-    u64 cmdId;
-    void* ptr;
-    size_t size;
-} IpcServerRequestData;
+    rc = smGetService(&g_apmSrv, "apm");
+    if(R_SUCCEEDED(rc))
+    {
+        rc = smGetService(&g_apmSysSrv, "apm:sys");
+    }
 
-typedef struct
-{
-    HipcParsedRequest hipc;
-    IpcServerRequestData data;
-} IpcServerRequest;
+    if (R_FAILED(rc))
+    {
+        apmExtExit();
+    }
 
-typedef Result (*IpcServerRequestHandler)(void* userdata, const IpcServerRequest* r, u8* out_data, size_t* out_dataSize);
-
-Result ipcServerInit(IpcServer* server, const char* name, u32 max_sessions);
-Result ipcServerExit(IpcServer* server);
-Result ipcServerProcess(IpcServer* server, IpcServerRequestHandler handler, void* userdata);
-Result ipcServerParseCommand(const IpcServerRequest* r, size_t* out_datasize, void** out_data, u64* out_cmd);
-
-#ifdef __cplusplus
+    return rc;
 }
-#endif
+
+void apmExtExit(void)
+{
+    if (--g_refCnt == 0)
+    {
+        serviceClose(&g_apmSrv);
+        serviceClose(&g_apmSysSrv);
+    }
+}
+
+Result apmExtGetPerformanceMode(u32* out_mode)
+{
+    return serviceDispatchOut(&g_apmSrv, 1, *out_mode);
+}
+
+Result apmExtSysRequestPerformanceMode(u32 mode)
+{
+    return serviceDispatchIn(&g_apmSysSrv, 0, mode);
+}
+
+Result apmExtGetCurrentPerformanceConfiguration(u32* out_conf)
+{
+    return serviceDispatchOut(&g_apmSysSrv, 7, *out_conf);
+}

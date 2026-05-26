@@ -4,7 +4,7 @@
  * Author:
  *	Mikko Perttunen <mperttunen@nvidia.com>
  *
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -483,7 +483,7 @@ namespace tsensor {
         temps.gpu  = TranslateTemp(ReadReg(socthermVa, SENSOR_TEMP1) & SENSOR_TEMP1_GPU_TEMP_MASK);
         temps.pllx = TranslateTemp(ReadReg(socthermVa, SENSOR_TEMP2) & SENSOR_TEMP2_PLLX_TEMP_MASK);
 
-        if (board::GetSocType() == RClkSocType_Erista) {
+        if (board::GetSocType() == RyazhaClkSocType_Erista) {
             temps.mem = TranslateTemp(ReadReg(socthermVa, SENSOR_TEMP2) >> 16);
         } else {
             temps.mem = -1;
@@ -491,7 +491,7 @@ namespace tsensor {
     }
 
     void InitializeSoctherm() {
-        isMariko = board::GetSocType() == RClkSocType_Mariko;
+        isMariko = board::GetSocType() == RyazhaClkSocType_Mariko;
 
         constexpr u64 SocthermPa = 0x700E2000, FusePa = 0x7000F000, CarPa = 0x60006000;
         R_UNLESS(MapAddress(socthermVa, SocthermPa, "soctherm"));

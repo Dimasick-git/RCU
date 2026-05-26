@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -36,9 +36,9 @@ class BaseMenuGui : public BaseGui
 
     public:
         // u8 dockedHighestAllowedRefreshRate = 60;
-        RClkContext* context;
+        RyazhaClkContext* context;
         std::uint64_t lastContextUpdate;
-        RClkConfigValueList configList;
+        RyazhaClkConfigValueList configList;
         bool g_hardwareModelCached = false;
         bool g_isMariko = false;
         bool g_isAula = false;
@@ -87,5 +87,5 @@ class BaseMenuGui : public BaseGui
 
     private:
         char displayStrings[48][32];  // Pre-formatted display strings
-        tsl::Color tempColors[RClkThermalSensor_EnumMax];  // Pre-computed temperature colors
+        tsl::Color tempColors[RyazhaClkThermalSensor_EnumMax];  // Pre-computed temperature colors
 };
