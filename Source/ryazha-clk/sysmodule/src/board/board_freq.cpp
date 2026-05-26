@@ -231,7 +231,7 @@ namespace board {
             rc = apmExtGetCurrentPerformanceConfiguration(&confId);
             ASSERT_RESULT_OK(rc, "apmExtGetCurrentPerformanceConfiguration");
 
-            RyazhaClkApmConfiguration* apmConfiguration = nullptr;
+            RClkApmConfiguration* apmConfiguration = nullptr;
             for (size_t i = 0; rclk_g_apm_configurations[i].id; ++i) {
                 if(rclk_g_apm_configurations[i].id == confId) {
                     apmConfiguration = &rclk_g_apm_configurations[i];
