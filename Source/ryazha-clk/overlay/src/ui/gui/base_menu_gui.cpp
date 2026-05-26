@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -28,18 +28,6 @@
 #include "base_menu_gui.h"
 #include "fatal_gui.h"
 #include "../format.h"
-#include "../../i18n.hpp"
-
-// Cached unit suffixes -- грузим один раз при первом вызове, чтобы
-// sprintf не дёргал mutex i18n::t() по 30 раз каждый refresh.
-namespace {
-    const std::string& UNIT_MHZ() { static std::string s = i18n::t("MHz"); return s; }
-    const std::string& UNIT_MTS() { static std::string s = i18n::t("MT/s"); return s; }
-    const std::string& UNIT_HZ()  { static std::string s = i18n::t("Hz");  return s; }
-    const std::string& UNIT_MV()  { static std::string s = i18n::t("mV");  return s; }
-    const std::string& UNIT_MW()  { static std::string s = i18n::t("mW");  return s; }
-    const std::string& UNIT_NA()  { static std::string s = i18n::t("N/A"); return s; }
-}
 
 // Cache hardware model to avoid repeated syscalls
 
@@ -69,20 +57,10 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
     BaseGui::preDraw(renderer);
     if(!this->context) [[unlikely]] return;
 
-    // Labels через i18n -- юзер хочет видеть ЦП/ГП/РАМ/БАТ/КУЛ. Грузим
-    // один раз и кешируем как static std::string, чтобы getTextDimensions
-    // получал const char*.
-    static const std::string s_lbl[] = {
-        i18n::t("ID"), i18n::t("Profile"),
-        i18n::t("CPU"), i18n::t("GPU"), i18n::t("MEM"),
-        i18n::t("SoC"), i18n::t("Board"), i18n::t("Skin"),
-        i18n::t("Now"), i18n::t("Avg"),
-        i18n::t("BAT"), i18n::t("PMIC"), i18n::t("Fan"),
-        IsAula() ? i18n::t("OLED") : i18n::t("LCD"),
-        i18n::t("FPS"), i18n::t("RES"),
+    // All constants pre-calculated and cached
+    const char* labels[] = {
+        "App ID", "Profile", "CPU", "GPU", "MEM", "SoC", "Board", "Skin", "Now", "Avg", "BAT", "PMIC", "Fan", IsAula() ? "OLED" : "LCD", "FPS", "RES"
     };
-    const char* labels[16];
-    for (int i = 0; i < 16; i++) labels[i] = s_lbl[i].c_str();
 
     static constexpr u32 dataPositions[6] = {63-3+3, 200-1, 344-1-3, 200-1, 342-1, 321-1};
 
@@ -134,9 +112,9 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
     renderer->drawString(displayStrings[6], false, dataPositions[1], y, SMALL_TEXT_SIZE, tsl::infoTextColor);  // GPU real
     renderer->drawString(displayStrings[7], false, dataPositions[2], y, SMALL_TEXT_SIZE, tsl::infoTextColor);  // MEM real
 
-    renderer->drawString(displayStrings[28], false, positions[2], y, SMALL_TEXT_SIZE, tempColors[RClkThermalSensor_CPU]);  // CPU Real Temp
-    renderer->drawString(displayStrings[29], false, positions[3], y, SMALL_TEXT_SIZE, tempColors[RClkThermalSensor_GPU]);  // GPU Real Temp
-    renderer->drawString(displayStrings[30], false, positions[4], y, SMALL_TEXT_SIZE, tempColors[RClkThermalSensor_MEM]);  // RAM Real Temp
+    renderer->drawString(displayStrings[28], false, positions[2], y, SMALL_TEXT_SIZE, tempColors[RyazhaClkThermalSensor_CPU]);  // CPU Real Temp
+    renderer->drawString(displayStrings[29], false, positions[3], y, SMALL_TEXT_SIZE, tempColors[RyazhaClkThermalSensor_GPU]);  // GPU Real Temp
+    renderer->drawString(displayStrings[30], false, positions[4], y, SMALL_TEXT_SIZE, tempColors[RyazhaClkThermalSensor_MEM]);  // RAM Real Temp
 
     // === REAL FREQUENCIES ===
 
@@ -161,9 +139,9 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
     renderer->drawString(labels[7], false, positions[7], y, SMALL_TEXT_SIZE, tsl::sectionTextColor);
 
     // Temperatures with color - use pre-computed colors
-    renderer->drawString(displayStrings[11], false, dataPositions[0] - 1, y, SMALL_TEXT_SIZE, tempColors[RClkThermalSensor_SOC]);  // SOC
-    renderer->drawString(displayStrings[12], false, dataPositions[1], y, SMALL_TEXT_SIZE, tempColors[RClkThermalSensor_PCB]);  // PCB
-    renderer->drawString(displayStrings[13], false, dataPositions[2], y, SMALL_TEXT_SIZE, tempColors[RClkThermalSensor_Skin]);  // Skin
+    renderer->drawString(displayStrings[11], false, dataPositions[0] - 1, y, SMALL_TEXT_SIZE, tempColors[RyazhaClkThermalSensor_SOC]);  // SOC
+    renderer->drawString(displayStrings[12], false, dataPositions[1], y, SMALL_TEXT_SIZE, tempColors[RyazhaClkThermalSensor_PCB]);  // PCB
+    renderer->drawString(displayStrings[13], false, dataPositions[2], y, SMALL_TEXT_SIZE, tempColors[RyazhaClkThermalSensor_Skin]);  // Skin
 
     y += 20; // Direct assignment (191 + 20)
 
@@ -180,7 +158,7 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
 
     renderer->drawString(labels[10], false, positions[2], y, SMALL_TEXT_SIZE, tsl::sectionTextColor);
 
-    renderer->drawString(displayStrings[20], false, dataPositions[0], y, SMALL_TEXT_SIZE, tempColors[RClkThermalSensor_Battery]);  // Battery
+    renderer->drawString(displayStrings[20], false, dataPositions[0], y, SMALL_TEXT_SIZE, tempColors[RyazhaClkThermalSensor_Battery]);  // Battery
 
     renderer->drawString(labels[12], false, positions[3], y, SMALL_TEXT_SIZE, tsl::sectionTextColor); // fan label
 
@@ -212,9 +190,8 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
 void BaseMenuGui::refresh()
 {
     const u64 ticks = armGetSystemTick();
-    // 200ms gating -- юзер кликает -> видит изменение через ~1 кадр UI.
-    // Раньше было 1с (1e9ns) и казалось "overlay завис".
-    if (armTicksToNs(ticks - this->lastContextUpdate) <= 200000000UL) [[likely]] {
+    // Use cached comparison - 1 billion nanoseconds
+    if (armTicksToNs(ticks - this->lastContextUpdate) <= 1000000000UL) [[likely]] {
         return; // Early exit for most calls
     }
 
@@ -222,7 +199,7 @@ void BaseMenuGui::refresh()
 
     // Lazy context allocation
     if (!this->context) [[unlikely]] {
-        this->context = new RClkContext;
+        this->context = new RyazhaClkContext;
     }
 
     Result rc = rclkIpcGetCurrentContext(this->context);
@@ -243,102 +220,102 @@ void BaseMenuGui::refresh()
     sprintf(displayStrings[0], "%016lX", context->applicationId);
 
     // Profile
-    strcpy(displayStrings[1], rclkFormatProfile(context->profile, true));
+    strcpy(displayStrings[1], hocclkFormatProfile(context->profile, true));
 
     // Current frequencies
-    u32 hz = context->freqs[RClkModule_CPU]; // CPU
-    sprintf(displayStrings[2], "%u.%u %s", hz / 1000000U, (hz / 100000U) % 10U, UNIT_MHZ().c_str());
+    u32 hz = context->freqs[RyazhaClkModule_CPU]; // CPU
+    sprintf(displayStrings[2], "%u.%u MHz", hz / 1000000U, (hz / 100000U) % 10U);
 
-    hz = context->freqs[RClkModule_GPU]; // GPU
-    sprintf(displayStrings[3], "%u.%u %s", hz / 1000000U, (hz / 100000U) % 10U, UNIT_MHZ().c_str());
+    hz = context->freqs[RyazhaClkModule_GPU]; // GPU
+    sprintf(displayStrings[3], "%u.%u MHz", hz / 1000000U, (hz / 100000U) % 10U);
 
-    hz = context->freqs[RClkModule_MEM]; // MEM
-    std::uint32_t unit = configList.values[RClkConfigValue_RamDisplayUnit];
+    hz = context->freqs[RyazhaClkModule_MEM]; // MEM
+    std::uint32_t unit = configList.values[RyazhaClkConfigValue_RamDisplayUnit];
     std::uint32_t mhz = hz / 1000000U;
     std::uint32_t mts = mhz * 2;
     std::uint32_t tenth = (hz / 100000U) % 10U;
     if(unit == RamDisplayUnit_MTs)
-        sprintf(displayStrings[4], "%u %s", mts, UNIT_MTS().c_str());
+        sprintf(displayStrings[4], "%u MT/s", mts);
     else if(unit == RamDisplayUnit_MHz)
-        sprintf(displayStrings[4], "%u.%u %s", mhz, tenth, UNIT_MHZ().c_str());
+        sprintf(displayStrings[4], "%u.%u MHz", mhz, tenth);
     else if(unit == RamDisplayUnit_MHzMTs) {
-        hz = context->realFreqs[RClkModule_MEM];
+        hz = context->realFreqs[RyazhaClkModule_MEM];
         mhz = hz / 1000000U;
         tenth = (hz / 100000U) % 10U;
         sprintf(displayStrings[4], "%u.%u MHz", mhz, tenth);
     }
 
     // Real frequencies
-    hz = context->realFreqs[RClkModule_CPU]; // CPU
-    sprintf(displayStrings[5], "%u.%u %s", hz / 1000000U, (hz / 100000U) % 10U, UNIT_MHZ().c_str());
+    hz = context->realFreqs[RyazhaClkModule_CPU]; // CPU
+    sprintf(displayStrings[5], "%u.%u MHz", hz / 1000000U, (hz / 100000U) % 10U);
 
-    hz = context->realFreqs[RClkModule_GPU]; // GPU
-    sprintf(displayStrings[6], "%u.%u %s", hz / 1000000U, (hz / 100000U) % 10U, UNIT_MHZ().c_str());
+    hz = context->realFreqs[RyazhaClkModule_GPU]; // GPU
+    sprintf(displayStrings[6], "%u.%u MHz", hz / 1000000U, (hz / 100000U) % 10U);
 
-    hz = context->realFreqs[RClkModule_MEM]; // MEM
-    unit = configList.values[RClkConfigValue_RamDisplayUnit];
+    hz = context->realFreqs[RyazhaClkModule_MEM]; // MEM
+    unit = configList.values[RyazhaClkConfigValue_RamDisplayUnit];
     mhz = hz / 1000000U;
     mts = mhz * 2;
     tenth = (hz / 100000U) % 10U;
     if(unit == RamDisplayUnit_MTs || unit == RamDisplayUnit_MHzMTs)
-        sprintf(displayStrings[7], "%u %s", mts, UNIT_MTS().c_str());
+        sprintf(displayStrings[7], "%u MT/s", mts);
     else
-        sprintf(displayStrings[7], "%u.%u %s", mhz, tenth, UNIT_MHZ().c_str());
+        sprintf(displayStrings[7], "%u.%u MHz", mhz, tenth);
 
     // Voltages
-    sprintf(displayStrings[8], "%.1f %s", context->voltages[RClkVoltage_CPU] / 1000.0, UNIT_MV().c_str());
-    sprintf(displayStrings[9], "%.1f %s", context->voltages[RClkVoltage_GPU] / 1000.0, UNIT_MV().c_str());
+    sprintf(displayStrings[8], "%.1f mV", context->voltages[RyazhaClkVoltage_CPU] / 1000.0);
+    sprintf(displayStrings[9], "%.1f mV", context->voltages[RyazhaClkVoltage_GPU] / 1000.0);
 
-    switch(configList.values[RClkConfigValue_RAMVoltDisplayMode]) {
+    switch(configList.values[RyazhaClkConfigValue_RAMVoltDisplayMode]) {
         case RamDisplayMode_VDD2:
-            sprintf(displayStrings[10], "%u.%u %s", context->voltages[RClkVoltage_EMCVDD2] / 1000U, (context->voltages[RClkVoltage_EMCVDD2] % 1000U) / 100U, UNIT_MV().c_str());
+            sprintf(displayStrings[10], "%u.%u mV", context->voltages[RyazhaClkVoltage_EMCVDD2] / 1000U, (context->voltages[RyazhaClkVoltage_EMCVDD2] % 1000U) / 100U);
             break;
         case RamDisplayMode_VDDQ:
-            sprintf(displayStrings[10], "%u.%u %s", context->voltages[RClkVoltage_EMCVDDQ] / 1000U, (context->voltages[RClkVoltage_EMCVDDQ] % 1000U) / 100U, UNIT_MV().c_str());
+            sprintf(displayStrings[10], "%u.%u mV", context->voltages[RyazhaClkVoltage_EMCVDDQ] / 1000U, (context->voltages[RyazhaClkVoltage_EMCVDDQ] % 1000U) / 100U);
             break;
         default:
-            strcpy(displayStrings[10], UNIT_NA().c_str());
+            strcpy(displayStrings[10], "N/A");
             break;
     }
 
     // Temperatures and pre-compute colors
-    u32 millis = context->temps[RClkThermalSensor_SOC]; // SOC
+    u32 millis = context->temps[RyazhaClkThermalSensor_SOC]; // SOC
     sprintf(displayStrings[11], "%u.%u °C", millis / 1000U, (millis % 1000U) / 100U);
-    tempColors[RClkThermalSensor_SOC] = tsl::GradientColor(millis * 0.001f);
+    tempColors[RyazhaClkThermalSensor_SOC] = tsl::GradientColor(millis * 0.001f);
 
-    millis = context->temps[RClkThermalSensor_PCB]; // PCB
+    millis = context->temps[RyazhaClkThermalSensor_PCB]; // PCB
     sprintf(displayStrings[12], "%u.%u °C", millis / 1000U, (millis % 1000U) / 100U);
-    tempColors[RClkThermalSensor_PCB] = tsl::GradientColor(millis * 0.001f);
+    tempColors[RyazhaClkThermalSensor_PCB] = tsl::GradientColor(millis * 0.001f);
 
-    millis = context->temps[RClkThermalSensor_Skin]; // Skin
+    millis = context->temps[RyazhaClkThermalSensor_Skin]; // Skin
     sprintf(displayStrings[13], "%u.%u °C", millis / 1000U, (millis % 1000U) / 100U);
-    tempColors[RClkThermalSensor_Skin] = tsl::GradientColor(millis * 0.001f);
+    tempColors[RyazhaClkThermalSensor_Skin] = tsl::GradientColor(millis * 0.001f);
 
     // SOC voltage (if available)
-    sprintf(displayStrings[14], "%u %s", context->voltages[RClkVoltage_SOC] / 1000U, UNIT_MV().c_str());
+    sprintf(displayStrings[14], "%u mV", context->voltages[RyazhaClkVoltage_SOC] / 1000U);
 
     // Power
-    sprintf(displayStrings[15], "%d %s", context->power[0], UNIT_MW().c_str()); // Now
-    sprintf(displayStrings[16], "%d %s", context->power[1], UNIT_MW().c_str()); // Avg
+    sprintf(displayStrings[15], "%d mW", context->power[0]); // Now
+    sprintf(displayStrings[16], "%d mW", context->power[1]); // Avg
 
-    sprintf(displayStrings[17], "%u%%", context->partLoad[RClkPartLoad_GPU] / 10);
-    sprintf(displayStrings[18], "%u%%", context->partLoad[RClkPartLoad_EMC] / 10);
-    sprintf(displayStrings[19], "%u%%", context->partLoad[RClkPartLoad_CPUMax] / 10);
+    sprintf(displayStrings[17], "%u%%", context->partLoad[RyazhaClkPartLoad_GPU] / 10);
+    sprintf(displayStrings[18], "%u%%", context->partLoad[RyazhaClkPartLoad_EMC] / 10);
+    sprintf(displayStrings[19], "%u%%", context->partLoad[RyazhaClkPartLoad_CPUMax] / 10);
 
-    millis = context->temps[RClkThermalSensor_Battery]; // Battery
+    millis = context->temps[RyazhaClkThermalSensor_Battery]; // Battery
     sprintf(displayStrings[20], "%u.%u °C", millis / 1000U, (millis % 1000U) / 100U);
-    tempColors[RClkThermalSensor_Battery] = tsl::GradientColor(millis * 0.001f);
+    tempColors[RyazhaClkThermalSensor_Battery] = tsl::GradientColor(millis * 0.001f);
 
-    sprintf(displayStrings[21], "%d %s", context->voltages[RClkVoltage_Battery], UNIT_MV().c_str()); // BAT AVG
+    sprintf(displayStrings[21], "%d mV", context->voltages[RyazhaClkVoltage_Battery]); // BAT AVG
 
-    sprintf(displayStrings[23], "%u%%", context->partLoad[RClkPartLoad_BAT] / 1000);
+    sprintf(displayStrings[23], "%u%%", context->partLoad[RyazhaClkPartLoad_BAT] / 1000);
 
-    sprintf(displayStrings[24], "%u%%", context->partLoad[RClkPartLoad_FAN]);
+    sprintf(displayStrings[24], "%u%%", context->partLoad[RyazhaClkPartLoad_FAN]);
 
-    sprintf(displayStrings[25], "%u %s", context->realFreqs[RClkModule_Display], UNIT_HZ().c_str());
+    sprintf(displayStrings[25], "%u Hz", context->realFreqs[RyazhaClkModule_Display]);
     if(this->context->isSaltyNXInstalled) {
         if(context->fps == 254) {
-            strcpy(displayStrings[26], UNIT_NA().c_str());
+            strcpy(displayStrings[26], "N/A");
         } else {
             memset(displayStrings[26], 0, sizeof(displayStrings[26]));
             sprintf(displayStrings[26], "%u", context->fps);
@@ -347,24 +324,24 @@ void BaseMenuGui::refresh()
 
     if(this->context->isSaltyNXInstalled) {
         if(context->resolutionHeight == 0) {
-            strcpy(displayStrings[27], UNIT_NA().c_str());
+            strcpy(displayStrings[27], "N/A");
         } else {
             memset(displayStrings[27], 0, sizeof(displayStrings[27]));
             sprintf(displayStrings[27], "%up", context->resolutionHeight);
         }
     }
 
-    millis = context->temps[RClkThermalSensor_CPU];
+    millis = context->temps[RyazhaClkThermalSensor_CPU];
     sprintf(displayStrings[28], "%u.%u", millis / 1000U, (millis % 1000U) / 100U);
-    tempColors[RClkThermalSensor_CPU] = tsl::GradientColor(millis * 0.001f);
+    tempColors[RyazhaClkThermalSensor_CPU] = tsl::GradientColor(millis * 0.001f);
 
-    millis = context->temps[RClkThermalSensor_GPU];
+    millis = context->temps[RyazhaClkThermalSensor_GPU];
     sprintf(displayStrings[29], "%u.%u", millis / 1000U, (millis % 1000U) / 100U);
-    tempColors[RClkThermalSensor_GPU] = tsl::GradientColor(millis * 0.001f);
+    tempColors[RyazhaClkThermalSensor_GPU] = tsl::GradientColor(millis * 0.001f);
 
-    millis = context->temps[RClkThermalSensor_MEM];
+    millis = context->temps[RyazhaClkThermalSensor_MEM];
     sprintf(displayStrings[30], "%u.%u", millis / 1000U, (millis % 1000U) / 100U);
-    tempColors[RClkThermalSensor_MEM] = tsl::GradientColor(millis * 0.001f);
+    tempColors[RyazhaClkThermalSensor_MEM] = tsl::GradientColor(millis * 0.001f);
 
 }
 

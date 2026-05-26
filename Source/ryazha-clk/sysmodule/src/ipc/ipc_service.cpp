@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -39,7 +39,6 @@
 #include "../mgr/clock_manager.hpp"
 #include "../file/config.hpp"
 #include "../file/kip.hpp"
-#include "../auto_ryazha.hpp"
 namespace ipcService {
 
     namespace {
@@ -61,7 +60,7 @@ namespace ipcService {
             return 0;
         }
 
-        Result GetCurrentContext(RClkContext* out_ctx) {
+        Result GetCurrentContext(RyazhaClkContext* out_ctx) {
             *out_ctx = clockManager::GetCurrentContext();
             return 0;
         }
@@ -79,7 +78,7 @@ namespace ipcService {
             return 0;
         }
 
-        Result GetProfiles(std::uint64_t* tid, RClkTitleProfileList* out_profiles) {
+        Result GetProfiles(std::uint64_t* tid, RyazhaClkTitleProfileList* out_profiles) {
             if (!config::HasProfilesLoaded()) {
                 return RCLK_ERROR(ConfigNotLoaded);
             }
@@ -87,11 +86,11 @@ namespace ipcService {
             return 0;
         }
 
-        Result SetProfiles(RClkIpc_SetProfiles_Args* args) {
+        Result SetProfiles(RyazhaClkIpc_SetProfiles_Args* args) {
             if (!config::HasProfilesLoaded()) {
                 return RCLK_ERROR(ConfigNotLoaded);
             }
-            RClkTitleProfileList profiles = args->profiles;
+            RyazhaClkTitleProfileList profiles = args->profiles;
             if (!config::SetProfiles(args->tid, &profiles, true)) {
                 return RCLK_ERROR(ConfigSaveFailed);
             }
@@ -103,43 +102,35 @@ namespace ipcService {
             return 0;
         }
 
-        Result SetOverride(RClkIpc_SetOverride_Args* args) {
-            if (!RCLK_ENUM_VALID(RClkModule, args->module)) {
+        Result SetOverride(RyazhaClkIpc_SetOverride_Args* args) {
+            if (!RCLK_ENUM_VALID(RyazhaClkModule, args->module)) {
                 return RCLK_ERROR(Generic);
             }
             config::SetOverrideHz(args->module, args->hz);
             return 0;
         }
 
-        Result GetConfigValuesHandler(RClkConfigValueList* out_configValues) {
-            // Гейтинг HasProfilesLoaded() снят -- config values живут
-            // независимо от profile-таблицы. При первом старте без
-            // config.ini Load() теперь создаёт пустой scaffold + ставит
-            // gLoaded=true, так что even fresh installs работают.
+        Result GetConfigValuesHandler(RyazhaClkConfigValueList* out_configValues) {
+            if (!config::HasProfilesLoaded()) {
+                return RCLK_ERROR(ConfigNotLoaded);
+            }
             config::GetConfigValues(out_configValues);
             return 0;
         }
 
-        Result SetConfigValuesHandler(RClkConfigValueList* configValues) {
-            RClkConfigValueList copy = *configValues;
+        Result SetConfigValuesHandler(RyazhaClkConfigValueList* configValues) {
+            if (!config::HasProfilesLoaded()) {
+                return RCLK_ERROR(ConfigNotLoaded);
+            }
+            RyazhaClkConfigValueList copy = *configValues;
             if (!config::SetConfigValues(&copy, true)) {
                 return RCLK_ERROR(ConfigSaveFailed);
             }
             return 0;
         }
 
-        Result GetLadderConfigHandler(RClkLadderConfig* out_cfg) {
-            autoRyazha::GetConfig(out_cfg);
-            return 0;
-        }
-
-        Result SetLadderConfigHandler(const RClkLadderConfig* cfg) {
-            autoRyazha::SetConfig(cfg);
-            return 0;
-        }
-
-        Result GetFreqList(RClkIpc_GetFreqList_Args* args, std::uint32_t* out_list, std::size_t size, std::uint32_t* out_count) {
-            if (!RCLK_ENUM_VALID(RClkModule, args->module)) {
+        Result GetFreqList(RyazhaClkIpc_GetFreqList_Args* args, std::uint32_t* out_list, std::size_t size, std::uint32_t* out_count) {
+            if (!RCLK_ENUM_VALID(RyazhaClkModule, args->module)) {
                 return RCLK_ERROR(Generic);
             }
             if (args->maxCount != size/sizeof(*out_list)) {
@@ -152,11 +143,11 @@ namespace ipcService {
         Result ServiceHandlerFunc(void* arg, const IpcServerRequest* r, u8* out_data, size_t* out_dataSize) {
             (void)arg;
             switch (r->data.cmdId) {
-                case RClkIpcCmd_GetApiVersion:
+                case RyazhaClkIpcCmd_GetApiVersion:
                     *out_dataSize = sizeof(u32);
                     return GetApiVersion((u32*)out_data);
 
-                case RClkIpcCmd_GetVersionString:
+                case RyazhaClkIpcCmd_GetVersionString:
                     if (r->hipc.meta.num_recv_buffers >= 1) {
                         return GetVersionString(
                             (char*)hipcGetBufferAddress(r->hipc.data.recv_buffers),
@@ -165,75 +156,75 @@ namespace ipcService {
                     }
                     break;
 
-                case RClkIpcCmd_GetCurrentContext:
+                case RyazhaClkIpcCmd_GetCurrentContext:
                     if (r->data.size >= sizeof(std::uint64_t) && r->hipc.meta.num_recv_buffers >= 1) {
                         size_t bufSize = hipcGetBufferSize(r->hipc.data.recv_buffers);
-                        if (bufSize >= sizeof(RClkContext)) {
-                            return GetCurrentContext((RClkContext*)hipcGetBufferAddress(r->hipc.data.recv_buffers));
+                        if (bufSize >= sizeof(RyazhaClkContext)) {
+                            return GetCurrentContext((RyazhaClkContext*)hipcGetBufferAddress(r->hipc.data.recv_buffers));
                         }
                     }
                     break;
 
-                case RClkIpcCmd_Exit:
+                case RyazhaClkIpcCmd_Exit:
                     return ExitHandler();
 
-                case RClkIpcCmd_GetProfileCount:
+                case RyazhaClkIpcCmd_GetProfileCount:
                     if (r->data.size >= sizeof(std::uint64_t)) {
                         *out_dataSize = sizeof(std::uint8_t);
                         return GetProfileCount((std::uint64_t*)r->data.ptr, (std::uint8_t*)out_data);
                     }
                     break;
 
-                case RClkIpcCmd_GetProfiles:
+                case RyazhaClkIpcCmd_GetProfiles:
                     if (r->data.size >= sizeof(std::uint64_t) && r->hipc.meta.num_recv_buffers >= 1) {
                         size_t bufSize = hipcGetBufferSize(r->hipc.data.recv_buffers);
-                        if (bufSize >= sizeof(RClkTitleProfileList)) {
-                            return GetProfiles((std::uint64_t*)r->data.ptr, (RClkTitleProfileList*)hipcGetBufferAddress(r->hipc.data.recv_buffers));
+                        if (bufSize >= sizeof(RyazhaClkTitleProfileList)) {
+                            return GetProfiles((std::uint64_t*)r->data.ptr, (RyazhaClkTitleProfileList*)hipcGetBufferAddress(r->hipc.data.recv_buffers));
                         }
                     }
                     break;
 
-                case RClkIpcCmd_SetProfiles:
-                    if (r->data.size >= sizeof(RClkIpc_SetProfiles_Args)) {
-                        return SetProfiles((RClkIpc_SetProfiles_Args*)r->data.ptr);
+                case RyazhaClkIpcCmd_SetProfiles:
+                    if (r->data.size >= sizeof(RyazhaClkIpc_SetProfiles_Args)) {
+                        return SetProfiles((RyazhaClkIpc_SetProfiles_Args*)r->data.ptr);
                     }
                     break;
 
-                case RClkIpcCmd_SetEnabled:
+                case RyazhaClkIpcCmd_SetEnabled:
                     if (r->data.size >= sizeof(std::uint8_t)) {
                         return SetEnabled((std::uint8_t*)r->data.ptr);
                     }
                     break;
 
-                case RClkIpcCmd_SetOverride:
-                    if (r->data.size >= sizeof(RClkIpc_SetOverride_Args)) {
-                        return SetOverride((RClkIpc_SetOverride_Args*)r->data.ptr);
+                case RyazhaClkIpcCmd_SetOverride:
+                    if (r->data.size >= sizeof(RyazhaClkIpc_SetOverride_Args)) {
+                        return SetOverride((RyazhaClkIpc_SetOverride_Args*)r->data.ptr);
                     }
                     break;
 
-                case RClkIpcCmd_GetConfigValues:
+                case RyazhaClkIpcCmd_GetConfigValues:
                     if (r->hipc.meta.num_recv_buffers >= 1) {
                         size_t bufSize = hipcGetBufferSize(r->hipc.data.recv_buffers);
-                        if (bufSize >= sizeof(RClkConfigValueList)) {
-                            return GetConfigValuesHandler((RClkConfigValueList*)hipcGetBufferAddress(r->hipc.data.recv_buffers));
+                        if (bufSize >= sizeof(RyazhaClkConfigValueList)) {
+                            return GetConfigValuesHandler((RyazhaClkConfigValueList*)hipcGetBufferAddress(r->hipc.data.recv_buffers));
                         }
                     }
                     break;
 
-                case RClkIpcCmd_SetConfigValues:
+                case RyazhaClkIpcCmd_SetConfigValues:
                     if (r->hipc.meta.num_send_buffers >= 1) {
                         size_t bufSize = hipcGetBufferSize(r->hipc.data.send_buffers);
-                        if (bufSize >= sizeof(RClkConfigValueList)) {
-                            return SetConfigValuesHandler((RClkConfigValueList*)hipcGetBufferAddress(r->hipc.data.send_buffers));
+                        if (bufSize >= sizeof(RyazhaClkConfigValueList)) {
+                            return SetConfigValuesHandler((RyazhaClkConfigValueList*)hipcGetBufferAddress(r->hipc.data.send_buffers));
                         }
                     }
                     break;
 
-                case RClkIpcCmd_GetFreqList:
-                    if (r->data.size >= sizeof(RClkIpc_GetFreqList_Args) && r->hipc.meta.num_recv_buffers >= 1) {
+                case RyazhaClkIpcCmd_GetFreqList:
+                    if (r->data.size >= sizeof(RyazhaClkIpc_GetFreqList_Args) && r->hipc.meta.num_recv_buffers >= 1) {
                         *out_dataSize = sizeof(std::uint32_t);
                         return GetFreqList(
-                            (RClkIpc_GetFreqList_Args*)r->data.ptr,
+                            (RyazhaClkIpc_GetFreqList_Args*)r->data.ptr,
                             (std::uint32_t*)hipcGetBufferAddress(r->hipc.data.recv_buffers),
                             hipcGetBufferSize(r->hipc.data.recv_buffers),
                             (std::uint32_t*)out_data
@@ -241,28 +232,10 @@ namespace ipcService {
                     }
                     break;
 
-                case RClkIpcCmd_SetKipData:
+                case RyazhaClkIpcCmd_SetKipData:
                     if (r->data.size >= 0) {
                         kip::SetKipData();
                         return 0;
-                    }
-                    break;
-
-                case RClkIpcCmd_GetLadderConfig:
-                    if (r->hipc.meta.num_recv_buffers >= 1) {
-                        size_t bufSize = hipcGetBufferSize(r->hipc.data.recv_buffers);
-                        if (bufSize >= sizeof(RClkLadderConfig)) {
-                            return GetLadderConfigHandler((RClkLadderConfig*)hipcGetBufferAddress(r->hipc.data.recv_buffers));
-                        }
-                    }
-                    break;
-
-                case RClkIpcCmd_SetLadderConfig:
-                    if (r->hipc.meta.num_send_buffers >= 1) {
-                        size_t bufSize = hipcGetBufferSize(r->hipc.data.send_buffers);
-                        if (bufSize >= sizeof(RClkLadderConfig)) {
-                            return SetLadderConfigHandler((const RClkLadderConfig*)hipcGetBufferAddress(r->hipc.data.send_buffers));
-                        }
                     }
                     break;
             }

@@ -26,7 +26,7 @@ SOURCES		:=	src src/hos src/i2c src/ipc src/board src/display src/tsensor src/mg
 DATA		:=	data
 INCLUDES	:=	../common/include src/hos src/soc src/i2c src/util src/pwr src/ipc
 EXEFS_SRC	:=	exefs_src
-LIBNAMES	:=	minIni nxExt
+LIBNAMES	:=	minIni
 # major minor patch
 TARGET_VERSION	:= 2.4.0
 KIP_VERSION :=  240

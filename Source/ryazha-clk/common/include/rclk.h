@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -49,7 +49,6 @@ extern "C" {
 #include "rclk/config.h"
 #include "rclk/errors.h"
 #include "rclk/result.hpp"
-#include "rclk/auto_ryazha.h"   // RClkLadderConfig, RClkLadderAlgo, RClkLadderVrr
 
 #ifdef __cplusplus
 }

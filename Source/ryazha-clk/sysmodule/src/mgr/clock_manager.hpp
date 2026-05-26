@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -43,8 +43,8 @@ namespace clockManager {
     // instance variables
     extern bool gRunning;
     extern LockableMutex gContextMutex;
-    extern RClkContext gContext;
-    extern FreqTable gFreqTable[RClkModule_EnumMax];
+    extern RyazhaClkContext gContext;
+    extern FreqTable gFreqTable[RyazhaClkModule_EnumMax];
     extern std::uint64_t gLastTempLogNs;
     extern std::uint64_t gLastFreqLogNs;
     extern std::uint64_t gLastPowerLogNs;
@@ -54,15 +54,15 @@ namespace clockManager {
     void Initialize();
     void Exit();
 
-    RClkContext GetCurrentContext();
+    RyazhaClkContext GetCurrentContext();
 
     void SetRunning(bool running);
     bool Running();
 
-    std::uint32_t GetMaxAllowedHz(RClkModule module, RClkProfile profile);
-    bool IsAssignableHz(RClkModule module, std::uint32_t hz);
+    std::uint32_t GetMaxAllowedHz(RyazhaClkModule module, RyazhaClkProfile profile);
+    bool IsAssignableHz(RyazhaClkModule module, std::uint32_t hz);
 
-    void GetFreqList(RClkModule module, std::uint32_t* list, std::uint32_t maxCount, std::uint32_t* outCount);
+    void GetFreqList(RyazhaClkModule module, std::uint32_t* list, std::uint32_t maxCount, std::uint32_t* outCount);
 
     void Tick();
     void WaitForNextTick();

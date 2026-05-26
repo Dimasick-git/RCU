@@ -1,13 +1,5 @@
-# ryazha-clk
+# hoc-clk
 
-Sysmodule + Tesla overlay для управления частотами Switch (CPU/GPU/RAM/Display).
-Title ID `00FF0000636C6BFF`. Часть проекта RCU.
+Overclocking suite for Nintendo Switch.
 
-См. полное описание в [главном README](../../README.md).
-
-## Layout
-
-- `sysmodule/` — фоновый сервис, exefs.nsp
-- `overlay/` — Tesla overlay, ryazha-clk.ovl
-- `common/` — общий header'ы + IPC client (рaza с overlay'ем и sysmodule'ем)
-- `build.sh` — сборочный скрипт (вызывается из корневого build pipeline)
+Support is only provided for FW 17.0.0+. This MAY work on older firmwares but support is NOT guaranteed

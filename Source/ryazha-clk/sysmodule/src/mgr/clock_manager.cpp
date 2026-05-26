@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -52,36 +52,36 @@ namespace clockManager {
 
     bool gRunning = false;
     LockableMutex gContextMutex;
-    RClkContext gContext = {};
-    FreqTable gFreqTable[RClkModule_EnumMax];
+    RyazhaClkContext gContext = {};
+    FreqTable gFreqTable[RyazhaClkModule_EnumMax];
     std::uint64_t gLastTempLogNs = 0;
     std::uint64_t gLastFreqLogNs = 0;
     std::uint64_t gLastPowerLogNs = 0;
     std::uint64_t gLastCsvWriteNs = 0;
 
-    bool IsAssignableHz(RClkModule module, std::uint32_t hz)
+    bool IsAssignableHz(RyazhaClkModule module, std::uint32_t hz)
     {
         switch (module) {
-        case RClkModule_CPU:
+        case RyazhaClkModule_CPU:
             return hz >= 500000000;
-        case RClkModule_MEM:
+        case RyazhaClkModule_MEM:
             return hz >= 665600000;
         default:
             return true;
         }
     }
 
-    std::uint32_t GetMaxAllowedHz(RClkModule module, RClkProfile profile)
+    std::uint32_t GetMaxAllowedHz(RyazhaClkModule module, RyazhaClkProfile profile)
     {
-        if (config::GetConfigValue(RClkConfigValue_UncappedClocks)) {
+        if (config::GetConfigValue(RyazhaClkConfigValue_UncappedClocks)) {
             return ~0; // Integer limit, uncapped clocks ON
         } else {
-            if (module == RClkModule_GPU) {
-                if (profile < RClkProfile_HandheldCharging) {
+            if (module == RyazhaClkModule_GPU) {
+                if (profile < RyazhaClkProfile_HandheldCharging) {
                     switch (board::GetSocType()) {
-                    case RClkSocType_Erista:
+                    case RyazhaClkSocType_Erista:
                         return 460800000;
-                    case RClkSocType_Mariko:
+                    case RyazhaClkSocType_Mariko:
                         switch (config::GetConfigValue(KipConfigValue_marikoGpuUV)) {
                         case 0:
                             return 614400000;
@@ -95,11 +95,11 @@ namespace clockManager {
                     default:
                         return 460800000;
                     }
-                } else if (profile <= RClkProfile_HandheldChargingUSB) {
+                } else if (profile <= RyazhaClkProfile_HandheldChargingUSB) {
                     switch (board::GetSocType()) {
-                    case RClkSocType_Erista:
+                    case RyazhaClkSocType_Erista:
                         return 768000000;
-                    case RClkSocType_Mariko:
+                    case RyazhaClkSocType_Mariko:
                         switch (config::GetConfigValue(KipConfigValue_marikoGpuUV)) {
                         case 0:
                             return 844800000;
@@ -114,8 +114,8 @@ namespace clockManager {
                         return 768000000;
                     }
                 }
-            } else if (module == RClkModule_CPU) {
-                if (profile < RClkProfile_HandheldCharging && board::GetSocType() == RClkSocType_Erista) {
+            } else if (module == RyazhaClkModule_CPU) {
+                if (profile < RyazhaClkProfile_HandheldCharging && board::GetSocType() == RyazhaClkSocType_Erista) {
                     return 1581000000;
                 } else {
                     return ~0;
@@ -125,7 +125,7 @@ namespace clockManager {
         return 0;
     }
 
-    std::uint32_t GetNearestHz(RClkModule module, std::uint32_t inHz, std::uint32_t maxHz)
+    std::uint32_t GetNearestHz(RyazhaClkModule module, std::uint32_t inHz, std::uint32_t maxHz)
     {
         std::uint32_t *freqs = &gFreqTable[module].list[0];
         size_t count = gFreqTable[module].count - 1;
@@ -147,8 +147,8 @@ namespace clockManager {
     void ResetToStockClocks()
     {
         board::ResetToStockCpu();
-        if (config::GetConfigValue(RClkConfigValue_LiveCpuUv)) {
-            if (board::GetSocType() == RClkSocType_Erista)
+        if (config::GetConfigValue(RyazhaClkConfigValue_LiveCpuUv)) {
+            if (board::GetSocType() == RyazhaClkSocType_Erista)
                 board::SetDfllTunings(config::GetConfigValue(KipConfigValue_eristaCpuUV), 0, 1581000000);
             else
                 board::SetDfllTunings(config::GetConfigValue(KipConfigValue_marikoCpuUVLow), config::GetConfigValue(KipConfigValue_marikoCpuUVHigh), board::CalculateTbreak(config::GetConfigValue(KipConfigValue_tableConf)));
@@ -157,7 +157,7 @@ namespace clockManager {
         board::ResetToStockGpu();
     }
 
-    bool ConfigIntervalTimeout(RClkConfigValue intervalMsConfigValue, std::uint64_t ns, std::uint64_t *lastLogNs)
+    bool ConfigIntervalTimeout(RyazhaClkConfigValue intervalMsConfigValue, std::uint64_t ns, std::uint64_t *lastLogNs)
     {
         std::uint64_t logInterval = config::GetConfigValue(intervalMsConfigValue) * 1000000ULL;
         bool shouldLog = logInterval && ((ns - *lastLogNs) > logInterval);
@@ -169,7 +169,7 @@ namespace clockManager {
         return shouldLog;
     }
 
-    void RefreshFreqTableRow(RClkModule module)
+    void RefreshFreqTableRow(RyazhaClkModule module)
     {
         std::scoped_lock lock{gContextMutex};
 
@@ -182,7 +182,7 @@ namespace clockManager {
         std::uint32_t *hz = &gFreqTable[module].list[0];
         gFreqTable[module].count = 0;
 
-        if (module == RClkModule_GPU && board::GetSocType() == RClkSocType_Mariko) {
+        if (module == RyazhaClkModule_GPU && board::GetSocType() == RyazhaClkSocType_Mariko) {
             constexpr u32 kStep = 38400000;
             constexpr u32 kPcvStep = 76800000;
 
@@ -205,7 +205,7 @@ namespace clockManager {
 
             for (u32 f = kPcvStep; f <= kMax && gFreqTable[module].count < RCLK_FREQ_LIST_MAX; f += kStep) {
                 if (f % kPcvStep != 0) {
-                    if (!config::GetConfigValue(RClkConfigValue_MarikoMiddleFreqs)) 
+                    if (!config::GetConfigValue(RyazhaClkConfigValue_MarikoMiddleFreqs)) 
                         continue;
                     *hz = f;
                     gFreqTable[module].count++;
@@ -238,10 +238,10 @@ namespace clockManager {
             }
 
             // Workaround for PCV bug involving 38.4mhz step rate on erista
-            if (module == RClkModule_GPU && board::GetSocType() == RClkSocType_Erista) {
+            if (module == RyazhaClkModule_GPU && board::GetSocType() == RyazhaClkSocType_Erista) {
                 static const struct { 
                     u32 hz; 
-                    RClkConfigValue kval; 
+                    RyazhaClkConfigValue kval; 
                 } eristaGpuVoltMap[] = {
                     {  76800000, KipConfigValue_g_volt_e_76800   },
                     { 115200000, KipConfigValue_g_volt_e_115200  },
@@ -293,26 +293,27 @@ namespace clockManager {
         fileUtils::LogLine("[mgr] count = %u", gFreqTable[module].count);
     }
 
-    void HandleSafetyFeatures()
+    bool HandleSafetyFeatures()
     {
-        if (config::GetConfigValue(RClkConfigValue_HandheldTDP) && (gContext.profile != RClkProfile_Docked)) {
-            if (board::GetConsoleType() == RClkConsoleType_Hoag) {
-                if (board::GetPowerMw(RClkPowerSensor_Avg) < -(int)config::GetConfigValue(RClkConfigValue_LiteTDPLimit)) {
+        if (config::GetConfigValue(RyazhaClkConfigValue_HandheldTDP) && (gContext.profile != RyazhaClkProfile_Docked)) {
+            if (board::GetConsoleType() == RyazhaClkConsoleType_Hoag) {
+                if (board::GetPowerMw(RyazhaClkPowerSensor_Avg) < -(int)config::GetConfigValue(RyazhaClkConfigValue_LiteTDPLimit)) {
                     ResetToStockClocks();
-                    return;
+                    return true;
                 }
             } else {
-                if (board::GetPowerMw(RClkPowerSensor_Avg) < -(int)config::GetConfigValue(RClkConfigValue_HandheldTDPLimit)) {
+                if (board::GetPowerMw(RyazhaClkPowerSensor_Avg) < -(int)config::GetConfigValue(RyazhaClkConfigValue_HandheldTDPLimit)) {
                     ResetToStockClocks();
-                    return;
+                    return true;
                 }
             }
         }
 
-        if (((tmp451TempSoc() / 1000) > (int)config::GetConfigValue(RClkConfigValue_ThermalThrottleThreshold)) && config::GetConfigValue(RClkConfigValue_ThermalThrottle)) {
+        if (((tmp451TempSoc() / 1000) > (int)config::GetConfigValue(RyazhaClkConfigValue_ThermalThrottleThreshold)) && config::GetConfigValue(RyazhaClkConfigValue_ThermalThrottle)) {
             ResetToStockClocks();
-            return;
+            return true;
         }
+        return false;
     }
     void HandleMiscFeatures()
     {
@@ -321,22 +322,22 @@ namespace clockManager {
         if(++tick > 10) {
             tick = 0;
 
-            if (config::GetConfigValue(RClkConfigValue_BatteryChargeCurrent)) {
-                I2c_Bq24193_SetFastChargeCurrentLimit(config::GetConfigValue(RClkConfigValue_BatteryChargeCurrent));
+            if (config::GetConfigValue(RyazhaClkConfigValue_BatteryChargeCurrent)) {
+                I2c_Bq24193_SetFastChargeCurrentLimit(config::GetConfigValue(RyazhaClkConfigValue_BatteryChargeCurrent));
             }
 
-            I2c_BuckConverter_SetMvOut(&I2c_Display, config::GetConfigValue(RClkConfigValue_DisplayVoltage));
+            I2c_BuckConverter_SetMvOut(&I2c_Display, config::GetConfigValue(RyazhaClkConfigValue_DisplayVoltage));
 
-            if(board::GetConsoleType() == RClkConsoleType_Aula)
-                AulaDisplay::SetDisplayColorMode((AulaColorMode)config::GetConfigValue(RClkConfigValue_AulaDisplayColorPreset));
-            if(config::GetConfigValue(RClkConfigValue_LiveCpuUv)) {
+            if(board::GetConsoleType() == RyazhaClkConsoleType_Aula)
+                AulaDisplay::SetDisplayColorMode((AulaColorMode)config::GetConfigValue(RyazhaClkConfigValue_AulaDisplayColorPreset));
+            if(config::GetConfigValue(RyazhaClkConfigValue_LiveCpuUv)) {
                 board::HandleCpuUv();
             }
         }
     }
 
     void ApplyGpuDvfs(u32 targetHz) {
-        s32 dvfsOffset = config::GetConfigValue(RClkConfigValue_DVFSOffset);
+        s32 dvfsOffset = config::GetConfigValue(RyazhaClkConfigValue_DVFSOffset);
         dvfsOffset = std::max(dvfsOffset, -80);
         u32 vmin = board::GetMinimumGpuVmin(targetHz / 1000000, board::GetGpuSpeedoBracket());
 
@@ -348,16 +349,16 @@ namespace clockManager {
         vmin = std::min(vmin, 1000u);
 
         /* Get nearest gpu clock; we need this in a second to update the voltage. */
-        u32 gpuHz = board::GetHz(RClkModule_GPU);
-        u32 maxHz = GetMaxAllowedHz(RClkModule_GPU, gContext.profile);
-        u32 nearestGpuHz = GetNearestHz(RClkModule_GPU, gpuHz, maxHz);
+        u32 gpuHz = board::GetHz(RyazhaClkModule_GPU);
+        u32 maxHz = GetMaxAllowedHz(RyazhaClkModule_GPU, gContext.profile);
+        u32 nearestGpuHz = GetNearestHz(RyazhaClkModule_GPU, gpuHz, maxHz);
 
         /* Hijack gpu volt table. */
         board::PcvHijackGpuVolts(vmin);
 
         /* Update gpu frequency to actually use the voltage. */
         if (targetHz) {
-            board::SetHz(RClkModule_GPU, nearestGpuHz);
+            board::SetHz(RyazhaClkModule_GPU, nearestGpuHz);
         } else {
             /* If the target frequency is zero, we reset the frequency to ensure it gets updated even without any frequency override. */
             board::ResetToStockGpu();
@@ -367,50 +368,50 @@ namespace clockManager {
 
     void DVFSReset()
     {
-        if (board::GetSocType() == RClkSocType_Mariko && config::GetConfigValue(RClkConfigValue_DVFSMode) == DVFSMode_Hijack) {
+        if (board::GetSocType() == RyazhaClkSocType_Mariko && config::GetConfigValue(RyazhaClkConfigValue_DVFSMode) == DVFSMode_Hijack) {
             board::PcvHijackGpuVolts(0); // Reset to vMin
 
-            u32 targetHz = gContext.overrideFreqs[RClkModule_GPU];
+            u32 targetHz = gContext.overrideFreqs[RyazhaClkModule_GPU];
             if (!targetHz) {
-                targetHz = config::GetAutoClockHz(gContext.applicationId, RClkModule_GPU, gContext.profile, false);
+                targetHz = config::GetAutoClockHz(gContext.applicationId, RyazhaClkModule_GPU, gContext.profile, false);
                 if (!targetHz) {
-                    targetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, RClkModule_GPU, gContext.profile, false);
+                    targetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, RyazhaClkModule_GPU, gContext.profile, false);
                 }
             }
-            u32 maxHz = GetMaxAllowedHz(RClkModule_GPU, gContext.profile);
-            u32 nearestHz = GetNearestHz(RClkModule_GPU, targetHz, maxHz);
+            u32 maxHz = GetMaxAllowedHz(RyazhaClkModule_GPU, gContext.profile);
+            u32 nearestHz = GetNearestHz(RyazhaClkModule_GPU, targetHz, maxHz);
 
             board::ResetToStockGpu();
             if (targetHz)
-                board::SetHz(RClkModule_GPU, nearestHz);
+                board::SetHz(RyazhaClkModule_GPU, nearestHz);
         }
     }
 
-    void HandleFreqReset(RClkModule module, bool isBoost, bool didHijackPcv)
+    void HandleFreqReset(RyazhaClkModule module, bool isBoost, bool didHijackPcv)
     {
         switch (module) {
-            case RClkModule_CPU:
-                if (!(isBoost || (config::GetConfigValue(RClkConfigValue_OverwriteBoostMode) && isBoost)))
+            case RyazhaClkModule_CPU:
+                if (!(isBoost || (config::GetConfigValue(RyazhaClkConfigValue_OverwriteBoostMode) && isBoost)))
                     board::ResetToStockCpu();
-                if (config::GetConfigValue(RClkConfigValue_LiveCpuUv)) {
-                    if (board::GetSocType() == RClkSocType_Erista)
+                if (config::GetConfigValue(RyazhaClkConfigValue_LiveCpuUv)) {
+                    if (board::GetSocType() == RyazhaClkSocType_Erista)
                         board::SetDfllTunings(config::GetConfigValue(KipConfigValue_eristaCpuUV), 0, 1581000000);
                     else
                         board::SetDfllTunings(config::GetConfigValue(KipConfigValue_marikoCpuUVLow), config::GetConfigValue(KipConfigValue_marikoCpuUVHigh), board::CalculateTbreak(config::GetConfigValue(KipConfigValue_tableConf)));
                 }
                 break;
-            case RClkModule_GPU:
+            case RyazhaClkModule_GPU:
                 board::ResetToStockGpu();
                 break;
-            case RClkModule_MEM:
+            case RyazhaClkModule_MEM:
                 board::ResetToStockMem();
                 if(!didHijackPcv) {
                     DVFSReset();
                     didHijackPcv = true;
                 }
                 break;
-            case RClkModule_Display:
-                if (config::GetConfigValue(RClkConfigValue_OverwriteRefreshRate)) {
+            case RyazhaClkModule_Display:
+                if (config::GetConfigValue(RyazhaClkConfigValue_OverwriteRefreshRate)) {
                     board::ResetToStockDisplay();
                 }
                 break;
@@ -427,98 +428,98 @@ namespace clockManager {
         static bool prepareBoostExit = false;
 
         bool didHijackPcv = false;
-        bool skipCpuDueToBoost = isBoost && !config::GetConfigValue(RClkConfigValue_OverwriteBoostMode);
+        bool skipCpuDueToBoost = isBoost && !config::GetConfigValue(RyazhaClkConfigValue_OverwriteBoostMode);
         if (skipCpuDueToBoost) {
-            board::SetHz(RClkModule_CPU, board::GetHz(RClkModule_CPU));
+            board::SetHz(RyazhaClkModule_CPU, board::GetHz(RyazhaClkModule_CPU));
             prepareBoostExit = true;
             return; // Return if we aren't overwriting boost mode
         }
 
         if (prepareBoostExit) {
-            board::SetHz(RClkModule_CPU, board::GetHz(RClkModule_CPU));
+            board::SetHz(RyazhaClkModule_CPU, board::GetHz(RyazhaClkModule_CPU));
             prepareBoostExit = false;
         }
         bool returnRaw = false; // Return a value scaled to MHz instead of raw value
-        for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
-            u32 oldHz = board::GetHz((RClkModule)module); // Get Old hz (used primarily for DVFS Logic)
+        for (unsigned int module = 0; module < RyazhaClkModule_EnumMax; module++) {
+            u32 oldHz = board::GetHz((RyazhaClkModule)module); // Get Old hz (used primarily for DVFS Logic)
 
-            if (module > RClkModule_MEM)
+            if (module > RyazhaClkModule_MEM)
                 returnRaw = true;
             else
                 returnRaw = false;
             targetHz = gContext.overrideFreqs[module];
             if (!targetHz) {
-                targetHz = config::GetAutoClockHz(gContext.applicationId, (RClkModule)module, gContext.profile, returnRaw);
+                targetHz = config::GetAutoClockHz(gContext.applicationId, (RyazhaClkModule)module, gContext.profile, returnRaw);
                 if (!targetHz)
-                    targetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, (RClkModule)module, gContext.profile, returnRaw);
+                    targetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, (RyazhaClkModule)module, gContext.profile, returnRaw);
             }
 
-            if (module == RClkModule_Governor) {
+            if (module == RyazhaClkModule_Governor) {
                 governor::HandleGovernor(targetHz);
             }
 
             bool noCPU = governor::isCpuGovernorEnabled;
             bool noGPU = governor::isGpuGovernorEnabled;
             bool noDisp = governor::isVRREnabled;
-            if (noDisp && module == RClkModule_Display)
+            if (noDisp && module == RyazhaClkModule_Display)
                 continue;
 
-            if (module == RClkModule_Display && config::GetConfigValue(RClkConfigValue_OverwriteRefreshRate) && !noDisp) {
+            if (module == RyazhaClkModule_Display && config::GetConfigValue(RyazhaClkConfigValue_OverwriteRefreshRate) && !noDisp) {
                 if (targetHz) {
-                    board::SetHz(RClkModule_Display, targetHz);
-                    gContext.freqs[RClkModule_Display] = targetHz;
-                    gContext.realFreqs[RClkModule_Display] = targetHz;
+                    board::SetHz(RyazhaClkModule_Display, targetHz);
+                    gContext.freqs[RyazhaClkModule_Display] = targetHz;
+                    gContext.realFreqs[RyazhaClkModule_Display] = targetHz;
 
-                    gContext.stable.freqs[RClkModule_Display] = targetHz;
-                    gContext.stable.realFreqs[RClkModule_Display] = targetHz;
+                    gContext.stable.freqs[RyazhaClkModule_Display] = targetHz;
+                    gContext.stable.realFreqs[RyazhaClkModule_Display] = targetHz;
                 } else {
-                    HandleFreqReset(RClkModule_Display, isBoost, didHijackPcv);
+                    HandleFreqReset(RyazhaClkModule_Display, isBoost, didHijackPcv);
                 }
             }
 
             // The modules above MEM require special handling
-            if (module > RClkModule_MEM) {
+            if (module > RyazhaClkModule_MEM) {
                 continue;
             }
 
-            if ((skipCpuDueToBoost || noCPU) && module == RClkModule_CPU)
+            if ((skipCpuDueToBoost || noCPU) && module == RyazhaClkModule_CPU)
                 continue;
-            if (noGPU && module == RClkModule_GPU)
+            if (noGPU && module == RyazhaClkModule_GPU)
                 continue;
 
             if (targetHz) {
-                maxHz = GetMaxAllowedHz((RClkModule)module, gContext.profile);
-                nearestHz = GetNearestHz((RClkModule)module, targetHz, maxHz);
+                maxHz = GetMaxAllowedHz((RyazhaClkModule)module, gContext.profile);
+                nearestHz = GetNearestHz((RyazhaClkModule)module, targetHz, maxHz);
 
                 if (nearestHz != gContext.freqs[module]) {
                     fileUtils::LogLine(
                         "[mgr] %s clock set : %u.%u MHz (target = %u.%u MHz)",
-                        board::GetModuleName((RClkModule)module, true),
+                        board::GetModuleName((RyazhaClkModule)module, true),
                         nearestHz / 1000000, nearestHz / 100000 - nearestHz / 1000000 * 10,
                         targetHz / 1000000, targetHz / 100000 - targetHz / 1000000 * 10
                     );
 
                     // The logic MUST be done in this order otherwise you WILL get crashes
-                    if (module == RClkModule_MEM && board::GetSocType() == RClkSocType_Mariko && targetHz > oldHz && config::GetConfigValue(RClkConfigValue_DVFSMode) == DVFSMode_Hijack) {
+                    if (module == RyazhaClkModule_MEM && board::GetSocType() == RyazhaClkSocType_Mariko && targetHz > oldHz && config::GetConfigValue(RyazhaClkConfigValue_DVFSMode) == DVFSMode_Hijack) {
                         ApplyGpuDvfs(targetHz);
                     }
 
-                    board::SetHz((RClkModule)module, nearestHz);
+                    board::SetHz((RyazhaClkModule)module, nearestHz);
                     gContext.freqs[module] = nearestHz;
 
-                    if (module < RClkModuleStable_EnumMax) {
+                    if (module < RyazhaClkModuleStable_EnumMax) {
                         gContext.stable.freqs[module] = nearestHz;
                     }
 
-                    if (module == RClkModule_MEM && board::GetSocType() == RClkSocType_Mariko && targetHz < oldHz && config::GetConfigValue(RClkConfigValue_DVFSMode) == DVFSMode_Hijack) {
+                    if (module == RyazhaClkModule_MEM && board::GetSocType() == RyazhaClkSocType_Mariko && targetHz < oldHz && config::GetConfigValue(RyazhaClkConfigValue_DVFSMode) == DVFSMode_Hijack) {
                         ApplyGpuDvfs(targetHz);
                     }
 
-                    if(module == RClkModule_MEM && board::GetSocType() == RClkSocType_Mariko && config::GetConfigValue(RClkConfigValue_DVFSMode) == DVFSMode_Hijack)
+                    if(module == RyazhaClkModule_MEM && board::GetSocType() == RyazhaClkSocType_Mariko && config::GetConfigValue(RyazhaClkConfigValue_DVFSMode) == DVFSMode_Hijack)
                         didHijackPcv = false;
                 }
             } else {
-                HandleFreqReset((RClkModule)module, isBoost, didHijackPcv);
+                HandleFreqReset((RyazhaClkModule)module, isBoost, didHijackPcv);
             }
         }
     }
@@ -538,7 +539,7 @@ namespace clockManager {
             hasChanged = true;
         }
 
-        RClkProfile profile = board::GetProfile();
+        RyazhaClkProfile profile = board::GetProfile();
         if (profile != gContext.profile) {
             fileUtils::LogLine("[mgr] Profile change: %s", board::GetProfileName(profile, true));
             gContext.profile = profile;
@@ -548,7 +549,7 @@ namespace clockManager {
         // restore clocks to stock values on app or profile change
         if (hasChanged) {
             board::ResetToStock();
-            if (board::GetSocType() == RClkSocType_Mariko && config::GetConfigValue(RClkConfigValue_DVFSMode) == DVFSMode_Hijack) {
+            if (board::GetSocType() == RyazhaClkSocType_Mariko && config::GetConfigValue(RyazhaClkConfigValue_DVFSMode) == DVFSMode_Hijack) {
                 board::PcvHijackGpuVolts(0);
                 board::ResetToStockGpu();
             }
@@ -556,26 +557,26 @@ namespace clockManager {
         }
 
         std::uint32_t hz = 0;
-        for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
-            hz = board::GetHz((RClkModule)module);
+        for (unsigned int module = 0; module < RyazhaClkModule_EnumMax; module++) {
+            hz = board::GetHz((RyazhaClkModule)module);
             if (hz != 0 && hz != gContext.freqs[module]) {
-                fileUtils::LogLine("[mgr] %s clock change: %u.%u MHz", board::GetModuleName((RClkModule)module, true), hz / 1000000, hz / 100000 - hz / 1000000 * 10);
+                fileUtils::LogLine("[mgr] %s clock change: %u.%u MHz", board::GetModuleName((RyazhaClkModule)module, true), hz / 1000000, hz / 100000 - hz / 1000000 * 10);
                 gContext.freqs[module] = hz;
 
-                if (module < RClkModuleStable_EnumMax) {
+                if (module < RyazhaClkModuleStable_EnumMax) {
                     gContext.stable.freqs[module] = hz;
                 }
                 hasChanged = true;
             }
 
-            hz = config::GetOverrideHz((RClkModule)module);
+            hz = config::GetOverrideHz((RyazhaClkModule)module);
             if (hz != gContext.overrideFreqs[module]) {
                 if (hz) {
-                    fileUtils::LogLine("[mgr] %s override change: %u.%u MHz", board::GetModuleName((RClkModule)module, true), hz / 1000000, hz / 100000 - hz / 1000000 * 10);
+                    fileUtils::LogLine("[mgr] %s override change: %u.%u MHz", board::GetModuleName((RyazhaClkModule)module, true), hz / 1000000, hz / 100000 - hz / 1000000 * 10);
                 }
                 gContext.overrideFreqs[module] = hz;
 
-                if (module < RClkModuleStable_EnumMax) {
+                if (module < RyazhaClkModuleStable_EnumMax) {
                     gContext.stable.overrideFreqs[module] = hz;
                 }
                 hasChanged = true;
@@ -586,80 +587,80 @@ namespace clockManager {
 
         // temperatures do not and should not force a refresh, hasChanged untouched
         std::uint32_t millis = 0;
-        bool shouldLogTemp = ConfigIntervalTimeout(RClkConfigValue_TempLogIntervalMs, ns, &gLastTempLogNs);
-        for (unsigned int sensor = 0; sensor < RClkThermalSensor_EnumMax; sensor++) {
-            millis = board::GetTemperatureMilli((RClkThermalSensor)sensor);
+        bool shouldLogTemp = ConfigIntervalTimeout(RyazhaClkConfigValue_TempLogIntervalMs, ns, &gLastTempLogNs);
+        for (unsigned int sensor = 0; sensor < RyazhaClkThermalSensor_EnumMax; sensor++) {
+            millis = board::GetTemperatureMilli((RyazhaClkThermalSensor)sensor);
             if (shouldLogTemp) {
-                fileUtils::LogLine("[mgr] %s temp: %u.%u °C", board::GetThermalSensorName((RClkThermalSensor)sensor, true), millis / 1000, (millis - millis / 1000 * 1000) / 100);
+                fileUtils::LogLine("[mgr] %s temp: %u.%u °C", board::GetThermalSensorName((RyazhaClkThermalSensor)sensor, true), millis / 1000, (millis - millis / 1000 * 1000) / 100);
             }
             gContext.temps[sensor] = millis;
 
-            if (sensor < RClkThermalSensorStable_EnumMax) {
+            if (sensor < RyazhaClkThermalSensorStable_EnumMax) {
                 gContext.stable.temps[sensor] = millis;
             }
         }
 
         // power stats do not and should not force a refresh, hasChanged untouched
         std::int32_t mw = 0;
-        bool shouldLogPower = ConfigIntervalTimeout(RClkConfigValue_PowerLogIntervalMs, ns, &gLastPowerLogNs);
-        for (unsigned int sensor = 0; sensor < RClkPowerSensor_EnumMax; sensor++) {
-            mw = board::GetPowerMw((RClkPowerSensor)sensor);
+        bool shouldLogPower = ConfigIntervalTimeout(RyazhaClkConfigValue_PowerLogIntervalMs, ns, &gLastPowerLogNs);
+        for (unsigned int sensor = 0; sensor < RyazhaClkPowerSensor_EnumMax; sensor++) {
+            mw = board::GetPowerMw((RyazhaClkPowerSensor)sensor);
             if (shouldLogPower) {
-                fileUtils::LogLine("[mgr] Power %s: %d mW", board::GetPowerSensorName((RClkPowerSensor)sensor, false), mw);
+                fileUtils::LogLine("[mgr] Power %s: %d mW", board::GetPowerSensorName((RyazhaClkPowerSensor)sensor, false), mw);
             }
             gContext.power[sensor] = mw;
 
-            if (sensor < RClkPowerSensorStable_EnumMax) {
+            if (sensor < RyazhaClkPowerSensorStable_EnumMax) {
                 gContext.stable.power[sensor] = mw;
             }
         }
 
         // real freqs do not and should not force a refresh, hasChanged untouched
         std::uint32_t realHz = 0;
-        bool shouldLogFreq = ConfigIntervalTimeout(RClkConfigValue_FreqLogIntervalMs, ns, &gLastFreqLogNs);
-        for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
-            realHz = board::GetRealHz((RClkModule)module);
+        bool shouldLogFreq = ConfigIntervalTimeout(RyazhaClkConfigValue_FreqLogIntervalMs, ns, &gLastFreqLogNs);
+        for (unsigned int module = 0; module < RyazhaClkModule_EnumMax; module++) {
+            realHz = board::GetRealHz((RyazhaClkModule)module);
             if (shouldLogFreq) {
-                fileUtils::LogLine("[mgr] %s real freq: %u.%u MHz", board::GetModuleName((RClkModule)module, true), realHz / 1000000, realHz / 100000 - realHz / 1000000 * 10);
+                fileUtils::LogLine("[mgr] %s real freq: %u.%u MHz", board::GetModuleName((RyazhaClkModule)module, true), realHz / 1000000, realHz / 100000 - realHz / 1000000 * 10);
             }
             gContext.realFreqs[module] = realHz;
 
-            if (module < RClkModuleStable_EnumMax) {
+            if (module < RyazhaClkModuleStable_EnumMax) {
                 gContext.stable.realFreqs[module] = realHz;
             }
         }
 
         // ram load do not and should not force a refresh, hasChanged untouched
-        for (unsigned int loadSource = 0; loadSource < RClkPartLoad_EnumMax; loadSource++) {
-            gContext.partLoad[loadSource] = board::GetPartLoad((RClkPartLoad)loadSource);
+        for (unsigned int loadSource = 0; loadSource < RyazhaClkPartLoad_EnumMax; loadSource++) {
+            gContext.partLoad[loadSource] = board::GetPartLoad((RyazhaClkPartLoad)loadSource);
 
-            if (loadSource < RClkPartLoadStable_EnumMax) {
-                gContext.stable.partLoad[loadSource] = board::GetPartLoad((RClkPartLoad)loadSource);
+            if (loadSource < RyazhaClkPartLoadStable_EnumMax) {
+                gContext.stable.partLoad[loadSource] = board::GetPartLoad((RyazhaClkPartLoad)loadSource);
             }
         }
 
-        for (unsigned int voltageSource = 0; voltageSource < RClkVoltage_EnumMax; voltageSource++) {
-            gContext.voltages[voltageSource] = board::GetVoltage((RClkVoltage)voltageSource);
+        for (unsigned int voltageSource = 0; voltageSource < RyazhaClkVoltage_EnumMax; voltageSource++) {
+            gContext.voltages[voltageSource] = board::GetVoltage((RyazhaClkVoltage)voltageSource);
 
-            if (voltageSource < RClkVoltageStable_EnumMax) {
-                gContext.stable.voltages[voltageSource] = board::GetVoltage((RClkVoltage)voltageSource);
+            if (voltageSource < RyazhaClkVoltageStable_EnumMax) {
+                gContext.stable.voltages[voltageSource] = board::GetVoltage((RyazhaClkVoltage)voltageSource);
             }
         }
 
-        if (ConfigIntervalTimeout(RClkConfigValue_CsvWriteIntervalMs, ns, &gLastCsvWriteNs)) {
+        if (ConfigIntervalTimeout(RyazhaClkConfigValue_CsvWriteIntervalMs, ns, &gLastCsvWriteNs)) {
             fileUtils::WriteContextToCsv(&gContext);
         }
 
         // this->context->maxDisplayFreq = board::GetHighestDockedDisplayRate();
-        u32 targetHz = gContext.overrideFreqs[RClkModule_Display];
+        u32 targetHz = gContext.overrideFreqs[RyazhaClkModule_Display];
         if (!targetHz) {
-            targetHz = config::GetAutoClockHz(gContext.applicationId, RClkModule_Display, gContext.profile, true);
+            targetHz = config::GetAutoClockHz(gContext.applicationId, RyazhaClkModule_Display, gContext.profile, true);
             if (!targetHz)
-                targetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, RClkModule_Display, gContext.profile, true);
+                targetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, RyazhaClkModule_Display, gContext.profile, true);
         }
 
-        if (board::GetConsoleType() != RClkConsoleType_Hoag)
-            board::SetDisplayRefreshDockedState(gContext.profile == RClkProfile_Docked);
+        if (board::GetConsoleType() != RyazhaClkConsoleType_Hoag)
+            board::SetDisplayRefreshDockedState(gContext.profile == RyazhaClkProfile_Docked);
 
         if (gContext.isSaltyNXInstalled)
             gContext.fps = integrations::GetSaltyNXFPS();
@@ -678,19 +679,19 @@ namespace clockManager {
     {
         gContext = {};
         gContext.applicationId = 0;
-        gContext.profile = RClkProfile_Handheld;
-        for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
+        gContext.profile = RyazhaClkProfile_Handheld;
+        for (unsigned int module = 0; module < RyazhaClkModule_EnumMax; module++) {
             gContext.freqs[module] = 0;
             gContext.realFreqs[module] = 0;
             gContext.overrideFreqs[module] = 0;
 
-            if (module < RClkModuleStable_EnumMax) {
+            if (module < RyazhaClkModuleStable_EnumMax) {
                 gContext.stable.freqs[module] = 0;
                 gContext.stable.realFreqs[module] = 0;
                 gContext.stable.overrideFreqs[module] = 0;
             }
 
-            RefreshFreqTableRow((RClkModule)module);
+            RefreshFreqTableRow((RyazhaClkModule)module);
         }
 
         gRunning = false;
@@ -701,12 +702,12 @@ namespace clockManager {
 
         board::FuseData *fuse = board::GetFuseData();
 
-        gContext.speedos[RClkSpeedo_CPU] = fuse->cpuSpeedo;
-        gContext.speedos[RClkSpeedo_GPU] = fuse->gpuSpeedo;
-        gContext.speedos[RClkSpeedo_SOC] = fuse->socSpeedo;
-        gContext.iddq[RClkSpeedo_CPU] = fuse->cpuIDDQ;
-        gContext.iddq[RClkSpeedo_GPU] = fuse->gpuIDDQ;
-        gContext.iddq[RClkSpeedo_SOC] = fuse->socIDDQ;
+        gContext.speedos[RyazhaClkSpeedo_CPU] = fuse->cpuSpeedo;
+        gContext.speedos[RyazhaClkSpeedo_GPU] = fuse->gpuSpeedo;
+        gContext.speedos[RyazhaClkSpeedo_SOC] = fuse->socSpeedo;
+        gContext.iddq[RyazhaClkSpeedo_CPU] = fuse->cpuIDDQ;
+        gContext.iddq[RyazhaClkSpeedo_GPU] = fuse->gpuIDDQ;
+        gContext.iddq[RyazhaClkSpeedo_SOC] = fuse->socIDDQ;
         gContext.waferX = fuse->waferX;
         gContext.waferY = fuse->waferY;
 
@@ -714,8 +715,8 @@ namespace clockManager {
         gContext.isDram8GB = board::IsDram8GB();
         gContext.consoleType = board::GetConsoleType();
         
-        board::SetGpuSchedulingMode((GpuSchedulingMode)config::GetConfigValue(RClkConfigValue_GPUScheduling), (GpuSchedulingOverrideMethod)config::GetConfigValue(RClkConfigValue_GPUSchedulingMethod));
-        gContext.gpuSchedulingMode = (GpuSchedulingMode)config::GetConfigValue(RClkConfigValue_GPUScheduling);
+        board::SetGpuSchedulingMode((GpuSchedulingMode)config::GetConfigValue(RyazhaClkConfigValue_GPUScheduling), (GpuSchedulingOverrideMethod)config::GetConfigValue(RyazhaClkConfigValue_GPUSchedulingMethod));
+        gContext.gpuSchedulingMode = (GpuSchedulingMode)config::GetConfigValue(RyazhaClkConfigValue_GPUScheduling);
 
         gContext.isSysDockInstalled = integrations::GetSysDockState();
         gContext.isSaltyNXInstalled = integrations::GetSaltyNXState();
@@ -732,7 +733,7 @@ namespace clockManager {
         governor::exitThreads();
     }
 
-    RClkContext GetCurrentContext()
+    RyazhaClkContext GetCurrentContext()
     {
         std::scoped_lock lock{gContextMutex};
         return gContext;
@@ -748,9 +749,9 @@ namespace clockManager {
         return gRunning;
     }
 
-    void GetFreqList(RClkModule module, std::uint32_t *list, std::uint32_t maxCount, std::uint32_t *outCount)
+    void GetFreqList(RyazhaClkModule module, std::uint32_t *list, std::uint32_t maxCount, std::uint32_t *outCount)
     {
-        ASSERT_ENUM_VALID(RClkModule, module);
+        ASSERT_ENUM_VALID(RyazhaClkModule, module);
 
         *outCount = std::min(maxCount, gFreqTable[module].count);
         memcpy(list, &gFreqTable[module].list[0], *outCount * sizeof(gFreqTable[0].list[0]));
@@ -765,19 +766,19 @@ namespace clockManager {
 
         bool isBoost = apmExtIsBoostMode(mode);
 
-        HandleSafetyFeatures();
+        bool shouldSkipClockSet = HandleSafetyFeatures();
         HandleMiscFeatures();
         
         // GPU clock should always be the same unless PCV has overwriten our change, so reset it
-        if (RefreshContext() || config::Refresh() || board::GetRealHz(RClkModule_GPU) != gContext.freqs[RClkModule_GPU]) {
+        if ((RefreshContext() || config::Refresh() || (board::GetRealHz(RyazhaClkModule_GPU) != gContext.freqs[RyazhaClkModule_GPU])) && !shouldSkipClockSet) {
             SetClocks(isBoost);
         }
     }
 
     void WaitForNextTick()
     {
-        if (board::GetHz(RClkModule_MEM) > 665000000)
-            svcSleepThread(config::GetConfigValue(RClkConfigValue_PollingIntervalMs) * 1000000ULL);
+        if (board::GetHz(RyazhaClkModule_MEM) > 665000000)
+            svcSleepThread(config::GetConfigValue(RyazhaClkConfigValue_PollingIntervalMs) * 1000000ULL);
         else
             svcSleepThread(5000 * 1000000ULL); // 5 seconds in sleep mode
     }
