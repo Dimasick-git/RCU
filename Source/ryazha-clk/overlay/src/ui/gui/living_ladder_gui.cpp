@@ -15,7 +15,7 @@
  *
  */
 
-#include "../i18n.hpp"
+#include "../../i18n.hpp"
 #include "living_ladder_gui.h"
 
 #include <algorithm>
