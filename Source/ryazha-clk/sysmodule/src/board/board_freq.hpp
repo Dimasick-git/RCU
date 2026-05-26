@@ -59,10 +59,10 @@ namespace board {
             ASSERT_RESULT_OK(rc, "apmExtGetCurrentPerformanceConfiguration");
 
             RyazhaClkApmConfiguration* apmConfiguration = nullptr;
-            for (size_t i = 0; hocclk_g_apm_configurations[i].id; ++i) {
+            for (size_t i = 0; rclk_g_apm_configurations[i].id; ++i) {
 
-                if (hocclk_g_apm_configurations[i].id == confId) {
-                    apmConfiguration = &hocclk_g_apm_configurations[i];
+                if (rclk_g_apm_configurations[i].id == confId) {
+                    apmConfiguration = &rclk_g_apm_configurations[i];
                     break;
                 }
             }

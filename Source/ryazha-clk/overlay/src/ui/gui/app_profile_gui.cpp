@@ -45,10 +45,10 @@ void AppProfileGui::openFreqChoiceGui(tsl::elm::ListItem* listItem, RyazhaClkPro
 {
     std::uint32_t hzList[RCLK_FREQ_LIST_MAX];
     std::uint32_t hzCount;
-    Result rc = hocclkIpcGetFreqList(module, &hzList[0], RCLK_FREQ_LIST_MAX, &hzCount);
+    Result rc = rclkIpcGetFreqList(module, &hzList[0], RCLK_FREQ_LIST_MAX, &hzCount);
     if(R_FAILED(rc))
     {
-        FatalGui::openWithResultCode("hocclkIpcGetFreqList", rc);
+        FatalGui::openWithResultCode("rclkIpcGetFreqList", rc);
         return;
     }
     std::map<uint32_t, std::string> labels = {};
@@ -64,10 +64,10 @@ void AppProfileGui::openFreqChoiceGui(tsl::elm::ListItem* listItem, RyazhaClkPro
         this->profileList->mhzMap[profile][module] = hz / 1000000;
         std::uint32_t mhz = this->profileList->mhzMap[profile][module];
         listItem->setValue(module == RyazhaClkModule_MEM ? formatListFreqMem(mhz, memUnit) : formatListFreqMHz(mhz));
-        Result rc = hocclkIpcSetProfiles(this->applicationId, this->profileList);
+        Result rc = rclkIpcSetProfiles(this->applicationId, this->profileList);
         if(R_FAILED(rc))
         {
-            FatalGui::openWithResultCode("hocclkIpcSetProfiles", rc);
+            FatalGui::openWithResultCode("rclkIpcSetProfiles", rc);
             return false;
         }
 
@@ -121,10 +121,10 @@ void AppProfileGui::addModuleListItem(RyazhaClkProfile profile, RyazhaClkModule 
             this->profileList->mhzMap[profile][module] = 0;
             listItem->setValue(module == RyazhaClkModule_MEM ? formatListFreqMem(0, memUnit) : formatListFreqMHz(0));
             
-            Result rc = hocclkIpcSetProfiles(this->applicationId, this->profileList);
+            Result rc = rclkIpcSetProfiles(this->applicationId, this->profileList);
             if(R_FAILED(rc))
             {
-                FatalGui::openWithResultCode("hocclkIpcSetProfiles", rc);
+                FatalGui::openWithResultCode("rclkIpcSetProfiles", rc);
                 return false;
             }
             return true;
@@ -144,10 +144,10 @@ void AppProfileGui::addModuleListItemToggle(RyazhaClkProfile profile, RyazhaClkM
     toggle->setStateChangedListener([this, profile, module](bool state) {
         this->profileList->mhzMap[profile][module] = state ? 1 : 0;
         
-        Result rc = hocclkIpcSetProfiles(this->applicationId, this->profileList);
+        Result rc = rclkIpcSetProfiles(this->applicationId, this->profileList);
         if(R_FAILED(rc))
         {
-            FatalGui::openWithResultCode("hocclkIpcSetProfiles", rc);
+            FatalGui::openWithResultCode("rclkIpcSetProfiles", rc);
         }
     });
     
@@ -244,12 +244,12 @@ void AppProfileGui::addModuleListItemValue(
                         listItem->setValue(this->formatValueDisplay(value / divisor, namedValues, suffix, divisor, decimalPlaces));
                         
                         Result rc =
-                            hocclkIpcSetProfiles(this->applicationId,
+                            rclkIpcSetProfiles(this->applicationId,
                                                  this->profileList);
                         if (R_FAILED(rc))
                         {
                             FatalGui::openWithResultCode(
-                                "hocclkIpcSetProfiles", rc);
+                                "rclkIpcSetProfiles", rc);
                             return false;
                         }
                         return true;
@@ -267,11 +267,11 @@ void AppProfileGui::addModuleListItemValue(
                 this->profileList->mhzMap[profile][module] = 0;
                 listItem->setValue(FREQ_DEFAULT_TEXT);
                 Result rc =
-                    hocclkIpcSetProfiles(this->applicationId,
+                    rclkIpcSetProfiles(this->applicationId,
                                          this->profileList);
                 if (R_FAILED(rc))
                 {
-                    FatalGui::openWithResultCode("hocclkIpcSetProfiles", rc);
+                    FatalGui::openWithResultCode("rclkIpcSetProfiles", rc);
                     return false;
                 }
                 return true;
@@ -293,9 +293,9 @@ public:
         BaseMenuGui::refresh(); // get latest context
         if(!this->context)
             return;
-        Result rc = hocclkIpcGetConfigValues(&configList);
+        Result rc = rclkIpcGetConfigValues(&configList);
         if (R_FAILED(rc)) [[unlikely]] {
-            FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc);
+            FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
             return;
         }
         this->listElement->addItem(new tsl::elm::CategoryHeader("Governor"));
@@ -316,8 +316,8 @@ public:
             bar->setValueChangedListener([this, shift](u8 value) {
                 u32& packed = this->profileList->mhzMap[this->profile][RyazhaClkModule_Governor];
                 packed = (packed & ~(0xFFu << shift)) | ((u32)value << shift);
-                Result rc = hocclkIpcSetProfiles(this->applicationId, this->profileList);
-                if (R_FAILED(rc)) FatalGui::openWithResultCode("hocclkIpcSetProfiles", rc);
+                Result rc = rclkIpcSetProfiles(this->applicationId, this->profileList);
+                if (R_FAILED(rc)) FatalGui::openWithResultCode("rclkIpcSetProfiles", rc);
             });
             this->listElement->addItem(bar);
         }
@@ -344,9 +344,9 @@ void AppProfileGui::addProfileUI(RyazhaClkProfile profile)
     BaseMenuGui::refresh();
     if(!this->context)
         return;
-    Result rc = hocclkIpcGetConfigValues(&configList);
+    Result rc = rclkIpcGetConfigValues(&configList);
     if (R_FAILED(rc)) [[unlikely]] {
-        FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc);
+        FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
         return;
     }
     if((profile == RyazhaClkProfile_Docked && IsHoag()) || profile == RyazhaClkProfile_HandheldCharging)
@@ -447,11 +447,11 @@ void AppProfileGui::listUI()
 void AppProfileGui::changeTo(std::uint64_t applicationId)
 {
     RyazhaClkTitleProfileList* profileList = new RyazhaClkTitleProfileList;
-    Result rc = hocclkIpcGetProfiles(applicationId, profileList);
+    Result rc = rclkIpcGetProfiles(applicationId, profileList);
     if(R_FAILED(rc))
     {
         delete profileList;
-        FatalGui::openWithResultCode("hocclkIpcGetProfiles", rc);
+        FatalGui::openWithResultCode("rclkIpcGetProfiles", rc);
         return;
     }
 

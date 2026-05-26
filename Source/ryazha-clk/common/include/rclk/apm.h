@@ -36,4 +36,4 @@ typedef struct {
     uint32_t mem_hz;
 } RyazhaClkApmConfiguration;
 
-extern RyazhaClkApmConfiguration hocclk_g_apm_configurations[];
+extern RyazhaClkApmConfiguration rclk_g_apm_configurations[];

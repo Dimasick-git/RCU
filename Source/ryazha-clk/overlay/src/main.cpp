@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_, Horizon OC, and Ryazha-CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -41,7 +41,7 @@ class AppOverlay : public tsl::Overlay
         //}
 
         virtual void exitServices() override {
-            hocclkIpcExit();
+            rclkIpcExit();
         }
 
         virtual std::unique_ptr<tsl::Gui> loadInitialGui() override
@@ -51,7 +51,7 @@ class AppOverlay : public tsl::Overlay
 
             tsl::hlp::ScopeGuard smGuard([] { smExit(); });
 
-            if(!hocclkIpcRunning())
+            if(!rclkIpcRunning())
             {
                 return initially<FatalGui>(
                     "ryazha-clk is not running.\n\n"
@@ -62,7 +62,7 @@ class AppOverlay : public tsl::Overlay
                 );
             }
 
-            if(R_FAILED(hocclkIpcInitialize()) || R_FAILED(hocclkIpcGetAPIVersion(&apiVersion)))
+            if(R_FAILED(rclkIpcInitialize()) || R_FAILED(rclkIpcGetAPIVersion(&apiVersion)))
             {
                 return initially<FatalGui>(
                     "Could not connect to ryazha-clk.\n\n"

@@ -35,9 +35,9 @@ void GlobalOverrideGui::openFreqChoiceGui(RyazhaClkModule module)
     std::uint32_t hzList[RCLK_FREQ_LIST_MAX];
     std::uint32_t hzCount;
     Result rc =
-    hocclkIpcGetFreqList(module, &hzList[0], RCLK_FREQ_LIST_MAX, &hzCount);
+    rclkIpcGetFreqList(module, &hzList[0], RCLK_FREQ_LIST_MAX, &hzCount);
     if (R_FAILED(rc)) {
-        FatalGui::openWithResultCode("hocclkIpcGetFreqList", rc);
+        FatalGui::openWithResultCode("rclkIpcGetFreqList", rc);
         return;
     }
     
@@ -52,9 +52,9 @@ void GlobalOverrideGui::openFreqChoiceGui(RyazhaClkModule module)
     tsl::changeTo<FreqChoiceGui>(
     this->context->overrideFreqs[module], hzList, hzCount, module,
     [this, module](std::uint32_t hz) {
-        Result rc = hocclkIpcSetOverride(module, hz);
+        Result rc = rclkIpcSetOverride(module, hz);
         if (R_FAILED(rc)) {
-            FatalGui::openWithResultCode("hocclkIpcSetOverride", rc);
+            FatalGui::openWithResultCode("rclkIpcSetOverride", rc);
             return false;
         }
 
@@ -191,12 +191,12 @@ void GlobalOverrideGui::addModuleListItemValue(
                         }
                         
                         Result rc =
-                            hocclkIpcSetOverride(module, this->context->overrideFreqs[module]);
+                            rclkIpcSetOverride(module, this->context->overrideFreqs[module]);
                         
                         if (R_FAILED(rc))
                         {
                             FatalGui::openWithResultCode(
-                                "hocclkIpcSetOverride", rc);
+                                "rclkIpcSetOverride", rc);
                             return false;
                         }
                         
@@ -223,11 +223,11 @@ void GlobalOverrideGui::addModuleListItemValue(
                 this->listHz[module] = 0;
                 listItem->setValue(FREQ_DEFAULT_TEXT);
                 
-                Result rc = hocclkIpcSetOverride(module, 0);
+                Result rc = rclkIpcSetOverride(module, 0);
                 
                 if (R_FAILED(rc))
                 {
-                    FatalGui::openWithResultCode("hocclkIpcSetOverride", rc);
+                    FatalGui::openWithResultCode("rclkIpcSetOverride", rc);
                     return false;
                 }
                 
@@ -253,9 +253,9 @@ void GlobalOverrideGui::addModuleListItem(RyazhaClkModule module)
             this->openFreqChoiceGui(module);
             return true;
         } else if ((keys & HidNpadButton_Y) == HidNpadButton_Y) {
-            Result rc = hocclkIpcSetOverride(module, 0);
+            Result rc = rclkIpcSetOverride(module, 0);
             if (R_FAILED(rc)) {
-                FatalGui::openWithResultCode("hocclkIpcSetOverride", rc);
+                FatalGui::openWithResultCode("rclkIpcSetOverride", rc);
                 return false;
             }
 
@@ -283,9 +283,9 @@ void GlobalOverrideGui::addModuleToggleItem(RyazhaClkModule module)
     new tsl::elm::ToggleListItem(moduleName, isOn);
 
     toggle->setStateChangedListener([this, module, toggle](bool state) {
-        Result rc = hocclkIpcSetOverride(module, state ? 1 : 0);
+        Result rc = rclkIpcSetOverride(module, state ? 1 : 0);
         if (R_FAILED(rc)) {
-            FatalGui::openWithResultCode("hocclkIpcSetProfiles", rc);
+            FatalGui::openWithResultCode("rclkIpcSetProfiles", rc);
         }
         this->lastContextUpdate = armGetSystemTick();
         this->context->overrideFreqs[module] = 0;
@@ -304,9 +304,9 @@ public:
         BaseMenuGui::refresh(); // get latest context
         if(!this->context)
             return;
-        Result rc = hocclkIpcGetConfigValues(&configList); // idk why this is needed, probably some refreshing issue
+        Result rc = rclkIpcGetConfigValues(&configList); // idk why this is needed, probably some refreshing issue
         if (R_FAILED(rc)) [[unlikely]] {
-            FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc);
+            FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
             return;
         }
         this->listElement->addItem(new tsl::elm::CategoryHeader("Governor"));
@@ -326,8 +326,8 @@ public:
             int shift = kAll[i].shift;
             bar->setValueChangedListener([this, shift](u8 value) {
                 this->packed = (this->packed & ~(0xFFu << shift)) | ((u32)value << shift);
-                Result rc = hocclkIpcSetOverride(RyazhaClkModule_Governor, this->packed);
-                if (R_FAILED(rc)) FatalGui::openWithResultCode("hocclkIpcSetOverride", rc);
+                Result rc = rclkIpcSetOverride(RyazhaClkModule_Governor, this->packed);
+                if (R_FAILED(rc)) FatalGui::openWithResultCode("rclkIpcSetOverride", rc);
                 this->lastContextUpdate = armGetSystemTick();
             });
             this->listElement->addItem(bar);
@@ -355,9 +355,9 @@ void GlobalOverrideGui::listUI()
     if(!this->context)
         return;
 
-    Result rc = hocclkIpcGetConfigValues(&configList); // idk why this is needed, probably some refreshing issue
+    Result rc = rclkIpcGetConfigValues(&configList); // idk why this is needed, probably some refreshing issue
     if (R_FAILED(rc)) [[unlikely]] {
-        FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc);
+        FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
         return;
     }
 

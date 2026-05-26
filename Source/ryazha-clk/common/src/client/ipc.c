@@ -34,7 +34,7 @@
 static Service g_hocclkSrv;
 static atomic_size_t g_refCnt;
 
-bool hocclkIpcRunning()
+bool rclkIpcRunning()
 {
     Handle handle;
     bool running = R_FAILED(smRegisterService(&handle, smEncodeName(HOCCLK_IPC_SERVICE_NAME), false, 1));
@@ -47,7 +47,7 @@ bool hocclkIpcRunning()
   return running;
 }
 
-Result hocclkIpcInitialize(void)
+Result rclkIpcInitialize(void)
 {
     Result rc = 0;
 
@@ -58,12 +58,12 @@ Result hocclkIpcInitialize(void)
 
     rc = smGetService(&g_hocclkSrv, HOCCLK_IPC_SERVICE_NAME);
 
-    if (R_FAILED(rc)) hocclkIpcExit();
+    if (R_FAILED(rc)) rclkIpcExit();
 
     return rc;
 }
 
-void hocclkIpcExit(void)
+void rclkIpcExit(void)
 {
     if (--g_refCnt == 0)
     {
@@ -71,12 +71,12 @@ void hocclkIpcExit(void)
     }
 }
 
-Result hocclkIpcGetAPIVersion(u32* out_ver)
+Result rclkIpcGetAPIVersion(u32* out_ver)
 {
     return serviceDispatchOut(&g_hocclkSrv, HocClkIpcCmd_GetApiVersion, *out_ver);
 }
 
-Result hocclkIpcGetVersionString(char* out, size_t len)
+Result rclkIpcGetVersionString(char* out, size_t len)
 {
     return serviceDispatch(&g_hocclkSrv, HocClkIpcCmd_GetVersionString,
         .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out },
@@ -84,7 +84,7 @@ Result hocclkIpcGetVersionString(char* out, size_t len)
     );
 }
 
-Result hocclkIpcGetCurrentContext(HocClkContext* out_context)
+Result rclkIpcGetCurrentContext(HocClkContext* out_context)
 {
     return serviceDispatch(&g_hocclkSrv, HocClkIpcCmd_GetCurrentContext,
         .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out },
@@ -92,18 +92,18 @@ Result hocclkIpcGetCurrentContext(HocClkContext* out_context)
     );
 }
 
-Result hocclkIpcGetProfileCount(u64 tid, u8* out_count)
+Result rclkIpcGetProfileCount(u64 tid, u8* out_count)
 {
     return serviceDispatchInOut(&g_hocclkSrv, HocClkIpcCmd_GetProfileCount, tid, *out_count);
 }
 
-Result hocclkIpcSetEnabled(bool enabled)
+Result rclkIpcSetEnabled(bool enabled)
 {
     u8 enabledRaw = (u8)enabled;
     return serviceDispatchIn(&g_hocclkSrv, HocClkIpcCmd_SetEnabled, enabledRaw);
 }
 
-Result hocclkIpcSetOverride(HocClkModule module, u32 hz)
+Result rclkIpcSetOverride(HocClkModule module, u32 hz)
 {
     HocClkIpc_SetOverride_Args args = {
         .module = module,
@@ -112,7 +112,7 @@ Result hocclkIpcSetOverride(HocClkModule module, u32 hz)
     return serviceDispatchIn(&g_hocclkSrv, HocClkIpcCmd_SetOverride, args);
 }
 
-Result hocclkIpcGetProfiles(u64 tid, HocClkTitleProfileList* out_profiles)
+Result rclkIpcGetProfiles(u64 tid, HocClkTitleProfileList* out_profiles)
 {
     return serviceDispatchIn(&g_hocclkSrv, HocClkIpcCmd_GetProfiles, tid,
         .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out },
@@ -120,7 +120,7 @@ Result hocclkIpcGetProfiles(u64 tid, HocClkTitleProfileList* out_profiles)
     );
 }
 
-Result hocclkIpcSetProfiles(u64 tid, HocClkTitleProfileList* profiles)
+Result rclkIpcSetProfiles(u64 tid, HocClkTitleProfileList* profiles)
 {
     HocClkIpc_SetProfiles_Args args;
     args.tid = tid;
@@ -128,7 +128,7 @@ Result hocclkIpcSetProfiles(u64 tid, HocClkTitleProfileList* profiles)
     return serviceDispatchIn(&g_hocclkSrv, HocClkIpcCmd_SetProfiles, args);
 }
 
-Result hocclkIpcGetConfigValues(HocClkConfigValueList* out_configValues)
+Result rclkIpcGetConfigValues(HocClkConfigValueList* out_configValues)
 {
     return serviceDispatch(&g_hocclkSrv, HocClkIpcCmd_GetConfigValues,
         .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out },
@@ -136,7 +136,7 @@ Result hocclkIpcGetConfigValues(HocClkConfigValueList* out_configValues)
     );
 }
 
-Result hocclkIpcSetConfigValues(HocClkConfigValueList* configValues)
+Result rclkIpcSetConfigValues(HocClkConfigValueList* configValues)
 {
     return serviceDispatch(&g_hocclkSrv, HocClkIpcCmd_SetConfigValues,
         .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_In },
@@ -144,7 +144,7 @@ Result hocclkIpcSetConfigValues(HocClkConfigValueList* configValues)
     );
 }
 
-Result hocclkIpcGetFreqList(HocClkModule module, u32* list, u32 maxCount, u32* outCount)
+Result rclkIpcGetFreqList(HocClkModule module, u32* list, u32 maxCount, u32* outCount)
 {
     HocClkIpc_GetFreqList_Args args = {
         .module = module,

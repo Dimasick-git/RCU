@@ -32,26 +32,26 @@
 #include "../board.h"
 #include "../ipc.h"
 
-bool hocclkIpcRunning();
-Result hocclkIpcInitialize(void);
-void hocclkIpcExit(void);
+bool rclkIpcRunning();
+Result rclkIpcInitialize(void);
+void rclkIpcExit(void);
 
-Result hocclkIpcGetAPIVersion(u32* out_ver);
-Result hocclkIpcGetVersionString(char* out, size_t len);
-Result hocclkIpcGetCurrentContext(RyazhaClkContext* out_context);
-Result hocclkIpcGetProfileCount(u64 tid, u8* out_count);
-Result hocclkIpcSetEnabled(bool enabled);
-Result hocclkIpcExitCmd();
-Result hocclkIpcSetOverride(RyazhaClkModule module, u32 hz);
-Result hocclkIpcGetProfiles(u64 tid, RyazhaClkTitleProfileList* out_profiles);
-Result hocclkIpcSetProfiles(u64 tid, RyazhaClkTitleProfileList* profiles);
-Result hocclkIpcGetConfigValues(RyazhaClkConfigValueList* out_configValues);
-Result hocclkIpcSetConfigValues(RyazhaClkConfigValueList* configValues);
-Result hocclkIpcGetFreqList(RyazhaClkModule module, u32* list, u32 maxCount, u32* outCount);
+Result rclkIpcGetAPIVersion(u32* out_ver);
+Result rclkIpcGetVersionString(char* out, size_t len);
+Result rclkIpcGetCurrentContext(RyazhaClkContext* out_context);
+Result rclkIpcGetProfileCount(u64 tid, u8* out_count);
+Result rclkIpcSetEnabled(bool enabled);
+Result rclkIpcExitCmd();
+Result rclkIpcSetOverride(RyazhaClkModule module, u32 hz);
+Result rclkIpcGetProfiles(u64 tid, RyazhaClkTitleProfileList* out_profiles);
+Result rclkIpcSetProfiles(u64 tid, RyazhaClkTitleProfileList* profiles);
+Result rclkIpcGetConfigValues(RyazhaClkConfigValueList* out_configValues);
+Result rclkIpcSetConfigValues(RyazhaClkConfigValueList* configValues);
+Result rclkIpcGetFreqList(RyazhaClkModule module, u32* list, u32 maxCount, u32* outCount);
 Result hocClkIpcSetKipData();
 Result hocClkIpcGetKipData();
 
-static inline Result hocclkIpcRemoveOverride(RyazhaClkModule module)
+static inline Result rclkIpcRemoveOverride(RyazhaClkModule module)
 {
-    return hocclkIpcSetOverride(module, 0);
+    return rclkIpcSetOverride(module, 0);
 }

@@ -110,7 +110,7 @@ tsl::elm::ListItem* FreqChoiceGui::createFreqListItem(std::uint32_t hz, bool sel
 
 void FreqChoiceGui::listUI()
 {
-    hocclkIpcGetConfigValues(this->configList);
+    rclkIpcGetConfigValues(this->configList);
 
     // Header based on CPU/GPU/MEM module
     std::string moduleName = hocclkFormatModule(this->module, false);

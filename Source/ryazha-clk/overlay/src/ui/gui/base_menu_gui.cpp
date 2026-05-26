@@ -202,15 +202,15 @@ void BaseMenuGui::refresh()
         this->context = new RyazhaClkContext;
     }
 
-    Result rc = hocclkIpcGetCurrentContext(this->context);
+    Result rc = rclkIpcGetCurrentContext(this->context);
     if (R_FAILED(rc)) [[unlikely]] {
-        FatalGui::openWithResultCode("hocclkIpcGetCurrentContext", rc);
+        FatalGui::openWithResultCode("rclkIpcGetCurrentContext", rc);
         return;
     }
 
-    rc = hocclkIpcGetConfigValues(&configList);
+    rc = rclkIpcGetConfigValues(&configList);
     if (R_FAILED(rc)) [[unlikely]] {
-        FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc);
+        FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
         return;
     }
     // dockedHighestAllowedRefreshRate = this->context->maxDisplayFreq;

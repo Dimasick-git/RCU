@@ -110,9 +110,9 @@ void MiscGui::addConfigToggle(RyazhaClkConfigValue configVal, const char* altNam
         toggle->setTextColor(tsl::Color(120, 235, 255, 255));
     toggle->setStateChangedListener([this, configVal, kip](bool state) {
         this->configList->values[configVal] = uint64_t(state);
-        Result rc = hocclkIpcSetConfigValues(this->configList);
+        Result rc = rclkIpcSetConfigValues(this->configList);
         if (R_FAILED(rc)) {
-            FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
+            FatalGui::openWithResultCode("rclkIpcSetConfigValues", rc);
         } else if (kip) {
             shouldSaveKip = true;
         }
@@ -159,8 +159,8 @@ void MiscGui::addConfigTrackbar(RyazhaClkConfigValue configVal, const char* altN
     bar->setProgress(curStep);
     bar->setValueChangedListener([this, configVal, kip, range](u16 v) {
         this->configList->values[configVal] = range.min + (u32)v * range.step;
-        Result rc = hocclkIpcSetConfigValues(this->configList);
-        if (R_FAILED(rc)) FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
+        Result rc = rclkIpcSetConfigValues(this->configList);
+        if (R_FAILED(rc)) FatalGui::openWithResultCode("rclkIpcSetConfigValues", rc);
         if (kip) shouldSaveKip = true;
     });
     this->listElement->addItem(bar);
@@ -198,8 +198,8 @@ void MiscGui::addMappedConfigTrackbar(RyazhaClkConfigValue configVal, const char
     bar->setValueChangedListener([this, configVal, kip, vals](u16 idx) {
         if (idx < (u16)vals.size())
             this->configList->values[configVal] = vals[idx];
-        Result rc = hocclkIpcSetConfigValues(this->configList);
-        if (R_FAILED(rc)) FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
+        Result rc = rclkIpcSetConfigValues(this->configList);
+        if (R_FAILED(rc)) FatalGui::openWithResultCode("rclkIpcSetConfigValues", rc);
         if (kip) shouldSaveKip = true;
     });
     this->listElement->addItem(bar);
@@ -277,9 +277,9 @@ void MiscGui::addConfigButton(RyazhaClkConfigValue configVal,
                     categoryName,
                     [this, configVal, kip](std::uint32_t value) {
                         this->configList->values[configVal] = value;
-                        Result rc = hocclkIpcSetConfigValues(this->configList);
+                        Result rc = rclkIpcSetConfigValues(this->configList);
                         if (R_FAILED(rc)) {
-                            FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
+                            FatalGui::openWithResultCode("rclkIpcSetConfigValues", rc);
                             return false;
                         }
                         if (kip) {
@@ -302,9 +302,9 @@ void MiscGui::addConfigButton(RyazhaClkConfigValue configVal,
                     categoryName,
                     [this, configVal, kip](std::uint32_t value) {
                         this->configList->values[configVal] = value;
-                        Result rc = hocclkIpcSetConfigValues(this->configList);
+                        Result rc = rclkIpcSetConfigValues(this->configList);
                         if (R_FAILED(rc)) {
-                            FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
+                            FatalGui::openWithResultCode("rclkIpcSetConfigValues", rc);
                             return false;
                         }
                         if (kip) {
@@ -403,9 +403,9 @@ void MiscGui::addConfigButtonS(RyazhaClkConfigValue configVal,
                     categoryName,
                     [this, configVal, kip](std::uint32_t value) {
                         this->configList->values[configVal] = value;
-                        Result rc = hocclkIpcSetConfigValues(this->configList);
+                        Result rc = rclkIpcSetConfigValues(this->configList);
                         if (R_FAILED(rc)) {
-                            FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
+                            FatalGui::openWithResultCode("rclkIpcSetConfigValues", rc);
                             return false;
                         }
                         if (kip) {
@@ -428,9 +428,9 @@ void MiscGui::addConfigButtonS(RyazhaClkConfigValue configVal,
                     categoryName,
                     [this, configVal, kip](std::uint32_t value) {
                         this->configList->values[configVal] = value;
-                        Result rc = hocclkIpcSetConfigValues(this->configList);
+                        Result rc = rclkIpcSetConfigValues(this->configList);
                         if (R_FAILED(rc)) {
-                            FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
+                            FatalGui::openWithResultCode("rclkIpcSetConfigValues", rc);
                             return false;
                         }
                         if (kip) {
@@ -496,9 +496,9 @@ void MiscGui::addFreqButton(RyazhaClkConfigValue configVal,
             std::uint32_t hzList[RCLK_FREQ_LIST_MAX];
             std::uint32_t hzCount;
 
-            Result rc = hocclkIpcGetFreqList(module, hzList, RCLK_FREQ_LIST_MAX, &hzCount);
+            Result rc = rclkIpcGetFreqList(module, hzList, RCLK_FREQ_LIST_MAX, &hzCount);
             if (R_FAILED(rc)) {
-                FatalGui::openWithResultCode("hocclkIpcGetFreqList", rc);
+                FatalGui::openWithResultCode("rclkIpcGetFreqList", rc);
                 return false;
             }
 
@@ -514,9 +514,9 @@ void MiscGui::addFreqButton(RyazhaClkConfigValue configVal,
                     uint64_t mhz = hz / 1'000'000;
                     this->configList->values[configVal] = mhz;
 
-                    Result rc = hocclkIpcSetConfigValues(this->configList);
+                    Result rc = rclkIpcSetConfigValues(this->configList);
                     if (R_FAILED(rc)) {
-                        FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
+                        FatalGui::openWithResultCode("rclkIpcSetConfigValues", rc);
                         return false;
                     }
 
@@ -538,9 +538,9 @@ void MiscGui::addFreqButton(RyazhaClkConfigValue configVal,
 
 void MiscGui::listUI()
 {
-    Result rc = hocclkIpcGetConfigValues(configList);
+    Result rc = rclkIpcGetConfigValues(configList);
     if (R_FAILED(rc)) [[unlikely]] {
-        FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc);
+        FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
         return;
     }
 
@@ -657,8 +657,8 @@ public:
 
 protected:
     void listUI() override {
-        Result rc = hocclkIpcGetConfigValues(this->configList);
-        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc); return; }
+        Result rc = rclkIpcGetConfigValues(this->configList);
+        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc); return; }
         this->listElement->addItem(new tsl::elm::CategoryHeader("General Settings"));
 
         ValueThresholds thresholdsDisabled(0, 0);
@@ -717,8 +717,8 @@ public:
 
 protected:
     void listUI() override {
-        Result rc = hocclkIpcGetConfigValues(this->configList);
-        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc); return; }
+        Result rc = rclkIpcGetConfigValues(this->configList);
+        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc); return; }
         this->listElement->addItem(new tsl::elm::CategoryHeader("Experimental Settings"));
         ValueThresholds thresholdsDisabled(0, 0);
         if(IsMariko()) {
@@ -853,8 +853,8 @@ public:
 
 protected:
     void listUI() override {
-        Result rc = hocclkIpcGetConfigValues(this->configList);
-        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc); return; }
+        Result rc = rclkIpcGetConfigValues(this->configList);
+        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc); return; }
         this->listElement->addItem(new tsl::elm::CategoryHeader("Governor Settings"));
         ValueThresholds thresholdsDisabled(0, 0);
 
@@ -888,8 +888,8 @@ public:
 
 protected:
     void listUI() override {
-        Result rc = hocclkIpcGetConfigValues(this->configList);
-        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc); return; }
+        Result rc = rclkIpcGetConfigValues(this->configList);
+        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc); return; }
         ValueThresholds thresholdsDisabled(0, 0);
 
         BaseMenuGui::refresh(); // get latest context
@@ -949,8 +949,8 @@ public:
 
 protected:
     void listUI() override {
-        Result rc = hocclkIpcGetConfigValues(this->configList);
-        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc); return; }
+        Result rc = rclkIpcGetConfigValues(this->configList);
+        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc); return; }
         this->listElement->addItem(new tsl::elm::CategoryHeader("Safety Settings"));
         addConfigToggle(RyazhaClkConfigValue_UncappedClocks, nullptr);
         addConfigToggle(RyazhaClkConfigValue_ThermalThrottle, nullptr);
@@ -1004,8 +1004,8 @@ protected:
         if(!this->context)
             return;
 
-        Result rc = hocclkIpcGetConfigValues(this->configList);
-        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc); return; }
+        Result rc = rclkIpcGetConfigValues(this->configList);
+        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc); return; }
         ValueThresholds thresholdsDisabled(0, 0);
         std::vector<NamedValue> noNamedValues = {};
 
@@ -1249,8 +1249,8 @@ public:
 
 protected:
     void listUI() override {
-        Result rc = hocclkIpcGetConfigValues(this->configList);
-        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc); return; }
+        Result rc = rclkIpcGetConfigValues(this->configList);
+        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc); return; }
         this->listElement->addItem(new tsl::elm::CategoryHeader("Memory Timings"));
 
         addConfigTrackbar(KipConfigValue_t1_tRCD,  "t1 tRCD",  ValueRange(0, 7,  1));
@@ -1521,9 +1521,9 @@ protected:
 
     void listUI() override {
         ValueThresholds thresholdsDisabled(0, 0);
-        Result rc = hocclkIpcGetConfigValues(this->configList);
+        Result rc = rclkIpcGetConfigValues(this->configList);
         if (R_FAILED(rc)) [[unlikely]] {
-            FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc);
+            FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
             return;
         }
 
@@ -1645,9 +1645,9 @@ protected:
                         std::string("2133 Latency Max"),
                         [this, thisKey, keysArr](uint32_t chosen) -> bool {
                             this->configList->values[thisKey] = chosen;
-                            Result rc = hocclkIpcSetConfigValues(this->configList);
+                            Result rc = rclkIpcSetConfigValues(this->configList);
                             if (R_FAILED(rc)) {
-                                FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
+                                FatalGui::openWithResultCode("rclkIpcSetConfigValues", rc);
                                 return false;
                             }
                             shouldSaveKip = true;
@@ -1705,9 +1705,9 @@ protected:
                     [this, thisKey, keysArr](uint32_t chosen) -> bool {
                         this->configList->values[thisKey] = chosen;
                         normalizeLatencies(keysArr);
-                        Result rc = hocclkIpcSetConfigValues(this->configList);
+                        Result rc = rclkIpcSetConfigValues(this->configList);
                         if (R_FAILED(rc)) {
-                            FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
+                            FatalGui::openWithResultCode("rclkIpcSetConfigValues", rc);
                             return false;
                         }
                         shouldSaveKip = true;
@@ -1945,9 +1945,9 @@ public:
 
 protected:
     void listUI() override {
-        Result rc = hocclkIpcGetConfigValues(this->configList); // populate config list early otherwise wont work
+        Result rc = rclkIpcGetConfigValues(this->configList); // populate config list early otherwise wont work
         if (R_FAILED(rc)) [[unlikely]] {
-            FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc);
+            FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
             return;
         }
 
@@ -2147,8 +2147,8 @@ public:
 
 protected:
     void listUI() override {
-        Result rc = hocclkIpcGetConfigValues(this->configList);
-        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc); return; }
+        Result rc = rclkIpcGetConfigValues(this->configList);
+        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc); return; }
         ValueThresholds thresholdsDisabled(0, 0);
         std::vector<NamedValue> noNamedValues = {};
 
@@ -2357,9 +2357,9 @@ public:
 protected:
     void listUI() override {
 
-        Result rc = hocclkIpcGetConfigValues(this->configList); // populate config list early otherwise wont work
+        Result rc = rclkIpcGetConfigValues(this->configList); // populate config list early otherwise wont work
         if (R_FAILED(rc)) [[unlikely]] {
-            FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc);
+            FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
             return;
         }
 
@@ -2612,9 +2612,9 @@ void MiscGui::refresh() {
     if (this->context && ++frameCounter >= 60) {
         frameCounter = 0;
 
-        Result rc = hocclkIpcGetConfigValues(this->configList);
+        Result rc = rclkIpcGetConfigValues(this->configList);
         if (R_FAILED(rc)) [[unlikely]] {
-            FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc);
+            FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
             return;
         }
         updateConfigToggles();
