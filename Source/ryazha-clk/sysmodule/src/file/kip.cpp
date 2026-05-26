@@ -1,3 +1,6 @@
+/* RCU build trigger: re-run CI after collab access added
+ *
+ */
 /*
  * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
