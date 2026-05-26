@@ -32,9 +32,9 @@ echo
 echo "*** Compiling loader ***"
 cd build/stratosphere/loader || exit 1
 make -j$CORES
-hactool -t kip1 out/nintendo_nx_arm64_armv8a/release/loader.kip --uncompress=loader.kip
+hactool -t kip1 out/nintendo_nx_arm64_armv8a/release/loader.kip --uncompress=rcu.kip
 cd ../../../ # exit
-cp -v build/stratosphere/loader/loader.kip dist/atmosphere/kips/loader.kip
+cp -v build/stratosphere/loader/rcu.kip dist/atmosphere/kips/rcu.kip
 
 echo
 echo "*** Compiling exosphere ***"

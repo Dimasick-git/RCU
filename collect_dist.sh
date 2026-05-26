@@ -25,17 +25,14 @@ mkdir -p "$DIST_ROOT/switch/.overlays"
 mkdir -p "$DIST_ROOT/switch/overlays"
 mkdir -p "$DIST_ROOT/config/ryazha-clk"
 
-# 2. Сборка лоадера (loader.kip)
-# Финальное имя -- loader.kip (а не rcu.kip): это convention Hekate/Atmosphere
-# для kip1=atmosphere/kips/loader.kip. На clean install rcu.kip не
-# подхватывается бутлоадером.
-echo -e "${YELLOW}--- Сборка лоадера (loader.kip) ---${NC}"
+# 2. Сборка лоадера (rcu.kip)
+echo -e "${YELLOW}--- Сборка лоадера (rcu.kip) ---${NC}"
 # Примечание: Лоадер требует наличия исходников Atmosphere в папке build/
 if [ -d "build/stratosphere/loader" ]; then
     pushd build/stratosphere/loader > /dev/null
     make clean && make -j$(nproc)
-    hactool -t kip1 out/nintendo_nx_arm64_armv8a/release/loader.kip --uncompress=loader.kip
-    cp loader.kip "$DIST_ROOT/atmosphere/kips/loader.kip"
+    hactool -t kip1 out/nintendo_nx_arm64_armv8a/release/loader.kip --uncompress=rcu.kip
+    cp rcu.kip "$DIST_ROOT/atmosphere/kips/rcu.kip"
     popd > /dev/null
     echo -e "${GREEN}Лоадер собран и скопирован.${NC}"
 else
