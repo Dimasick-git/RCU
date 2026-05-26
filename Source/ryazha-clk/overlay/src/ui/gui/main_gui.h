@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -36,9 +36,4 @@ class MainGui : public BaseMenuGui
         ~MainGui() {}
         void listUI() override;
         void refresh() override;
-
-        // X -> Ryazha-Авто / VRR menu (LivingLadderGui). Перехватываем
-        // на уровне Gui, чтобы шорткат работал откуда угодно в MainGui.
-        bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState& touchPos,
-                         HidAnalogStickState leftStick, HidAnalogStickState rightStick) override;
 };

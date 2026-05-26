@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -41,16 +41,16 @@
 
 namespace board {
     extern u64 clkVirtAddr, dsiVirtAddr, apbVirtAddr, fuseVirtAddr;
-    extern RClkSocType gSocType;
+    extern RyazhaClkSocType gSocType;
     extern u8 gDramID;
-    extern RClkConsoleType gConsoleType;
+    extern RyazhaClkConsoleType gConsoleType;
     extern FuseData fuseData;
     extern u8 speedoBracket;
     
     void Initialize();
     void Exit();
-    RClkSocType GetSocType();
-    RClkConsoleType GetConsoleType();
+    RyazhaClkSocType GetSocType();
+    RyazhaClkConsoleType GetConsoleType();
     u8 GetDramID();
     u8 GetGpuSpeedoBracket();
     bool IsDram8GB();

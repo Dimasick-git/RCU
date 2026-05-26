@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -53,9 +53,9 @@ namespace board {
 
     u64 clkVirtAddr, dsiVirtAddr, apbVirtAddr, fuseVirtAddr;
 
-    RClkSocType gSocType;
+    RyazhaClkSocType gSocType;
     u8 gDramID;
-    RClkConsoleType gConsoleType = RClkConsoleType_Icosa;
+    RyazhaClkConsoleType gConsoleType = RyazhaClkConsoleType_Icosa;
     FuseData fuseData;
     u8 speedoBracket;
     PwmChannelSession iCon;
@@ -75,33 +75,33 @@ namespace board {
 
         u32 hidrev = *(u32*)(apbVirtAddr + APB_MISC_GP_HIDREV);
         if (((hidrev >> 4) & 0xF) >= GP_HIDREV_MAJOR_T210B01) {
-            gSocType = RClkSocType_Mariko;
+            gSocType = RyazhaClkSocType_Mariko;
             CacheGpuVoltTable();
         } else {
-            gSocType = RClkSocType_Erista;
+            gSocType = RyazhaClkSocType_Erista;
         }
 
         u32 odm4 = *(u32*)(fuseVirtAddr + FUSE_OFFSET + FUSE_RESERVED_ODMX(4));
 
-        if (gSocType == RClkSocType_Mariko) {
+        if (gSocType == RyazhaClkSocType_Mariko) {
             switch ((odm4 & 0xF0000) >> 16) {
                 case 2:
-                    gConsoleType = RClkConsoleType_Hoag;
+                    gConsoleType = RyazhaClkConsoleType_Hoag;
                     break;
                 case 4:
-                    gConsoleType = RClkConsoleType_Aula;
+                    gConsoleType = RyazhaClkConsoleType_Aula;
                     break;
                 case 1:
                 default:
-                    gConsoleType = RClkConsoleType_Iowa;
+                    gConsoleType = RyazhaClkConsoleType_Iowa;
             }
         } else {
-            gConsoleType = RClkConsoleType_Icosa;
+            gConsoleType = RyazhaClkConsoleType_Icosa;
         }
 
         gDramID = (odm4 & 0xF8) >> 3;
         // Get extended dram id info.
-        if (gSocType == RClkSocType_Mariko) {
+        if (gSocType == RyazhaClkSocType_Mariko) {
             gDramID |= (odm4 & 0x7000) >> 7;
         }
     }
@@ -180,7 +180,7 @@ namespace board {
         svcCallSecureMonitor(&args);
 
         if (args.X[1] != PMC_BASE) { // if param 1 is identical read failed
-            tsensor::InitializeAotag(GetSocType() == RClkSocType_Mariko);
+            tsensor::InitializeAotag(GetSocType() == RyazhaClkSocType_Mariko);
         }
 
         Result pwmCheck = 1;
@@ -190,7 +190,7 @@ namespace board {
 
         StartMiscThread(pwmCheck, &iCon);
 
-        display::DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = (GetConsoleType() == RClkConsoleType_Hoag), .isRetroSUPER = integrations::GetRETROSuperStatus()};
+        display::DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = (GetConsoleType() == RyazhaClkConsoleType_Hoag), .isRetroSUPER = integrations::GetRETROSuperStatus()};
         display::Initialize(&cfg);
 
         CacheDfllData();
@@ -225,11 +225,11 @@ namespace board {
         nvExit();
     }
 
-    RClkSocType GetSocType() {
+    RyazhaClkSocType GetSocType() {
         return gSocType;
     }
 
-    RClkConsoleType GetConsoleType() {
+    RyazhaClkConsoleType GetConsoleType() {
         return gConsoleType;
     }
 
@@ -244,7 +244,7 @@ namespace board {
         svcCallSecureMonitor(&args);
 
         if (args.X[1] == (MC_REGISTER_BASE + MC_EMEM_CFG_0)) { // if param 1 is identical read failed
-            notification::writeNotification("Ryazha CLK\nSecmon read failed!\n This may be a hardware issue!");
+            notification::writeNotification("Horizon OC\nSecmon read failed!\n This may be a hardware issue!");
             return false;
         }
 
@@ -253,7 +253,7 @@ namespace board {
 
     /* TODO: Put this into a different file. */
     void SetDisplayRefreshDockedState(bool docked) {
-        if (GetConsoleType() != RClkConsoleType_Hoag) {
+        if (GetConsoleType() != RyazhaClkConsoleType_Hoag) {
             display::SetDockedState(docked);
         }
     }

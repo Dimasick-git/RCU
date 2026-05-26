@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -50,7 +50,7 @@
 
 namespace config {
 
-    uint64_t configValues[RClkConfigValue_EnumMax];
+    uint64_t configValues[RyazhaClkConfigValue_EnumMax];
 
     namespace {
 
@@ -58,8 +58,8 @@ namespace config {
         std::string gPath;
         time_t gMtime = 0;
         std::atomic_bool gEnabled{false};
-        std::uint32_t gOverrideFreqs[RClkModule_EnumMax];
-        std::map<std::tuple<std::uint64_t, RClkProfile, RClkModule>, std::uint32_t> gProfileMHzMap;
+        std::uint32_t gOverrideFreqs[RyazhaClkModule_EnumMax];
+        std::map<std::tuple<std::uint64_t, RyazhaClkProfile, RyazhaClkModule>, std::uint32_t> gProfileMHzMap;
         std::map<std::uint64_t, std::uint8_t> gProfileCountMap;
         LockableMutex gConfigMutex;
         LockableMutex gOverrideMutex;
@@ -73,7 +73,7 @@ namespace config {
             return mtime;
         }
 
-        std::uint32_t FindClockMHz(std::uint64_t tid, RClkModule module, RClkProfile profile) {
+        std::uint32_t FindClockMHz(std::uint64_t tid, RyazhaClkModule module, RyazhaClkProfile profile) {
             if (gLoaded) {
                 auto it = gProfileMHzMap.find(std::make_tuple(tid, profile, module));
                 if (it != gProfileMHzMap.end()) {
@@ -83,7 +83,7 @@ namespace config {
             return 0;
         }
 
-        std::uint32_t FindClockHzFromProfiles(std::uint64_t tid, RClkModule module, std::initializer_list<RClkProfile> profiles, u32 mhzMultiplier = 1000000) {
+        std::uint32_t FindClockHzFromProfiles(std::uint64_t tid, RyazhaClkModule module, std::initializer_list<RyazhaClkProfile> profiles, u32 mhzMultiplier = 1000000) {
             std::uint32_t mhz = 0;
 
             if (gLoaded) {
@@ -102,11 +102,11 @@ namespace config {
             (void)userdata;
             std::uint64_t input;
             if (!strcmp(section, CONFIG_VAL_SECTION)) {
-                for (unsigned int kval = 0; kval < RClkConfigValue_EnumMax; kval++) {
-                    if (!strcmp(key, rclkFormatConfigValue((RClkConfigValue)kval, false))) {
+                for (unsigned int kval = 0; kval < RyazhaClkConfigValue_EnumMax; kval++) {
+                    if (!strcmp(key, hocclkFormatConfigValue((RyazhaClkConfigValue)kval, false))) {
                         input = strtoul(value, NULL, 0);
-                        if (!rclkValidConfigValue((RClkConfigValue)kval, input)) {
-                            input = rclkDefaultConfigValue((RClkConfigValue)kval);
+                        if (!hocclkValidConfigValue((RyazhaClkConfigValue)kval, input)) {
+                            input = hocclkDefaultConfigValue((RyazhaClkConfigValue)kval);
                             fileUtils::LogLine("[cfg] Invalid value for key '%s' in section '%s': using default %d", key, section, input);
                         }
                         configValues[kval] = input;
@@ -125,28 +125,28 @@ namespace config {
                 return 1;
             }
 
-            RClkProfile parsedProfile = RClkProfile_EnumMax;
-            RClkModule parsedModule = RClkModule_EnumMax;
+            RyazhaClkProfile parsedProfile = RyazhaClkProfile_EnumMax;
+            RyazhaClkModule parsedModule = RyazhaClkModule_EnumMax;
 
-            for (unsigned int profile = 0; profile < RClkProfile_EnumMax; profile++) {
-                const char* profileCode = board::GetProfileName((RClkProfile)profile, false);
+            for (unsigned int profile = 0; profile < RyazhaClkProfile_EnumMax; profile++) {
+                const char* profileCode = board::GetProfileName((RyazhaClkProfile)profile, false);
                 size_t profileCodeLen = strlen(profileCode);
 
                 if (!strncmp(key, profileCode, profileCodeLen) && key[profileCodeLen] == '_') {
                     const char* subkey = key + profileCodeLen + 1;
 
-                    for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
-                        const char* moduleCode = board::GetModuleName((RClkModule)module, false);
+                    for (unsigned int module = 0; module < RyazhaClkModule_EnumMax; module++) {
+                        const char* moduleCode = board::GetModuleName((RyazhaClkModule)module, false);
                         size_t moduleCodeLen = strlen(moduleCode);
                         if (!strncmp(subkey, moduleCode, moduleCodeLen) && subkey[moduleCodeLen] == '\0') {
-                            parsedProfile = (RClkProfile)profile;
-                            parsedModule = (RClkModule)module;
+                            parsedProfile = (RyazhaClkProfile)profile;
+                            parsedModule = (RyazhaClkModule)module;
                         }
                     }
                 }
             }
 
-            if (parsedModule == RClkModule_EnumMax || parsedProfile == RClkProfile_EnumMax) {
+            if (parsedModule == RyazhaClkModule_EnumMax || parsedProfile == RyazhaClkProfile_EnumMax) {
                 fileUtils::LogLine("[cfg] Skipping key '%s' in section '%s': Unrecognized key", key, section);
                 return 1;
             }
@@ -172,8 +172,8 @@ namespace config {
             gLoaded = false;
             gProfileMHzMap.clear();
             gProfileCountMap.clear();
-            for (unsigned int i = 0; i < RClkConfigValue_EnumMax; i++) {
-                configValues[i] = rclkDefaultConfigValue((RClkConfigValue)i);
+            for (unsigned int i = 0; i < RyazhaClkConfigValue_EnumMax; i++) {
+                configValues[i] = hocclkDefaultConfigValue((RyazhaClkConfigValue)i);
             }
         }
 
@@ -183,31 +183,12 @@ namespace config {
             Close();
             gMtime = CheckModificationTime();
             if (!gMtime) {
-                // File missing -- auto-create minimal scaffold so subsequent
-                // writes (SetConfigValues / SetProfiles) have somewhere to
-                // land, и чтобы overlay не получал ConfigNotLoaded на пустом
-                // SD. Дир мы не создаём -- путь /config/ryazha-clk/ создаёт
-                // сам HOS через filesystem_access (perms.json "*").
-                fileUtils::LogLine("[cfg] %s missing -- creating empty scaffold", gPath.c_str());
-                FILE* f = std::fopen(gPath.c_str(), "w");
-                if (f) {
-                    std::fputs("[config]\n", f);
-                    std::fclose(f);
-                    gMtime = CheckModificationTime();
-                } else {
-                    fileUtils::LogLine("[cfg] WARN cannot create %s (SD read-only?)", gPath.c_str());
-                }
-            }
-            if (gMtime && !ini_browse(&BrowseIniFunc, nullptr, gPath.c_str())) {
-                fileUtils::LogLine("[cfg] Error loading file (ini_browse failed)");
+                fileUtils::LogLine("[cfg] Error finding file");
+            } else if (!ini_browse(&BrowseIniFunc, nullptr, gPath.c_str())) {
+                fileUtils::LogLine("[cfg] Error loading file");
             }
 
-            // gLoaded = true ВСЕГДА после Load(): даже если файл пустой/битый,
-            // мы хотим, чтобы UI мог писать и тем самым лечил файл. Старое
-            // поведение "молча возвращать ConfigNotLoaded" заставляло юзера
-            // думать, что overlay не реагирует.
             gLoaded = true;
-            fileUtils::LogLine("[cfg] Loaded (mtime=%lld)", (long long)gMtime);
         }
 
     }
@@ -219,11 +200,11 @@ namespace config {
         gProfileCountMap.clear();
         gMtime = 0;
         gEnabled = false;
-        for (unsigned int i = 0; i < RClkModule_EnumMax; i++) {
+        for (unsigned int i = 0; i < RyazhaClkModule_EnumMax; i++) {
             gOverrideFreqs[i] = 0;
         }
-        for (unsigned int i = 0; i < RClkConfigValue_EnumMax; i++) {
-            configValues[i] = rclkDefaultConfigValue((RClkConfigValue)i);
+        for (unsigned int i = 0; i < RyazhaClkConfigValue_EnumMax; i++) {
+            configValues[i] = hocclkDefaultConfigValue((RyazhaClkConfigValue)i);
         }
     }
 
@@ -246,34 +227,34 @@ namespace config {
         return gLoaded;
     }
 
-    std::uint32_t GetAutoClockHz(std::uint64_t tid, RClkModule module, RClkProfile profile, bool returnRaw) {
+    std::uint32_t GetAutoClockHz(std::uint64_t tid, RyazhaClkModule module, RyazhaClkProfile profile, bool returnRaw) {
         std::scoped_lock lock{gConfigMutex};
         switch (profile) {
-            case RClkProfile_Handheld:
-                return FindClockHzFromProfiles(tid, module, {RClkProfile_Handheld}, returnRaw ? 1 : 1000000);
-            case RClkProfile_HandheldCharging:
-            case RClkProfile_HandheldChargingUSB:
-                return FindClockHzFromProfiles(tid, module, {RClkProfile_HandheldChargingUSB, RClkProfile_HandheldCharging, RClkProfile_Handheld}, returnRaw ? 1 : 1000000);
-            case RClkProfile_HandheldChargingOfficial:
-                return FindClockHzFromProfiles(tid, module, {RClkProfile_HandheldChargingOfficial, RClkProfile_HandheldCharging, RClkProfile_Handheld}, returnRaw ? 1 : 1000000);
-            case RClkProfile_Docked:
-                return FindClockHzFromProfiles(tid, module, {RClkProfile_Docked}, returnRaw ? 1 : 1000000);
+            case RyazhaClkProfile_Handheld:
+                return FindClockHzFromProfiles(tid, module, {RyazhaClkProfile_Handheld}, returnRaw ? 1 : 1000000);
+            case RyazhaClkProfile_HandheldCharging:
+            case RyazhaClkProfile_HandheldChargingUSB:
+                return FindClockHzFromProfiles(tid, module, {RyazhaClkProfile_HandheldChargingUSB, RyazhaClkProfile_HandheldCharging, RyazhaClkProfile_Handheld}, returnRaw ? 1 : 1000000);
+            case RyazhaClkProfile_HandheldChargingOfficial:
+                return FindClockHzFromProfiles(tid, module, {RyazhaClkProfile_HandheldChargingOfficial, RyazhaClkProfile_HandheldCharging, RyazhaClkProfile_Handheld}, returnRaw ? 1 : 1000000);
+            case RyazhaClkProfile_Docked:
+                return FindClockHzFromProfiles(tid, module, {RyazhaClkProfile_Docked}, returnRaw ? 1 : 1000000);
             default:
-                ERROR_THROW("Unhandled RClkProfile: %u", profile);
+                ERROR_THROW("Unhandled RyazhaClkProfile: %u", profile);
         }
         return 0;
     }
 
-    void GetProfiles(std::uint64_t tid, RClkTitleProfileList* out_profiles) {
+    void GetProfiles(std::uint64_t tid, RyazhaClkTitleProfileList* out_profiles) {
         std::scoped_lock lock{gConfigMutex};
-        for (unsigned int profile = 0; profile < RClkProfile_EnumMax; profile++) {
-            for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
-                out_profiles->mhzMap[profile][module] = FindClockMHz(tid, (RClkModule)module, (RClkProfile)profile);
+        for (unsigned int profile = 0; profile < RyazhaClkProfile_EnumMax; profile++) {
+            for (unsigned int module = 0; module < RyazhaClkModule_EnumMax; module++) {
+                out_profiles->mhzMap[profile][module] = FindClockMHz(tid, (RyazhaClkModule)module, (RyazhaClkProfile)profile);
             }
         }
     }
 
-    bool SetProfiles(std::uint64_t tid, RClkTitleProfileList* profiles, bool immediate) {
+    bool SetProfiles(std::uint64_t tid, RyazhaClkTitleProfileList* profiles, bool immediate) {
         std::scoped_lock lock{gConfigMutex};
         uint8_t numProfiles = 0;
 
@@ -282,19 +263,19 @@ namespace config {
 
         std::vector<std::string> keys;
         std::vector<std::string> values;
-        keys.reserve(+RClkProfile_EnumMax * +RClkModule_EnumMax);
-        values.reserve(+RClkProfile_EnumMax * +RClkModule_EnumMax);
+        keys.reserve(+RyazhaClkProfile_EnumMax * +RyazhaClkModule_EnumMax);
+        values.reserve(+RyazhaClkProfile_EnumMax * +RyazhaClkModule_EnumMax);
 
         std::uint32_t* mhz = &profiles->mhz[0];
 
-        for (unsigned int profile = 0; profile < RClkProfile_EnumMax; profile++) {
-            for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
+        for (unsigned int profile = 0; profile < RyazhaClkProfile_EnumMax; profile++) {
+            for (unsigned int module = 0; module < RyazhaClkModule_EnumMax; module++) {
                 if (*mhz) {
                     numProfiles++;
 
-                    std::string key = std::string(board::GetProfileName((RClkProfile)profile, false)) +
+                    std::string key = std::string(board::GetProfileName((RyazhaClkProfile)profile, false)) +
                                       "_" +
-                                      board::GetModuleName((RClkModule)module, false);
+                                      board::GetModuleName((RyazhaClkModule)module, false);
                     std::string value = std::to_string(*mhz);
 
                     keys.push_back(key);
@@ -323,12 +304,12 @@ namespace config {
         if (immediate) {
             mhz = &profiles->mhz[0];
             gProfileCountMap[tid] = numProfiles;
-            for (unsigned int profile = 0; profile < RClkProfile_EnumMax; profile++) {
-                for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
+            for (unsigned int profile = 0; profile < RyazhaClkProfile_EnumMax; profile++) {
+                for (unsigned int module = 0; module < RyazhaClkModule_EnumMax; module++) {
                     if (*mhz) {
-                        gProfileMHzMap[std::make_tuple(tid, (RClkProfile)profile, (RClkModule)module)] = *mhz;
+                        gProfileMHzMap[std::make_tuple(tid, (RyazhaClkProfile)profile, (RyazhaClkModule)module)] = *mhz;
                     } else {
-                        gProfileMHzMap.erase(std::make_tuple(tid, (RClkProfile)profile, (RClkModule)module));
+                        gProfileMHzMap.erase(std::make_tuple(tid, (RyazhaClkProfile)profile, (RyazhaClkModule)module));
                     }
                     mhz++;
                 }
@@ -354,51 +335,51 @@ namespace config {
         return gEnabled;
     }
 
-    void SetOverrideHz(RClkModule module, std::uint32_t hz) {
-        ASSERT_ENUM_VALID(RClkModule, module);
+    void SetOverrideHz(RyazhaClkModule module, std::uint32_t hz) {
+        ASSERT_ENUM_VALID(RyazhaClkModule, module);
         std::scoped_lock lock{gOverrideMutex};
         gOverrideFreqs[module] = hz;
     }
 
-    std::uint32_t GetOverrideHz(RClkModule module) {
-        ASSERT_ENUM_VALID(RClkModule, module);
+    std::uint32_t GetOverrideHz(RyazhaClkModule module) {
+        ASSERT_ENUM_VALID(RyazhaClkModule, module);
         std::scoped_lock lock{gOverrideMutex};
         return gOverrideFreqs[module];
     }
 
-    std::uint64_t GetConfigValue(RClkConfigValue kval) {
-        ASSERT_ENUM_VALID(RClkConfigValue, kval);
+    std::uint64_t GetConfigValue(RyazhaClkConfigValue kval) {
+        ASSERT_ENUM_VALID(RyazhaClkConfigValue, kval);
         std::scoped_lock lock{gConfigMutex};
         return configValues[kval];
     }
 
-    const char* GetConfigValueName(RClkConfigValue kval, bool pretty) {
-        ASSERT_ENUM_VALID(RClkConfigValue, kval);
-        return rclkFormatConfigValue(kval, pretty);
+    const char* GetConfigValueName(RyazhaClkConfigValue kval, bool pretty) {
+        ASSERT_ENUM_VALID(RyazhaClkConfigValue, kval);
+        return hocclkFormatConfigValue(kval, pretty);
     }
 
-    void GetConfigValues(RClkConfigValueList* out_configValues) {
+    void GetConfigValues(RyazhaClkConfigValueList* out_configValues) {
         std::scoped_lock lock{gConfigMutex};
-        for (unsigned int kval = 0; kval < RClkConfigValue_EnumMax; kval++) {
+        for (unsigned int kval = 0; kval < RyazhaClkConfigValue_EnumMax; kval++) {
             out_configValues->values[kval] = configValues[kval];
         }
     }
 
-    bool SetConfigValues(RClkConfigValueList* configValues, bool immediate) {
+    bool SetConfigValues(RyazhaClkConfigValueList* configValues, bool immediate) {
         std::scoped_lock lock{gConfigMutex};
 
         std::vector<const char*> iniKeys;
         std::vector<std::string> iniValues;
-        iniKeys.reserve(RClkConfigValue_EnumMax + 1);
-        iniValues.reserve(RClkConfigValue_EnumMax);
+        iniKeys.reserve(RyazhaClkConfigValue_EnumMax + 1);
+        iniValues.reserve(RyazhaClkConfigValue_EnumMax);
 
-        for (unsigned int kval = 0; kval < RClkConfigValue_EnumMax; kval++) {
-            if (!rclkValidConfigValue((RClkConfigValue)kval, configValues->values[kval]) ||
-               configValues->values[kval] == rclkDefaultConfigValue((RClkConfigValue)kval)) {
+        for (unsigned int kval = 0; kval < RyazhaClkConfigValue_EnumMax; kval++) {
+            if (!hocclkValidConfigValue((RyazhaClkConfigValue)kval, configValues->values[kval]) ||
+               configValues->values[kval] == hocclkDefaultConfigValue((RyazhaClkConfigValue)kval)) {
                 continue;
             }
             iniValues.push_back(std::to_string(configValues->values[kval]));
-            iniKeys.push_back(rclkFormatConfigValue((RClkConfigValue)kval, false));
+            iniKeys.push_back(hocclkFormatConfigValue((RyazhaClkConfigValue)kval, false));
         }
 
         iniKeys.push_back(NULL);
@@ -415,11 +396,11 @@ namespace config {
         }
 
         if (immediate) {
-            for (unsigned int kval = 0; kval < RClkConfigValue_EnumMax; kval++) {
-                if (rclkValidConfigValue((RClkConfigValue)kval, configValues->values[kval])) {
+            for (unsigned int kval = 0; kval < RyazhaClkConfigValue_EnumMax; kval++) {
+                if (hocclkValidConfigValue((RyazhaClkConfigValue)kval, configValues->values[kval])) {
                     config::configValues[kval] = configValues->values[kval];
                 } else {
-                    config::configValues[kval] = rclkDefaultConfigValue((RClkConfigValue)kval);
+                    config::configValues[kval] = hocclkDefaultConfigValue((RyazhaClkConfigValue)kval);
                 }
             }
         }
@@ -427,22 +408,22 @@ namespace config {
         return true;
     }
 
-    bool ResetConfigValue(RClkConfigValue kval) {
-        if (!RCLK_ENUM_VALID(RClkConfigValue, kval)) {
-            fileUtils::LogLine("[cfg] Invalid RClkConfigValue: %u", kval);
+    bool ResetConfigValue(RyazhaClkConfigValue kval) {
+        if (!RCLK_ENUM_VALID(RyazhaClkConfigValue, kval)) {
+            fileUtils::LogLine("[cfg] Invalid RyazhaClkConfigValue: %u", kval);
             return false;
         }
 
         std::scoped_lock lock{gConfigMutex};
 
-        std::uint64_t defaultValue = rclkDefaultConfigValue(kval);
+        std::uint64_t defaultValue = hocclkDefaultConfigValue(kval);
 
         std::vector<const char*> iniKeys;
         std::vector<std::string> iniValues;
         iniKeys.reserve(2);
         iniValues.reserve(1);
 
-        iniKeys.push_back(rclkFormatConfigValue(kval, false));
+        iniKeys.push_back(hocclkFormatConfigValue(kval, false));
         iniValues.push_back("");
         iniKeys.push_back(NULL);
 
@@ -464,11 +445,11 @@ namespace config {
         return true;
     }
 
-    bool SetConfigValue(RClkConfigValue kval, std::uint64_t value, bool immediate) {
-        if (!RCLK_ENUM_VALID(RClkConfigValue, kval)) {
+    bool SetConfigValue(RyazhaClkConfigValue kval, std::uint64_t value, bool immediate) {
+        if (!RCLK_ENUM_VALID(RyazhaClkConfigValue, kval)) {
             return false;
         }
-        if (!rclkValidConfigValue(kval, value)) {
+        if (!hocclkValidConfigValue(kval, value)) {
             return false;
         }
 
@@ -479,7 +460,7 @@ namespace config {
         iniKeys.reserve(2);
         iniValues.reserve(1);
 
-        iniKeys.push_back(rclkFormatConfigValue(kval, false));
+        iniKeys.push_back(hocclkFormatConfigValue(kval, false));
         iniValues.push_back(std::to_string(value));
         iniKeys.push_back(NULL);
 
