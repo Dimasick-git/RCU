@@ -306,6 +306,8 @@ static inline const char* rclkFormatConfigValue(RClkConfigValue val, bool pretty
             return pretty ? "KIP Version" : "kip_version";
         // case KipConfigValue_mtcConf:
         //     return pretty ? "MTC Config" : "kip_mtc_conf";
+        case KipConfigValue_gpuSpeedo:
+            return pretty ? "GPU Speedo" : "gpu_speedo";
         case KipConfigValue_hpMode:
             return pretty ? "HP Mode" : "kip_hp_mode";
 
@@ -313,7 +315,11 @@ static inline const char* rclkFormatConfigValue(RClkConfigValue val, bool pretty
         case KipConfigValue_commonEmcMemVolt:
             return pretty ? "Common EMC/MEM Voltage" : "common_emc_mem_volt";
         case KipConfigValue_eristaEmcMaxClock:
-            return pretty ? "Erista EMC Max Clock" : "erista_emc_max_clock2";
+            return pretty ? "Erista EMC Max Clock" : "erista_emc_max_clock";
+        case KipConfigValue_eristaEmcMaxClock1:
+            return pretty ? "Erista EMC Max Clock (1)" : "erista_emc_max_clock_1";
+        case KipConfigValue_eristaEmcMaxClock2:
+            return pretty ? "Erista EMC Max Clock (2)" : "erista_emc_max_clock_2";
         case KipConfigValue_stepMode:
             return pretty ? "Step Mode:" : "step_mode";
         case KipConfigValue_marikoEmcMaxClock:
@@ -351,6 +357,11 @@ static inline const char* rclkFormatConfigValue(RClkConfigValue val, bool pretty
 
         case KipConfigValue_t2_tRP_cap:
             return pretty ? "t2 - trp 1333WL Cap" : "t2_tRP_cap";
+
+        case KipConfigValue_mem_burst_read_latency:
+            return pretty ? "Mem Burst Read Latency" : "mem_burst_read_latency";
+        case KipConfigValue_mem_burst_write_latency:
+            return pretty ? "Mem Burst Write Latency" : "mem_burst_write_latency";
 
         case KipConfigValue_read_latency_1333:
             return pretty ? "1333 Read Latency" : "read_latency_1333";

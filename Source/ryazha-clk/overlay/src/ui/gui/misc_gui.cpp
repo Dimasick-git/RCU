@@ -1389,18 +1389,27 @@ protected:
     void listUI() override {
         ValueThresholds thresholdsDisabled(0, 0);
 
+        // ВАЖНО: GetConfigValues ДО ветвления на Erista/Mariko. Раньше
+        // Erista-ветка return'илась без получения configList, и при
+        // изменении настройки overlay слал в IPC zero-initialized
+        // configList (новый из конструктора MiscGui). SetConfigValues
+        // с immediate=true принимал эти нули как валидные значения и
+        // затирал ВСЁ in-memory + дропал не-default ключи из .ini.
+        // Затем ~MiscGui() → SetKipData() пишет в KIP нули вместо
+        // реальных настроек. Юзер теряет всё. (HOC всегда сначала
+        // вызывает GetConfigValues, потом branching по платформе.)
+        Result rc = rclkIpcGetConfigValues(this->configList);
+        if (R_FAILED(rc)) [[unlikely]] {
+            FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
+            return;
+        }
+
         if (IsErista()) {
             std::vector<NamedValue> rlLabels = { NamedValue("1333 RL", 28), NamedValue("1600 RL", 32), NamedValue("1866 RL", 36), NamedValue("2133 RL", 40) };
             std::vector<NamedValue> wlLabels = { NamedValue("1333 WL", 12), NamedValue("1600 WL", 14), NamedValue("1866 WL", 16), NamedValue("2133 WL", 18) };
 
             addConfigButton(KipConfigValue_mem_burst_read_latency,  "Read Latency",  ValueRange(0, 6, 1, "", 0), "Read Latency",  &thresholdsDisabled, {}, rlLabels, false, true);
             addConfigButton(KipConfigValue_mem_burst_write_latency, "Write Latency", ValueRange(0, 6, 1, "", 0), "Write Latency", &thresholdsDisabled, {}, wlLabels, false, true);
-            return;
-        }
-
-        Result rc = rclkIpcGetConfigValues(this->configList);
-        if (R_FAILED(rc)) [[unlikely]] {
-            FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc);
             return;
         }
 
