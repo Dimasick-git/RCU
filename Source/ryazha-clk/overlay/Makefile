@@ -69,7 +69,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-exceptions -std=gnu++23
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS := -lcurl -lz -lzzip -lmbedtls -lmbedx509 -lmbedcrypto -ljansson -lnx
+LIBS := -lcurl -lz -lzzip -lpng -lmbedtls -lmbedx509 -lmbedcrypto -ljansson -lnx
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
