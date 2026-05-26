@@ -173,11 +173,11 @@ namespace clockManager {
     {
         std::scoped_lock lock{gContextMutex};
 
-        std::uint32_t freqs[HOCCLK_FREQ_LIST_MAX];
+        std::uint32_t freqs[RCLK_FREQ_LIST_MAX];
         std::uint32_t count;
 
         fileUtils::LogLine("[mgr] %s freq list refresh", board::GetModuleName(module, true));
-        board::GetFreqList(module, &freqs[0], HOCCLK_FREQ_LIST_MAX, &count);
+        board::GetFreqList(module, &freqs[0], RCLK_FREQ_LIST_MAX, &count);
 
         std::uint32_t *hz = &gFreqTable[module].list[0];
         gFreqTable[module].count = 0;
@@ -203,7 +203,7 @@ namespace clockManager {
                 }
             }
 
-            for (u32 f = kPcvStep; f <= kMax && gFreqTable[module].count < HOCCLK_FREQ_LIST_MAX; f += kStep) {
+            for (u32 f = kPcvStep; f <= kMax && gFreqTable[module].count < RCLK_FREQ_LIST_MAX; f += kStep) {
                 if (f % kPcvStep != 0) {
                     if (!config::GetConfigValue(RyazhaClkConfigValue_MarikoMiddleFreqs)) 
                         continue;
@@ -222,7 +222,7 @@ namespace clockManager {
                 }
             }
 
-            for (u32 i = 0; i < count && gFreqTable[module].count < HOCCLK_FREQ_LIST_MAX; i++) {
+            for (u32 i = 0; i < count && gFreqTable[module].count < RCLK_FREQ_LIST_MAX; i++) {
                 if (freqs[i] > kMax && IsAssignableHz(module, freqs[i])) {
                     *hz = freqs[i];
                     gFreqTable[module].count++;
@@ -375,7 +375,7 @@ namespace clockManager {
             if (!targetHz) {
                 targetHz = config::GetAutoClockHz(gContext.applicationId, RyazhaClkModule_GPU, gContext.profile, false);
                 if (!targetHz) {
-                    targetHz = config::GetAutoClockHz(HOCCLK_GLOBAL_PROFILE_TID, RyazhaClkModule_GPU, gContext.profile, false);
+                    targetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, RyazhaClkModule_GPU, gContext.profile, false);
                 }
             }
             u32 maxHz = GetMaxAllowedHz(RyazhaClkModule_GPU, gContext.profile);
@@ -451,7 +451,7 @@ namespace clockManager {
             if (!targetHz) {
                 targetHz = config::GetAutoClockHz(gContext.applicationId, (RyazhaClkModule)module, gContext.profile, returnRaw);
                 if (!targetHz)
-                    targetHz = config::GetAutoClockHz(HOCCLK_GLOBAL_PROFILE_TID, (RyazhaClkModule)module, gContext.profile, returnRaw);
+                    targetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, (RyazhaClkModule)module, gContext.profile, returnRaw);
             }
 
             if (module == RyazhaClkModule_Governor) {
@@ -656,7 +656,7 @@ namespace clockManager {
         if (!targetHz) {
             targetHz = config::GetAutoClockHz(gContext.applicationId, RyazhaClkModule_Display, gContext.profile, true);
             if (!targetHz)
-                targetHz = config::GetAutoClockHz(HOCCLK_GLOBAL_PROFILE_TID, RyazhaClkModule_Display, gContext.profile, true);
+                targetHz = config::GetAutoClockHz(RCLK_GLOBAL_PROFILE_TID, RyazhaClkModule_Display, gContext.profile, true);
         }
 
         if (board::GetConsoleType() != RyazhaClkConsoleType_Hoag)

@@ -31,8 +31,8 @@
 #include "board.h"
 #include "clock_manager.h"
 
-#define HOCCLK_IPC_API_VERSION 2
-#define HOCCLK_IPC_SERVICE_NAME "hoc:clk"
+#define RCLK_IPC_API_VERSION 2
+#define RCLK_IPC_SERVICE_NAME "rclk:clk"
 
 enum RyazhaClkIpcCmd
 {

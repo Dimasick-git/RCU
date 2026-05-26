@@ -73,7 +73,7 @@ class AppOverlay : public tsl::Overlay
                 );
             }
 
-            if(HOCCLK_IPC_API_VERSION != apiVersion)
+            if(RCLK_IPC_API_VERSION != apiVersion)
             {
                 return initially<FatalGui>(
                     "Overlay not compatible with\n\n"

@@ -221,7 +221,7 @@ typedef enum AulaColorMode {
 // 	//0x0F40 [40] 94 [0F], 5.5" clone
 // } RyazhaClkDisplayPanel;
 
-#define HOCCLK_ENUM_VALID(n, v) ((v) < n##_EnumMax)
+#define RCLK_ENUM_VALID(n, v) ((v) < n##_EnumMax)
 
 // Packed u32
 // Bits 0-7 - CPU

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_, Horizon OC, and Ryazha-CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -31,7 +31,6 @@
 #include "app_profile_gui.h"
 #include "global_override_gui.h"
 #include "misc_gui.h"
-#include "about_gui.h"
 
 void MainGui::listUI()
 {
@@ -65,7 +64,7 @@ void MainGui::listUI()
     globalProfileItem->setClickListener([this](u64 keys) {
         if((keys & HidNpadButton_A) == HidNpadButton_A && this->context)
         {
-            AppProfileGui::changeTo(HOCCLK_GLOBAL_PROFILE_TID);
+            AppProfileGui::changeTo(RCLK_GLOBAL_PROFILE_TID);
             return true;
         }
 
@@ -98,18 +97,6 @@ void MainGui::listUI()
         return false;
     });
     this->listElement->addItem(miscItem);
-
-    tsl::elm::ListItem* aboutItem = new tsl::elm::ListItem("About");
-    aboutItem->setClickListener([this](u64 keys) {
-        if((keys & HidNpadButton_A) == HidNpadButton_A && this->context)
-        {
-            tsl::changeTo<AboutGui>();
-            return true;
-        }
-
-        return false;
-    });
-    this->listElement->addItem(aboutItem);
 
 }
 

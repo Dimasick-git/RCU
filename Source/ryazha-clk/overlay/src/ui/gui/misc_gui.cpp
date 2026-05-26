@@ -493,10 +493,10 @@ void MiscGui::addFreqButton(RyazhaClkConfigValue configVal,
             if ((keys & HidNpadButton_A) == 0)
                 return false;
 
-            std::uint32_t hzList[HOCCLK_FREQ_LIST_MAX];
+            std::uint32_t hzList[RCLK_FREQ_LIST_MAX];
             std::uint32_t hzCount;
 
-            Result rc = hocclkIpcGetFreqList(module, hzList, HOCCLK_FREQ_LIST_MAX, &hzCount);
+            Result rc = hocclkIpcGetFreqList(module, hzList, RCLK_FREQ_LIST_MAX, &hzCount);
             if (R_FAILED(rc)) {
                 FatalGui::openWithResultCode("hocclkIpcGetFreqList", rc);
                 return false;

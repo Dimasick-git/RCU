@@ -409,7 +409,7 @@ namespace config {
     }
 
     bool ResetConfigValue(RyazhaClkConfigValue kval) {
-        if (!HOCCLK_ENUM_VALID(RyazhaClkConfigValue, kval)) {
+        if (!RCLK_ENUM_VALID(RyazhaClkConfigValue, kval)) {
             fileUtils::LogLine("[cfg] Invalid RyazhaClkConfigValue: %u", kval);
             return false;
         }
@@ -446,7 +446,7 @@ namespace config {
     }
 
     bool SetConfigValue(RyazhaClkConfigValue kval, std::uint64_t value, bool immediate) {
-        if (!HOCCLK_ENUM_VALID(RyazhaClkConfigValue, kval)) {
+        if (!RCLK_ENUM_VALID(RyazhaClkConfigValue, kval)) {
             return false;
         }
         if (!hocclkValidConfigValue(kval, value)) {
