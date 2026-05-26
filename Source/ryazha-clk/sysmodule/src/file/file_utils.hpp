@@ -48,6 +48,6 @@ namespace fileUtils {
     bool IsLogEnabled();
     void InitializeAsync();
     void LogLine(const char* format, ...);
-    void WriteContextToCsv(const RyazhaClkContext* context);
+    void WriteContextToCsv(const RClkContext* context);
 
 }

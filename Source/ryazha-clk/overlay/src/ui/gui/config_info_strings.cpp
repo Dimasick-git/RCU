@@ -18,18 +18,18 @@
 
 #include "config_info_strings.h"
 
-std::vector<std::string> ConfigInfoStrings(RyazhaClkConfigValue val, bool isMariko, bool isHoag)
+std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, bool isHoag)
 {
     switch (val)
     {
-        case RyazhaClkConfigValue_PollingIntervalMs:
+        case RClkConfigValue_PollingIntervalMs:
             return {
                 "The interval (in milliseconds) where clocks are applied, temperatures and voltages are polled and logs are written (if enabled).",
                 "Higher values may cause more delay between changing a setting and it taking effect, and lower values may increase sysmodule memory usage",
                 "Default: 300ms"
             };
 
-        case RyazhaClkConfigValue_RamDisplayUnit:
+        case RClkConfigValue_RamDisplayUnit:
             return {
                 "The unit used when displaying RAM frequency values.",
                 "Options:",
@@ -39,7 +39,7 @@ std::vector<std::string> ConfigInfoStrings(RyazhaClkConfigValue val, bool isMari
                 "Default: MHz"
             };
 
-        case RyazhaClkConfigValue_RAMVoltDisplayMode:
+        case RClkConfigValue_RAMVoltDisplayMode:
             return {
                 "The method used to display RAM voltage values.",
                 "Options:",
@@ -48,25 +48,25 @@ std::vector<std::string> ConfigInfoStrings(RyazhaClkConfigValue val, bool isMari
                 "Default: VDD2"
             };
 
-        case RyazhaClkConfigValue_EnableExperimentalSettings:
+        case RClkConfigValue_EnableExperimentalSettings:
             return {
                 "When enabled, shows settings that are still being tested and may be unstable or not work at all.",
                 "Use with caution and report any issues to the developers."
             };
 
-        case RyazhaClkConfigValue_MarikoMiddleFreqs:
+        case RClkConfigValue_MarikoMiddleFreqs:
             return {
                 "Allows usage of frequencies stepped by 38.4MHz instead of 76.8MHz below 1228MHz GPU clock",
                 "Default: OFF"
             };
 
-        case RyazhaClkConfigValue_LiveCpuUv:
+        case RClkConfigValue_LiveCpuUv:
             return {
                 "Allows changing CPU undervolt settings without a reboot",
                 "Default: OFF"
             };
 
-        case RyazhaClkConfigValue_GPUSchedulingMethod:
+        case RClkConfigValue_GPUSchedulingMethod:
             return {
                 "Method used for GPU scheduling override",
                 "Options:",
@@ -75,7 +75,7 @@ std::vector<std::string> ConfigInfoStrings(RyazhaClkConfigValue val, bool isMari
                 "Default: INI"
             };
 
-        case RyazhaClkConfigValue_MemoryFrequencyMeasurementMode:
+        case RClkConfigValue_MemoryFrequencyMeasurementMode:
             return {
                 "How the RAM real frequency is measured",
                 "Options:",
@@ -84,13 +84,13 @@ std::vector<std::string> ConfigInfoStrings(RyazhaClkConfigValue val, bool isMari
                 "Default: PLL"
             };
 
-        case RyazhaClkConfigValue_BatteryChargeCurrent:
+        case RClkConfigValue_BatteryChargeCurrent:
             return {
                 "Overrides the charge current to the battery. Use with caution!",
                 isHoag ? "Default: 1664 mA" : "2048 mA"
             };
 
-        case RyazhaClkConfigValue_AulaDisplayColorPreset:
+        case RClkConfigValue_AulaDisplayColorPreset:
             return {
                 "Current display color preset. Default is Basic",
                 "Options:",
@@ -102,13 +102,13 @@ std::vector<std::string> ConfigInfoStrings(RyazhaClkConfigValue val, bool isMari
                 "Default: Do not override"
             };
 
-        case RyazhaClkConfigValue_CpuGovernorMinimumFreq:
+        case RClkConfigValue_CpuGovernorMinimumFreq:
             return {
                 "The minimum frequency that the CPU governor will allow.",
                 "Default: 612MHz"
             };
 
-        case RyazhaClkConfigValue_OverwriteRefreshRate:
+        case RClkConfigValue_OverwriteRefreshRate:
             return {
                 "Controls the availability of display refresh rate features.",
                 "When enabled, allows changing the display refresh rate and using display refresh rate related features.",
@@ -116,21 +116,21 @@ std::vector<std::string> ConfigInfoStrings(RyazhaClkConfigValue val, bool isMari
                 "Default: OFF"
             };
 
-        case RyazhaClkConfigValue_MaxDisplayClockH:
+        case RClkConfigValue_MaxDisplayClockH:
             return {
                 "The maximum display clock frequency in handheld mode (in Hz).",
                 "Warning: Changing this value may cause instability or display damage.",
                 "Default: 60 Hz"
             };
 
-        case RyazhaClkConfigValue_DisplayVoltage:
+        case RClkConfigValue_DisplayVoltage:
             return {
                 "The voltage supplied to the display panel (in mV).",
                 "Warning: Changing this value may cause instability.",
                 "Default: 1200mV"
             };
 
-        case RyazhaClkConfigValue_UncappedClocks:
+        case RClkConfigValue_UncappedClocks:
             if(isMariko) {
                 return {
                     "When enabled, disables clock cappings",
@@ -164,26 +164,26 @@ std::vector<std::string> ConfigInfoStrings(RyazhaClkConfigValue val, bool isMari
                 };
             }
 
-        case RyazhaClkConfigValue_ThermalThrottle:
+        case RClkConfigValue_ThermalThrottle:
             return {
                 "If enabled, Resets to stock clocks after the threshold is applied",
                 "Default: ON",
             };
 
-        case RyazhaClkConfigValue_HandheldTDP:
+        case RClkConfigValue_HandheldTDP:
             return {
                 "If enabled, Resets to stock clocks when power consumption is above the threshold in handheld mode",
                 "Default: ON",
             };
 
-        case RyazhaClkConfigValue_HandheldTDPLimit:
-        case RyazhaClkConfigValue_LiteTDPLimit:
+        case RClkConfigValue_HandheldTDPLimit:
+        case RClkConfigValue_LiteTDPLimit:
             return {
                 "The power consumption threshold (in mW) for resetting to stock clocks in handheld mode when Handheld TDP is enabled.",
                 isHoag ? "Default: 6400mW" : "Default: 9600mW"
             };
 
-        case RyazhaClkConfigValue_ThermalThrottleThreshold:
+        case RClkConfigValue_ThermalThrottleThreshold:
             return {
                 "The temperature threshold (in °C) for resetting to stock clocks when Thermal Throttle is enabled.",
                 "Default: 70°C"
@@ -437,7 +437,7 @@ std::vector<std::string> ConfigInfoStrings(RyazhaClkConfigValue val, bool isMari
                 "Default: 1235 mV"
             };
 
-        case RyazhaClkConfigValue_EristaMaxCpuClock:
+        case RClkConfigValue_EristaMaxCpuClock:
             return {
                 "The maximum available CPU clock",
                 "Default: 1785 MHz"
@@ -449,7 +449,7 @@ std::vector<std::string> ConfigInfoStrings(RyazhaClkConfigValue val, bool isMari
                 "Default: 1785 MHz"
             };
 
-        case RyazhaClkConfigValue_OverwriteBoostMode:
+        case RClkConfigValue_OverwriteBoostMode:
             return {
                 "If enabled, profiles can override the boost mode setting",
                 "Default: OFF"
@@ -478,7 +478,7 @@ std::vector<std::string> ConfigInfoStrings(RyazhaClkConfigValue val, bool isMari
                 "Default: 800 mV"
             };
 
-        case RyazhaClkConfigValue_DVFSMode:
+        case RClkConfigValue_DVFSMode:
             return {
                 "The mode used for GPU DVFS",
                 "Adjusts GPU vmin when RAM clock is changed due to a higher requirement",
@@ -488,7 +488,7 @@ std::vector<std::string> ConfigInfoStrings(RyazhaClkConfigValue val, bool isMari
                 "Default: PCV Hijack"
             };
 
-        case RyazhaClkConfigValue_DVFSOffset:
+        case RClkConfigValue_DVFSOffset:
             return {
                 "The offset added/subtracted to the GPU vmin when the RAM clock is changed due to a higher requirement in PCV Hijack mode",
                 "Default: 0 mV (Disabled)"
@@ -516,7 +516,7 @@ std::vector<std::string> ConfigInfoStrings(RyazhaClkConfigValue val, bool isMari
                 "Default: 0 mV (Disabled)"
             };
 
-        case RyazhaClkConfigValue_GPUScheduling:
+        case RClkConfigValue_GPUScheduling:
             return {
                 "The scheduling method used for GPU clocks",
                 "Options:",

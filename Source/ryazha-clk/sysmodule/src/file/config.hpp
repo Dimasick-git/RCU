@@ -40,22 +40,22 @@ namespace config {
     bool HasProfilesLoaded();
 
     std::uint8_t GetProfileCount(std::uint64_t tid);
-    void GetProfiles(std::uint64_t tid, RyazhaClkTitleProfileList* out_profiles);
-    bool SetProfiles(std::uint64_t tid, RyazhaClkTitleProfileList* profiles, bool immediate);
-    std::uint32_t GetAutoClockHz(std::uint64_t tid, RyazhaClkModule module, RyazhaClkProfile profile, bool returnRaw);
+    void GetProfiles(std::uint64_t tid, RClkTitleProfileList* out_profiles);
+    bool SetProfiles(std::uint64_t tid, RClkTitleProfileList* profiles, bool immediate);
+    std::uint32_t GetAutoClockHz(std::uint64_t tid, RClkModule module, RyazhaClkProfile profile, bool returnRaw);
 
     void SetEnabled(bool enabled);
     bool Enabled();
-    void SetOverrideHz(RyazhaClkModule module, std::uint32_t hz);
-    std::uint32_t GetOverrideHz(RyazhaClkModule module);
+    void SetOverrideHz(RClkModule module, std::uint32_t hz);
+    std::uint32_t GetOverrideHz(RClkModule module);
 
-    std::uint64_t GetConfigValue(RyazhaClkConfigValue val);
-    const char* GetConfigValueName(RyazhaClkConfigValue val, bool pretty);
-    void GetConfigValues(RyazhaClkConfigValueList* out_configValues);
-    bool SetConfigValues(RyazhaClkConfigValueList* configValues, bool immediate);
-    bool ResetConfigValue(RyazhaClkConfigValue kval);
-    bool SetConfigValue(RyazhaClkConfigValue kval, std::uint64_t value, bool immediate = true);
+    std::uint64_t GetConfigValue(RClkConfigValue val);
+    const char* GetConfigValueName(RClkConfigValue val, bool pretty);
+    void GetConfigValues(RClkConfigValueList* out_configValues);
+    bool SetConfigValues(RClkConfigValueList* configValues, bool immediate);
+    bool ResetConfigValue(RClkConfigValue kval);
+    bool SetConfigValue(RClkConfigValue kval, std::uint64_t value, bool immediate = true);
 
-    extern uint64_t configValues[RyazhaClkConfigValue_EnumMax];
+    extern uint64_t configValues[RClkConfigValue_EnumMax];
 
 }

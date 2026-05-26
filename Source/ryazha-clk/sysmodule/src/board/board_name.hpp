@@ -30,7 +30,7 @@
 
 namespace board {
 
-    const char *GetModuleName(RyazhaClkModule module, bool pretty);
+    const char *GetModuleName(RClkModule module, bool pretty);
     const char *GetProfileName(RyazhaClkProfile profile, bool pretty);
     const char *GetThermalSensorName(RyazhaClkThermalSensor sensor, bool pretty);
     const char *GetPowerSensorName(RyazhaClkPowerSensor sensor, bool pretty);

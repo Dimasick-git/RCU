@@ -98,7 +98,7 @@ namespace board {
             cachedTune.tune0Low = *reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE0_0);
             cachedTune.tune1Low = *reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE1_0);
         } else {
-            SetHz(RyazhaClkModule_CPU, 1785000000);
+            SetHz(RClkModule_CPU, 1785000000);
             cachedTune.tune0High = *reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE0_0);
             ResetToStockCpu();
         }
@@ -109,7 +109,7 @@ namespace board {
         u32* tune0_ptr = reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE0_0);
         u32* tune1_ptr = reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE1_0);
         if (GetSocType() == RyazhaClkSocType_Mariko) {
-            if (GetHz(RyazhaClkModule_CPU) < tbreakPoint && (levelLow || levelHigh)) {
+            if (GetHz(RClkModule_CPU) < tbreakPoint && (levelLow || levelHigh)) {
                 if (levelLow) {
                     *tune0_ptr = marikoCpuUvLow[levelLow-1].tune0_low;
                     *tune1_ptr = marikoCpuUvLow[levelLow-1].tune1_low;
@@ -126,17 +126,17 @@ namespace board {
                 }
                 return;
             }
-            if (GetHz(RyazhaClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
+            if (GetHz(RClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
                 *tune0_ptr = 0xCFFF;
                 *tune1_ptr = 0xFF072201;
                 return;
-            } else if (GetHz(RyazhaClkModule_CPU) >= tbreakPoint || (!levelHigh)) {
+            } else if (GetHz(RClkModule_CPU) >= tbreakPoint || (!levelHigh)) {
                 *tune0_ptr = cachedTune.tune0High; // per console?
                 *tune1_ptr = 0xFFF7FF3F;
                 return;
             }
         } else {
-            // if (GetHz(RyazhaClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
+            // if (GetHz(RClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
             //     *tune0_ptr = cachedTune.tune0Low; // I think each erista has a different tune0/tune1?
             //     *tune1_ptr = cachedTune.tune1Low;
             //     return;

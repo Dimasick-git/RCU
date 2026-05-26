@@ -30,8 +30,8 @@
 
 namespace board {
 
-    const char *GetModuleName(RyazhaClkModule module, bool pretty) {
-        ASSERT_ENUM_VALID(RyazhaClkModule, module);
+    const char *GetModuleName(RClkModule module, bool pretty) {
+        ASSERT_ENUM_VALID(RClkModule, module);
         return rclkFormatModule(module, pretty);
     }
 

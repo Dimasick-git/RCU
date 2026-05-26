@@ -41,12 +41,12 @@ typedef enum
 
 typedef enum
 {
-    RyazhaClkConsoleType_Icosa = 0, // V1
-    RyazhaClkConsoleType_Iowa,      // V2
-    RyazhaClkConsoleType_Hoag,      // Lite
-    RyazhaClkConsoleType_Aula,      // OLED
-    RyazhaClkConsoleType_EnumMax,
-} RyazhaClkConsoleType;
+    RClkConsoleType_Icosa = 0, // V1
+    RClkConsoleType_Iowa,      // V2
+    RClkConsoleType_Hoag,      // Lite
+    RClkConsoleType_Aula,      // OLED
+    RClkConsoleType_EnumMax,
+} RClkConsoleType;
 
 typedef enum {
     RyazhaClkVoltage_SOC = 0, // VDD_SOC rail. 
@@ -71,13 +71,13 @@ typedef enum
 
 typedef enum
 {
-    RyazhaClkModule_CPU = 0, 
-    RyazhaClkModule_GPU,
-    RyazhaClkModule_MEM,
-    RyazhaClkModule_Governor,
-    RyazhaClkModule_Display,
-    RyazhaClkModule_EnumMax,
-} RyazhaClkModule;
+    RClkModule_CPU = 0, 
+    RClkModule_GPU,
+    RClkModule_MEM,
+    RClkModule_Governor,
+    RClkModule_Display,
+    RClkModule_EnumMax,
+} RClkModule;
 
 typedef enum
 {
@@ -242,19 +242,19 @@ inline u8 GovernorStateVrr(u32 p) {
     return (u8)((p >> 16) & 0xFF);
 }
 
-static inline const char* rclkFormatModule(RyazhaClkModule module, bool pretty)
+static inline const char* rclkFormatModule(RClkModule module, bool pretty)
 {
     switch(module)
     {
-        case RyazhaClkModule_CPU:
+        case RClkModule_CPU:
             return pretty ? "CPU" : "cpu";
-        case RyazhaClkModule_GPU:
+        case RClkModule_GPU:
             return pretty ? "GPU" : "gpu";
-        case RyazhaClkModule_MEM:
+        case RClkModule_MEM:
             return pretty ? "Memory" : "mem";
-        case RyazhaClkModule_Display:
+        case RClkModule_Display:
             return pretty ? "Display" : "display";
-        case RyazhaClkModule_Governor:
+        case RClkModule_Governor:
             return pretty ? "Governor" : "governor";
         default:
             return "null";
@@ -345,17 +345,17 @@ static inline const char* rclkFormatVoltage(RyazhaClkVoltage voltage, bool prett
     }
 }
 
-static inline const char* rclkFormatConsoleType(RyazhaClkConsoleType consoleType, bool pretty)
+static inline const char* rclkFormatConsoleType(RClkConsoleType consoleType, bool pretty)
 {
     switch(consoleType)
     {
-        case RyazhaClkConsoleType_Icosa:
+        case RClkConsoleType_Icosa:
             return pretty ? "Icosa (V1)" : "icosa";
-        case RyazhaClkConsoleType_Iowa:
+        case RClkConsoleType_Iowa:
             return pretty ? "Iowa (V2)" : "iowa";
-        case RyazhaClkConsoleType_Hoag:
+        case RClkConsoleType_Hoag:
             return pretty ? "Hoag (Lite)" : "hoag";
-        case RyazhaClkConsoleType_Aula:
+        case RClkConsoleType_Aula:
             return pretty ? "Aula (OLED)" : "aula";
         default:
             return "unknown";

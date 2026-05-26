@@ -58,17 +58,17 @@ enum RClkIpcCmd
 typedef struct
 {
     uint64_t tid;
-    RyazhaClkTitleProfileList profiles;
-} RyazhaClkIpc_SetProfiles_Args;
+    RClkTitleProfileList profiles;
+} RClkIpc_SetProfiles_Args;
 
 typedef struct
 {
-    RyazhaClkModule module;
+    RClkModule module;
     uint32_t hz;
-} RyazhaClkIpc_SetOverride_Args;
+} RClkIpc_SetOverride_Args;
 
 typedef struct
 {
-    RyazhaClkModule module;
+    RClkModule module;
     uint32_t maxCount;
-} RyazhaClkIpc_GetFreqList_Args;
+} RClkIpc_GetFreqList_Args;

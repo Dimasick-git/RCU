@@ -38,11 +38,11 @@
 
 namespace board {
 
-    void SetHz(RyazhaClkModule module, u32 hz);
+    void SetHz(RClkModule module, u32 hz);
 
-    u32 GetHz(RyazhaClkModule module);
-    u32 GetRealHz(RyazhaClkModule module);
-    void GetFreqList(RyazhaClkModule module, u32 *outList, u32 maxCount, u32 *outCount);
+    u32 GetHz(RClkModule module);
+    u32 GetRealHz(RClkModule module);
+    void GetFreqList(RClkModule module, u32 *outList, u32 maxCount, u32 *outCount);
     u32 GetHighestDockedDisplayRate();
     void HandleCpuUv();
     
@@ -50,7 +50,7 @@ namespace board {
     void ResetToStockDisplay();
 
     template <typename Getter>
-    void ResetToStockModule(Getter getHzFunc, RyazhaClkModule module) {
+    void ResetToStockModule(Getter getHzFunc, RClkModule module) {
         Result rc = 0;
 
         if (hosversionAtLeast(9, 0, 0)) {
@@ -83,15 +83,15 @@ namespace board {
     }
 
     inline void ResetToStockCpu() {
-        ResetToStockModule([](const RyazhaClkApmConfiguration& cfg) {return cfg.cpu_hz; }, RyazhaClkModule_CPU);
+        ResetToStockModule([](const RyazhaClkApmConfiguration& cfg) {return cfg.cpu_hz; }, RClkModule_CPU);
     }
 
     inline void ResetToStockGpu() {
-        ResetToStockModule([](const RyazhaClkApmConfiguration& cfg){ return cfg.gpu_hz; }, RyazhaClkModule_GPU);
+        ResetToStockModule([](const RyazhaClkApmConfiguration& cfg){ return cfg.gpu_hz; }, RClkModule_GPU);
     }
 
     inline void ResetToStockMem() {
-        ResetToStockModule([](const RyazhaClkApmConfiguration& cfg){ return cfg.mem_hz; }, RyazhaClkModule_MEM);
+        ResetToStockModule([](const RyazhaClkApmConfiguration& cfg){ return cfg.mem_hz; }, RClkModule_MEM);
     }
 
 }

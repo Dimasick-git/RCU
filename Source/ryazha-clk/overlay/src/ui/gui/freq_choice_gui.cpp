@@ -33,7 +33,7 @@
 FreqChoiceGui::FreqChoiceGui(std::uint32_t selectedHz,
                              std::uint32_t* hzList,
                              std::uint32_t hzCount,
-                             RyazhaClkModule module,
+                             RClkModule module,
                              FreqChoiceListener listener,
                              bool checkMax,
                              std::map<uint32_t, std::string> labels)
@@ -45,7 +45,7 @@ FreqChoiceGui::FreqChoiceGui(std::uint32_t selectedHz,
     this->listener = listener;
     this->checkMax = checkMax;
     this->labels = labels;
-    this->configList = new RyazhaClkConfigValueList {};
+    this->configList = new RClkConfigValueList {};
 }
 
 FreqChoiceGui::~FreqChoiceGui()
@@ -56,8 +56,8 @@ FreqChoiceGui::~FreqChoiceGui()
 tsl::elm::ListItem* FreqChoiceGui::createFreqListItem(std::uint32_t hz, bool selected, int safety)
 {
     std::string text;
-    if(module == RyazhaClkModule_MEM)
-        text = formatListFreqHzMem(hz, (RamDisplayUnit)this->configList->values[RyazhaClkConfigValue_RamDisplayUnit]);
+    if(module == RClkModule_MEM)
+        text = formatListFreqHzMem(hz, (RamDisplayUnit)this->configList->values[RClkConfigValue_RamDisplayUnit]);
     else
         text = formatListFreqHz(hz);
 
@@ -127,27 +127,27 @@ void FreqChoiceGui::listUI()
 
         // if (checkMax && IsMariko()) {
         //     if (moduleName == "cpu" &&
-        //         this->configList->values[RyazhaClkConfigValue_MarikoMaxCpuClock] < mhz)
+        //         this->configList->values[RClkConfigValue_MarikoMaxCpuClock] < mhz)
         //         continue;
 
         //     // if (moduleName == "gpu" &&
-        //     //     this->configList->values[RyazhaClkConfigValue_MarikoMaxGpuClock] < mhz)
+        //     //     this->configList->values[RClkConfigValue_MarikoMaxGpuClock] < mhz)
         //     //     continue;
 
         //     // if (moduleName == "mem" &&
-        //     //     this->configList->values[RyazhaClkConfigValue_MarikoMaxMemClock] < mhz)
+        //     //     this->configList->values[RClkConfigValue_MarikoMaxMemClock] < mhz)
         //     //     continue;
 
         if (checkMax && IsErista())
-            if (moduleName == "cpu" && this->configList->values[RyazhaClkConfigValue_EristaMaxCpuClock] < mhz)
+            if (moduleName == "cpu" && this->configList->values[RClkConfigValue_EristaMaxCpuClock] < mhz)
                 continue;
 
         //     // if (moduleName == "gpu" &&
-        //     //     this->configList->values[RyazhaClkConfigValue_EristaMaxGpuClock] < mhz)
+        //     //     this->configList->values[RClkConfigValue_EristaMaxGpuClock] < mhz)
         //     //     continue;
 
         //     // if (moduleName == "mem" &&
-        //     //     this->configList->values[RyazhaClkConfigValue_EristaMaxMemClock] < mhz)
+        //     //     this->configList->values[RClkConfigValue_EristaMaxMemClock] < mhz)
         //     //     continue;
         // }
 

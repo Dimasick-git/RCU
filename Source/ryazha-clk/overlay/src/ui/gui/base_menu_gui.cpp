@@ -199,7 +199,7 @@ void BaseMenuGui::refresh()
 
     // Lazy context allocation
     if (!this->context) [[unlikely]] {
-        this->context = new RyazhaClkContext;
+        this->context = new RClkContext;
     }
 
     Result rc = rclkIpcGetCurrentContext(this->context);
@@ -223,14 +223,14 @@ void BaseMenuGui::refresh()
     strcpy(displayStrings[1], rclkFormatProfile(context->profile, true));
 
     // Current frequencies
-    u32 hz = context->freqs[RyazhaClkModule_CPU]; // CPU
+    u32 hz = context->freqs[RClkModule_CPU]; // CPU
     sprintf(displayStrings[2], "%u.%u MHz", hz / 1000000U, (hz / 100000U) % 10U);
 
-    hz = context->freqs[RyazhaClkModule_GPU]; // GPU
+    hz = context->freqs[RClkModule_GPU]; // GPU
     sprintf(displayStrings[3], "%u.%u MHz", hz / 1000000U, (hz / 100000U) % 10U);
 
-    hz = context->freqs[RyazhaClkModule_MEM]; // MEM
-    std::uint32_t unit = configList.values[RyazhaClkConfigValue_RamDisplayUnit];
+    hz = context->freqs[RClkModule_MEM]; // MEM
+    std::uint32_t unit = configList.values[RClkConfigValue_RamDisplayUnit];
     std::uint32_t mhz = hz / 1000000U;
     std::uint32_t mts = mhz * 2;
     std::uint32_t tenth = (hz / 100000U) % 10U;
@@ -239,21 +239,21 @@ void BaseMenuGui::refresh()
     else if(unit == RamDisplayUnit_MHz)
         sprintf(displayStrings[4], "%u.%u MHz", mhz, tenth);
     else if(unit == RamDisplayUnit_MHzMTs) {
-        hz = context->realFreqs[RyazhaClkModule_MEM];
+        hz = context->realFreqs[RClkModule_MEM];
         mhz = hz / 1000000U;
         tenth = (hz / 100000U) % 10U;
         sprintf(displayStrings[4], "%u.%u MHz", mhz, tenth);
     }
 
     // Real frequencies
-    hz = context->realFreqs[RyazhaClkModule_CPU]; // CPU
+    hz = context->realFreqs[RClkModule_CPU]; // CPU
     sprintf(displayStrings[5], "%u.%u MHz", hz / 1000000U, (hz / 100000U) % 10U);
 
-    hz = context->realFreqs[RyazhaClkModule_GPU]; // GPU
+    hz = context->realFreqs[RClkModule_GPU]; // GPU
     sprintf(displayStrings[6], "%u.%u MHz", hz / 1000000U, (hz / 100000U) % 10U);
 
-    hz = context->realFreqs[RyazhaClkModule_MEM]; // MEM
-    unit = configList.values[RyazhaClkConfigValue_RamDisplayUnit];
+    hz = context->realFreqs[RClkModule_MEM]; // MEM
+    unit = configList.values[RClkConfigValue_RamDisplayUnit];
     mhz = hz / 1000000U;
     mts = mhz * 2;
     tenth = (hz / 100000U) % 10U;
@@ -266,7 +266,7 @@ void BaseMenuGui::refresh()
     sprintf(displayStrings[8], "%.1f mV", context->voltages[RyazhaClkVoltage_CPU] / 1000.0);
     sprintf(displayStrings[9], "%.1f mV", context->voltages[RyazhaClkVoltage_GPU] / 1000.0);
 
-    switch(configList.values[RyazhaClkConfigValue_RAMVoltDisplayMode]) {
+    switch(configList.values[RClkConfigValue_RAMVoltDisplayMode]) {
         case RamDisplayMode_VDD2:
             sprintf(displayStrings[10], "%u.%u mV", context->voltages[RyazhaClkVoltage_EMCVDD2] / 1000U, (context->voltages[RyazhaClkVoltage_EMCVDD2] % 1000U) / 100U);
             break;
@@ -312,7 +312,7 @@ void BaseMenuGui::refresh()
 
     sprintf(displayStrings[24], "%u%%", context->partLoad[RyazhaClkPartLoad_FAN]);
 
-    sprintf(displayStrings[25], "%u Hz", context->realFreqs[RyazhaClkModule_Display]);
+    sprintf(displayStrings[25], "%u Hz", context->realFreqs[RClkModule_Display]);
     if(this->context->isSaltyNXInstalled) {
         if(context->fps == 254) {
             strcpy(displayStrings[26], "N/A");
