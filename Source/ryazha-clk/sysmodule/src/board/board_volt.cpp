@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  * 
  * Copyright (c) B3711
  * 
@@ -94,11 +94,11 @@ namespace board {
         Result rc = QueryMemoryMapping(&cldvfs, CLDVFS_REGION_BASE, CLDVFS_REGION_SIZE);
         ASSERT_RESULT_OK(rc, "QueryMemoryMapping (cldvfs)");
 
-        if (GetSocType() == RyazhaClkSocType_Erista) {
+        if (GetSocType() == RClkSocType_Erista) {
             cachedTune.tune0Low = *reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE0_0);
             cachedTune.tune1Low = *reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE1_0);
         } else {
-            SetHz(RyazhaClkModule_CPU, 1785000000);
+            SetHz(RClkModule_CPU, 1785000000);
             cachedTune.tune0High = *reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE0_0);
             ResetToStockCpu();
         }
@@ -108,8 +108,8 @@ namespace board {
     void SetDfllTunings(u32 levelLow, u32 levelHigh, u32 tbreakPoint) {
         u32* tune0_ptr = reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE0_0);
         u32* tune1_ptr = reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE1_0);
-        if (GetSocType() == RyazhaClkSocType_Mariko) {
-            if (GetHz(RyazhaClkModule_CPU) < tbreakPoint && (levelLow || levelHigh)) {
+        if (GetSocType() == RClkSocType_Mariko) {
+            if (GetHz(RClkModule_CPU) < tbreakPoint && (levelLow || levelHigh)) {
                 if (levelLow) {
                     *tune0_ptr = marikoCpuUvLow[levelLow-1].tune0_low;
                     *tune1_ptr = marikoCpuUvLow[levelLow-1].tune1_low;
@@ -126,17 +126,17 @@ namespace board {
                 }
                 return;
             }
-            if (GetHz(RyazhaClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
+            if (GetHz(RClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
                 *tune0_ptr = 0xCFFF;
                 *tune1_ptr = 0xFF072201;
                 return;
-            } else if (GetHz(RyazhaClkModule_CPU) >= tbreakPoint || (!levelHigh)) {
+            } else if (GetHz(RClkModule_CPU) >= tbreakPoint || (!levelHigh)) {
                 *tune0_ptr = cachedTune.tune0High; // per console?
                 *tune1_ptr = 0xFFF7FF3F;
                 return;
             }
         } else {
-            // if (GetHz(RyazhaClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
+            // if (GetHz(RClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
             //     *tune0_ptr = cachedTune.tune0Low; // I think each erista has a different tune0/tune1?
             //     *tune1_ptr = cachedTune.tune1Low;
             //     return;
@@ -158,7 +158,7 @@ namespace board {
     };
     */
     u32 CalculateTbreak(u32 table) {
-        if (GetSocType() == RyazhaClkSocType_Erista) {
+        if (GetSocType() == RClkSocType_Erista) {
             return 1581000000;
         } else {
             switch (table) {
@@ -215,19 +215,19 @@ namespace board {
    /*
     Note: I think Nintendo's I2C driver (or my driver, but it looks correct to me)
    */
-    u32 GetVoltage(RyazhaClkVoltage voltage) {
+    u32 GetVoltage(RClkVoltage voltage) {
         u32 out = 0;
         BatteryChargeInfo info;
         RgltrSession s;
         switch (voltage) {
-            case RyazhaClkVoltage_SOC:
+            case RClkVoltage_SOC:
                 out = I2c_BuckConverter_GetUvOut(&I2c_SOC);
                 break;
-            case RyazhaClkVoltage_EMCVDD2:
+            case RClkVoltage_EMCVDD2:
                 out = I2c_BuckConverter_GetUvOut(&I2c_VDD2);
                 break;
-            case RyazhaClkVoltage_CPU:
-                if(GetSocType() == RyazhaClkSocType_Mariko) {
+            case RClkVoltage_CPU:
+                if(GetSocType() == RClkSocType_Mariko) {
                     out = I2c_BuckConverter_GetUvOut(&I2c_Mariko_CPU);
                 } else {
                     rgltrOpenSession(&s, PcvPowerDomainId_Max77621_Cpu);
@@ -235,8 +235,8 @@ namespace board {
                     rgltrCloseSession(&s);
                 }
                 break;
-            case RyazhaClkVoltage_GPU:
-                if(GetSocType() == RyazhaClkSocType_Mariko) {
+            case RClkVoltage_GPU:
+                if(GetSocType() == RClkSocType_Mariko) {
                     out = I2c_BuckConverter_GetUvOut(&I2c_Mariko_GPU);
                 } else {
                     rgltrOpenSession(&s, PcvPowerDomainId_Max77621_Gpu);
@@ -244,22 +244,22 @@ namespace board {
                     rgltrCloseSession(&s);
                 }               
                 break;
-            case RyazhaClkVoltage_EMCVDDQ:
-                if(GetSocType() == RyazhaClkSocType_Mariko) {
+            case RClkVoltage_EMCVDDQ:
+                if(GetSocType() == RClkSocType_Mariko) {
                     out = I2c_BuckConverter_GetUvOut(&I2c_Mariko_DRAM_VDDQ);
                 } else {
                     out = I2c_BuckConverter_GetUvOut(&I2c_VDD2);
                 }
                 break;
-            case RyazhaClkVoltage_Display:
+            case RClkVoltage_Display:
                 out = I2c_BuckConverter_GetUvOut(&I2c_Display);
                 break;
-            case RyazhaClkVoltage_Battery:
+            case RClkVoltage_Battery:
                 batteryInfoGetChargeInfo(&info);
                 out = info.VoltageAvg;
                 break;
             default:
-                ASSERT_ENUM_VALID(RyazhaClkVoltage, voltage);
+                ASSERT_ENUM_VALID(RClkVoltage, voltage);
         }
 
         return out > 0 ? out : 0;

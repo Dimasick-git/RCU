@@ -55,7 +55,7 @@
   "Compiling with minimal features": "최소한의 기능으로 컴파일하기",
   "Console Type:": "Console Type:",
   "Contributors": "기여자",
-  "Could not connect to ryazha-clk sysmodule.\\n\\n": "ryazha-clk 시스템 모듈에 연결할 수 없습니다.\\n\\n",
+  "Could not connect to hoc-clk sysmodule.\\n\\n": "hoc-clk 시스템 모듈에 연결할 수 없습니다.\\n\\n",
   "Credits": "크레딧",
   "CtCaer - Hekate, L4T and Proper Timings": "CtCaer - Hekate, L4T and Proper Timings",
   "DRAM Module: ": "DRAM Module: ",

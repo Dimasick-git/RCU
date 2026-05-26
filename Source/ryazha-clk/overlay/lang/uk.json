@@ -55,7 +55,7 @@
   "Compiling with minimal features": "Компіляція з мінімальними можливостями",
   "Console Type:": "Console Type:",
   "Contributors": "Дописувачі",
-  "Could not connect to ryazha-clk sysmodule.\\n\\n": "Не вдалося підключитися до системного модуля ryazha-clk.\\n\\n",
+  "Could not connect to hoc-clk sysmodule.\\n\\n": "Не вдалося підключитися до системного модуля hoc-clk.\\n\\n",
   "Credits": "Кредити",
   "CtCaer - Hekate, L4T and Proper Timings": "CtCaer - Hekate, L4T and Proper Timings",
   "DRAM Module: ": "DRAM Module: ",

@@ -28,7 +28,7 @@ namespace notification {
         }
         fclose(flagFile);
 
-        std::string filename = "hoc-" + std::to_string(std::time(nullptr)) + ".notify";
+        std::string filename = "ryazha-clk-" + std::to_string(std::time(nullptr)) + ".notify";
         std::string fullPath = "sdmc:/config/ultrahand/notifications/" + filename;
 
         FILE* file = fopen(fullPath.c_str(), "w");

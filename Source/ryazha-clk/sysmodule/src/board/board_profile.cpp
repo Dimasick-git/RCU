@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -37,13 +37,13 @@
 
 namespace board {
 
-    RyazhaClkProfile GetProfile() {
+    RClkProfile GetProfile() {
         u32 mode = 0;
         Result rc = apmExtGetPerformanceMode(&mode);
         ASSERT_RESULT_OK(rc, "apmExtGetPerformanceMode");
 
         if (mode) {
-            return RyazhaClkProfile_Docked;
+            return RClkProfile_Docked;
         }
 
         PsmChargerType chargerType;
@@ -52,12 +52,12 @@ namespace board {
         ASSERT_RESULT_OK(rc, "psmGetChargerType");
 
         if (chargerType == PsmChargerType_EnoughPower) {
-            return RyazhaClkProfile_HandheldChargingOfficial;
+            return RClkProfile_HandheldChargingOfficial;
         } else if (chargerType == PsmChargerType_LowPower) {
-            return RyazhaClkProfile_HandheldChargingUSB;
+            return RClkProfile_HandheldChargingUSB;
         }
 
-        return RyazhaClkProfile_Handheld;
+        return RClkProfile_Handheld;
     }
 
 }

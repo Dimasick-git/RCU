@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -110,32 +110,32 @@ namespace board {
         return std::round(std::max({cpuUsage0, cpuUsage1, cpuUsage2}));
     }
 
-    u32 GetPartLoad(RyazhaClkPartLoad loadSource) {
+    u32 GetPartLoad(RClkPartLoad loadSource) {
         switch(loadSource) {
-            case RyazhaClkPartLoad_EMC:
+            case RClkPartLoad_EMC:
                 return t210EmcLoadAll();
-            case RyazhaClkPartLoad_EMCCpu:
+            case RClkPartLoad_EMCCpu:
                 return t210EmcLoadCpu();
-            case RyazhaClkPartLoad_GPU:
+            case RClkPartLoad_GPU:
                 return gpuLoad;
-            case RyazhaClkPartLoad_CPUMax:
+            case RClkPartLoad_CPUMax:
                 return GetMaxCpuLoad();
-            case RyazhaClkPartLoad_BAT:
+            case RClkPartLoad_BAT:
                 BatteryChargeInfo info;
                 batteryInfoGetChargeInfo(&info);
                 return info.RawBatteryCharge;
-            case RyazhaClkPartLoad_FAN:
+            case RClkPartLoad_FAN:
                 return GetFanLevel();
-            case RyazhaClkPartLoad_RamBWAll:
+            case RClkPartLoad_RamBWAll:
                 return t210EmcBwAll();
-            case RyazhaClkPartLoad_RamBWCpu:
+            case RClkPartLoad_RamBWCpu:
                 return t210EmcBwCpu();
-            case RyazhaClkPartLoad_RamBWGpu:
+            case RClkPartLoad_RamBWGpu:
                 return t210EmcBwGpu();
-            case RyazhaClkPartLoad_RamBWPeak:
+            case RClkPartLoad_RamBWPeak:
                 return t210EmcBwPeak();
             default:
-                ASSERT_ENUM_VALID(RyazhaClkPartLoad, loadSource);
+                ASSERT_ENUM_VALID(RClkPartLoad, loadSource);
         }
         return 0;
     }

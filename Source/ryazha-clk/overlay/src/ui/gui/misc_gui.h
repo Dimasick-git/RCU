@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Ryazha-CLK Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -35,22 +35,22 @@ public:
     void refresh() override;
 
 protected:
-    RyazhaClkConfigValueList* configList;
-    std::map<RyazhaClkConfigValue, tsl::elm::ListItem*> configButtons;
-    std::map<RyazhaClkConfigValue, ValueRange> configRanges;
-    std::map<RyazhaClkConfigValue, std::vector<NamedValue>> configNamedValues;
-    std::map<RyazhaClkConfigValue, tsl::elm::ToggleListItem*> configToggles;
-    std::map<RyazhaClkConfigValue, std::tuple<tsl::elm::TrackBar*, tsl::elm::ListItem*, std::vector<uint64_t>>> configTrackbars;
-    std::set<RyazhaClkConfigValue> configButtonSKeys;
-    std::map<RyazhaClkConfigValue, std::string> configButtonSSubtext;
-    std::set<RyazhaClkConfigValue> emcClockConfigs;
+    RClkConfigValueList* configList;
+    std::map<RClkConfigValue, tsl::elm::ListItem*> configButtons;
+    std::map<RClkConfigValue, ValueRange> configRanges;
+    std::map<RClkConfigValue, std::vector<NamedValue>> configNamedValues;
+    std::map<RClkConfigValue, tsl::elm::ToggleListItem*> configToggles;
+    std::map<RClkConfigValue, std::tuple<tsl::elm::TrackBar*, tsl::elm::ListItem*, std::vector<uint64_t>>> configTrackbars;
+    std::set<RClkConfigValue> configButtonSKeys;
+    std::map<RClkConfigValue, std::string> configButtonSSubtext;
+    std::set<RClkConfigValue> emcClockConfigs;
 
-    void addConfigToggle(RyazhaClkConfigValue configVal, const char* altName, bool kip = false);
-    void addConfigTrackbar(RyazhaClkConfigValue configVal, const char* altName, const ValueRange& range, bool kip = true);
-    void addMappedConfigTrackbar(RyazhaClkConfigValue configVal, const char* altName,
+    void addConfigToggle(RClkConfigValue configVal, const char* altName, bool kip = false);
+    void addConfigTrackbar(RClkConfigValue configVal, const char* altName, const ValueRange& range, bool kip = true);
+    void addMappedConfigTrackbar(RClkConfigValue configVal, const char* altName,
                                   std::vector<u32> vals,
                                   std::initializer_list<std::string> names, bool kip = true);
-    void addConfigButton(RyazhaClkConfigValue configVal,
+    void addConfigButton(RClkConfigValue configVal,
         const char* altName,
         const ValueRange& range,
         const std::string& categoryName,
@@ -60,7 +60,7 @@ protected:
         bool showDefaultValue = true,
         bool kip = false);
 
-    void addConfigButtonS(RyazhaClkConfigValue configVal,
+    void addConfigButtonS(RClkConfigValue configVal,
         const char* altName,
         const ValueRange& range,
         const std::string& categoryName,
@@ -70,9 +70,9 @@ protected:
         bool showDefaultValue = true,
         const char* subText = nullptr,
         bool kip = false);
-    void addFreqButton(RyazhaClkConfigValue configVal,
+    void addFreqButton(RClkConfigValue configVal,
                             const char* altName,
-                            RyazhaClkModule module,
+                            RClkModule module,
                             const std::map<uint32_t, std::string>& labels = {});
     void updateConfigToggles();
 
