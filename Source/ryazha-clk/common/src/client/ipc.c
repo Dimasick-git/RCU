@@ -183,3 +183,8 @@ Result rclkIpcSetLadderConfig(RClkLadderConfig* config)
         .buffers = {{config, sizeof(RClkLadderConfig)}},
     );
 }
+
+Result rclkIpcExitCmd()
+{
+    return serviceDispatch(&g_rclkSrv, RClkIpcCmd_Exit);
+}
