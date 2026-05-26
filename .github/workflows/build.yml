@@ -288,17 +288,28 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          # Удаляем старое содержимое dist в репозитории, если оно есть
-          rm -rf dist_repo
-          git clone --depth 1 --branch ${{ github.ref_name }} https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} dist_repo
-          cd dist_repo
-          rm -rf dist/*
-          mkdir -p dist
-          cp -rvf ../dist/* dist/
-          git add dist/
-          if git diff --staged --quiet; then
-            echo "No changes in dist"
+
+          # Determine correct branch name (handle PR refs which have format X/merge)
+          BRANCH_NAME="${{ github.head_ref }}"
+          if [ -z "$BRANCH_NAME" ]; then
+            BRANCH_NAME="${{ github.ref_name }}"
+          fi
+
+          # Only push dist if we're on a push event (not a PR)
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            rm -rf dist_repo
+            git clone --depth 1 --branch "$BRANCH_NAME" https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} dist_repo || git clone --depth 1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} dist_repo
+            cd dist_repo
+            rm -rf dist/*
+            mkdir -p dist
+            cp -rvf ../dist/* dist/
+            git add dist/
+            if git diff --staged --quiet; then
+              echo "No changes in dist"
+            else
+              git commit -m "Update dist files from build [skip ci]"
+              git push origin "$BRANCH_NAME"
+            fi
           else
-            git commit -m "Update dist files from build [skip ci]"
-            git push origin ${{ github.ref_name }}
+            echo "Skipping dist push for pull request"
           fi
