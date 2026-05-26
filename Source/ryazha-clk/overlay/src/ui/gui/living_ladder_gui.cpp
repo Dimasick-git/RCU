@@ -1,4 +1,3 @@
-#include "../../i18n.hpp"
 /*
  * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
@@ -16,6 +15,7 @@
  *
  */
 
+#include "../i18n.hpp"
 #include "living_ladder_gui.h"
 
 #include <algorithm>
