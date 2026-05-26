@@ -193,7 +193,12 @@ namespace kip {
         u64 oldCrc = configValues.values[KipCrc32];
         configValues.values[KipCrc32] = newCrc; // write checksum
 
-        if (config::SetConfigValues(&configValues, false)) {
+        // immediate=true: сразу обновить in-memory configValues, иначе
+        // runtime[KipCrc32] остаётся со старым значением, и следующий
+        // SetKipData()/GetKipData() будет работать с устаревшим CRC --
+        // что в Horizon-OC всегда делалось как true, а в RCU когда-то
+        // случайно поменяли на false и всё посыпалось.
+        if (config::SetConfigValues(&configValues, true)) {
             fileUtils::LogLine("[kip] OK wrote %s: CRC32 %lu -> %lu (cust=%lu)",
                                kipPath, oldCrc, newCrc, configValues.values[KipConfigValue_custRev]);
             for (u64 i = KipConfigValue_hpMode; i < RClkConfigValue_EnumMax; i++) {
@@ -340,7 +345,13 @@ namespace kip {
         configValues.values[KipConfigValue_t6_tRTW_fine_tune] = cust_get_tRTW_fine_tune(&table);
 
         if (sizeof(RClkConfigValueList) <= sizeof(configValues)) {
-            if (config::SetConfigValues(&configValues, false)) {
+            // immediate=true: KIP-значения, прочитанные с файла, должны
+            // сразу попасть в runtime configValues -- иначе sysmodule
+            // продолжит использовать что-то ещё (default/stale из .ini
+            // initial load), и реальные частоты/напряжения не сойдутся
+            // с тем, что юзер видит в overlay. Horizon-OC всегда писал
+            // здесь true.
+            if (config::SetConfigValues(&configValues, true)) {
                 fileUtils::LogLine("[kip] KIP loaded. CRC32: %ld (Cust Rev %ld)", configValues.values[KipCrc32], configValues.values[KipConfigValue_custRev]);
                 for (u64 i = KipConfigValue_hpMode; i < RClkConfigValue_EnumMax; i++) {
                     fileUtils::LogLine("%s: %ld", rclkFormatConfigValue((RClkConfigValue)i, false), configValues.values[i]);
