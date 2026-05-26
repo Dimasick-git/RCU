@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -32,10 +32,10 @@ class AppProfileGui : public BaseMenuGui
 {
     protected:
         std::uint64_t applicationId;
-        RClkTitleProfileList* profileList;
-        void openFreqChoiceGui(tsl::elm::ListItem* listItem, RClkProfile profile, RClkModule module);
-        void addModuleListItem(RClkProfile profile, RClkModule module);
-        void addModuleListItemToggle(RClkProfile profile, RClkModule module);
+        RyazhaClkTitleProfileList* profileList;
+        void openFreqChoiceGui(tsl::elm::ListItem* listItem, RyazhaClkProfile profile, RyazhaClkModule module);
+        void addModuleListItem(RyazhaClkProfile profile, RyazhaClkModule module);
+        void addModuleListItemToggle(RyazhaClkProfile profile, RyazhaClkModule module);
         void openValueChoiceGui(
             tsl::elm::ListItem* listItem,
             std::uint32_t currentValue,
@@ -56,8 +56,8 @@ class AppProfileGui : public BaseMenuGui
             int decimalPlaces
         );
         void addModuleListItemValue(
-            RClkProfile profile,
-            RClkModule module,
+            RyazhaClkProfile profile,
+            RyazhaClkModule module,
             const std::string& categoryName,
             std::uint32_t min,
             std::uint32_t max,
@@ -69,17 +69,10 @@ class AppProfileGui : public BaseMenuGui
             std::vector<NamedValue> namedValues = {},
             bool showDefaultValue = true
         );
-        void addGovernorSection(RClkProfile profile);
-        // Inline Hz slider для Display частоты (per-profile). Заменяет
-        // табличный pick через ValueChoiceGui -- юзер просил "верни
-        // ползунок". Storage: profileList->mhzMap[profile][Display].
-        void addDisplayHzTrackBar(RClkProfile profile,
-                                  std::uint32_t minHz,
-                                  std::uint32_t maxHz,
-                                  std::uint32_t stepHz);
-        void addProfileUI(RClkProfile profile);
+        void addGovernorSection(RyazhaClkProfile profile);
+        void addProfileUI(RyazhaClkProfile profile);
     public:
-        AppProfileGui(std::uint64_t applicationId, RClkTitleProfileList* profileList);
+        AppProfileGui(std::uint64_t applicationId, RyazhaClkTitleProfileList* profileList);
         ~AppProfileGui();
         void listUI() override;
         static void changeTo(std::uint64_t applicationId);

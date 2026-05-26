@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_ and Ryazha CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -37,7 +37,6 @@
 #include "mgr/clock_manager.hpp"
 #include "ipc/ipc_service.hpp"
 #include "file/config.hpp"
-#include "auto_ryazha.hpp"
 
 #define INNER_HEAP_SIZE 0x40000
 
@@ -146,18 +145,10 @@ int main(int argc, char** argv)
     clockManager::Initialize();
     ipcService::Initialize();
 
-    // Ryazha-Авто / VRR-Авто autonomous tick thread.
-    // Initialize() читает /config/ryazha-clk/ryazha-auto.ini и создаёт
-    // thread (suspended). Start() взводит флаг + threadStart -> thread
-    // начинает крутить Tick() каждые 200мс пока gRunning=true.
-    // IPC GetLadderConfig/SetLadderConfig дёргают g.cfg под mutex'ом,
-    // так что overlay может live-перенастраивать ladder без рестарта.
-    autoRyazha::Initialize();
 
     clockManager::SetRunning(true);
     config::SetEnabled(true);
     ipcService::SetRunning(true);
-    autoRyazha::Start();
     // TemperaturePoint *table;
     // ReadConfigFile(&table);
     // InitFanController(table);
@@ -171,9 +162,6 @@ int main(int argc, char** argv)
 
     ipcService::SetRunning(false);
     ipcService::Exit();
-    autoRyazha::Exit();   // снять флаг + дождаться tick-thread'а ДО Exit'а
-                          // clockManager/board -- ladder может вызывать
-                          // config::SetOverrideHz и читать board state.
     clockManager::Exit();
     processManagement::Exit();
     board::Exit();
