@@ -140,14 +140,34 @@ namespace ipcService {
             return 0;
         }
 
+        Result GetKipDataHandler() {
+            kip::GetKipData();
+            return 0;
+        }
+
+        Result GetLadderConfigHandler(RClkLadderConfig* out_config) {
+            if (!out_config) {
+                return RCLK_ERROR(Generic);
+            }
+            memset(out_config, 0, sizeof(*out_config));
+            return 0;
+        }
+
+        Result SetLadderConfigHandler(RClkLadderConfig* config) {
+            if (!config) {
+                return RCLK_ERROR(Generic);
+            }
+            return 0;
+        }
+
         Result ServiceHandlerFunc(void* arg, const IpcServerRequest* r, u8* out_data, size_t* out_dataSize) {
             (void)arg;
             switch (r->data.cmdId) {
-                case RyazhaClkIpcCmd_GetApiVersion:
+                case RClkIpcCmd_GetApiVersion:
                     *out_dataSize = sizeof(u32);
                     return GetApiVersion((u32*)out_data);
 
-                case RyazhaClkIpcCmd_GetVersionString:
+                case RClkIpcCmd_GetVersionString:
                     if (r->hipc.meta.num_recv_buffers >= 1) {
                         return GetVersionString(
                             (char*)hipcGetBufferAddress(r->hipc.data.recv_buffers),
@@ -156,7 +176,7 @@ namespace ipcService {
                     }
                     break;
 
-                case RyazhaClkIpcCmd_GetCurrentContext:
+                case RClkIpcCmd_GetCurrentContext:
                     if (r->data.size >= sizeof(std::uint64_t) && r->hipc.meta.num_recv_buffers >= 1) {
                         size_t bufSize = hipcGetBufferSize(r->hipc.data.recv_buffers);
                         if (bufSize >= sizeof(RClkContext)) {
@@ -165,17 +185,17 @@ namespace ipcService {
                     }
                     break;
 
-                case RyazhaClkIpcCmd_Exit:
+                case RClkIpcCmd_Exit:
                     return ExitHandler();
 
-                case RyazhaClkIpcCmd_GetProfileCount:
+                case RClkIpcCmd_GetProfileCount:
                     if (r->data.size >= sizeof(std::uint64_t)) {
                         *out_dataSize = sizeof(std::uint8_t);
                         return GetProfileCount((std::uint64_t*)r->data.ptr, (std::uint8_t*)out_data);
                     }
                     break;
 
-                case RyazhaClkIpcCmd_GetProfiles:
+                case RClkIpcCmd_GetProfiles:
                     if (r->data.size >= sizeof(std::uint64_t) && r->hipc.meta.num_recv_buffers >= 1) {
                         size_t bufSize = hipcGetBufferSize(r->hipc.data.recv_buffers);
                         if (bufSize >= sizeof(RClkTitleProfileList)) {
@@ -184,25 +204,25 @@ namespace ipcService {
                     }
                     break;
 
-                case RyazhaClkIpcCmd_SetProfiles:
+                case RClkIpcCmd_SetProfiles:
                     if (r->data.size >= sizeof(RClkIpc_SetProfiles_Args)) {
                         return SetProfiles((RClkIpc_SetProfiles_Args*)r->data.ptr);
                     }
                     break;
 
-                case RyazhaClkIpcCmd_SetEnabled:
+                case RClkIpcCmd_SetEnabled:
                     if (r->data.size >= sizeof(std::uint8_t)) {
                         return SetEnabled((std::uint8_t*)r->data.ptr);
                     }
                     break;
 
-                case RyazhaClkIpcCmd_SetOverride:
+                case RClkIpcCmd_SetOverride:
                     if (r->data.size >= sizeof(RClkIpc_SetOverride_Args)) {
                         return SetOverride((RClkIpc_SetOverride_Args*)r->data.ptr);
                     }
                     break;
 
-                case RyazhaClkIpcCmd_GetConfigValues:
+                case RClkIpcCmd_GetConfigValues:
                     if (r->hipc.meta.num_recv_buffers >= 1) {
                         size_t bufSize = hipcGetBufferSize(r->hipc.data.recv_buffers);
                         if (bufSize >= sizeof(RClkConfigValueList)) {
@@ -211,7 +231,7 @@ namespace ipcService {
                     }
                     break;
 
-                case RyazhaClkIpcCmd_SetConfigValues:
+                case RClkIpcCmd_SetConfigValues:
                     if (r->hipc.meta.num_send_buffers >= 1) {
                         size_t bufSize = hipcGetBufferSize(r->hipc.data.send_buffers);
                         if (bufSize >= sizeof(RClkConfigValueList)) {
@@ -220,7 +240,7 @@ namespace ipcService {
                     }
                     break;
 
-                case RyazhaClkIpcCmd_GetFreqList:
+                case RClkIpcCmd_GetFreqList:
                     if (r->data.size >= sizeof(RClkIpc_GetFreqList_Args) && r->hipc.meta.num_recv_buffers >= 1) {
                         *out_dataSize = sizeof(std::uint32_t);
                         return GetFreqList(
@@ -232,10 +252,31 @@ namespace ipcService {
                     }
                     break;
 
-                case RyazhaClkIpcCmd_SetKipData:
+                case RClkIpcCmd_SetKipData:
                     if (r->data.size >= 0) {
                         kip::SetKipData();
                         return 0;
+                    }
+                    break;
+
+                case RClkIpcCmd_GetKipData:
+                    return GetKipDataHandler();
+
+                case RClkIpcCmd_GetLadderConfig:
+                    if (r->hipc.meta.num_recv_buffers >= 1) {
+                        size_t bufSize = hipcGetBufferSize(r->hipc.data.recv_buffers);
+                        if (bufSize >= sizeof(RClkLadderConfig)) {
+                            return GetLadderConfigHandler((RClkLadderConfig*)hipcGetBufferAddress(r->hipc.data.recv_buffers));
+                        }
+                    }
+                    break;
+
+                case RClkIpcCmd_SetLadderConfig:
+                    if (r->hipc.meta.num_send_buffers >= 1) {
+                        size_t bufSize = hipcGetBufferSize(r->hipc.data.send_buffers);
+                        if (bufSize >= sizeof(RClkLadderConfig)) {
+                            return SetLadderConfigHandler((RClkLadderConfig*)hipcGetBufferAddress(r->hipc.data.send_buffers));
+                        }
                     }
                     break;
             }
