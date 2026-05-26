@@ -55,7 +55,7 @@ namespace board {
 
     RyazhaClkSocType gSocType;
     u8 gDramID;
-    RyazhaClkConsoleType gConsoleType = RyazhaClkConsoleType_Icosa;
+    RClkConsoleType gConsoleType = RClkConsoleType_Icosa;
     FuseData fuseData;
     u8 speedoBracket;
     PwmChannelSession iCon;
@@ -86,17 +86,17 @@ namespace board {
         if (gSocType == RyazhaClkSocType_Mariko) {
             switch ((odm4 & 0xF0000) >> 16) {
                 case 2:
-                    gConsoleType = RyazhaClkConsoleType_Hoag;
+                    gConsoleType = RClkConsoleType_Hoag;
                     break;
                 case 4:
-                    gConsoleType = RyazhaClkConsoleType_Aula;
+                    gConsoleType = RClkConsoleType_Aula;
                     break;
                 case 1:
                 default:
-                    gConsoleType = RyazhaClkConsoleType_Iowa;
+                    gConsoleType = RClkConsoleType_Iowa;
             }
         } else {
-            gConsoleType = RyazhaClkConsoleType_Icosa;
+            gConsoleType = RClkConsoleType_Icosa;
         }
 
         gDramID = (odm4 & 0xF8) >> 3;
@@ -190,7 +190,7 @@ namespace board {
 
         StartMiscThread(pwmCheck, &iCon);
 
-        display::DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = (GetConsoleType() == RyazhaClkConsoleType_Hoag), .isRetroSUPER = integrations::GetRETROSuperStatus()};
+        display::DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = (GetConsoleType() == RClkConsoleType_Hoag), .isRetroSUPER = integrations::GetRETROSuperStatus()};
         display::Initialize(&cfg);
 
         CacheDfllData();
@@ -229,7 +229,7 @@ namespace board {
         return gSocType;
     }
 
-    RyazhaClkConsoleType GetConsoleType() {
+    RClkConsoleType GetConsoleType() {
         return gConsoleType;
     }
 
@@ -253,7 +253,7 @@ namespace board {
 
     /* TODO: Put this into a different file. */
     void SetDisplayRefreshDockedState(bool docked) {
-        if (GetConsoleType() != RyazhaClkConsoleType_Hoag) {
+        if (GetConsoleType() != RClkConsoleType_Hoag) {
             display::SetDockedState(docked);
         }
     }

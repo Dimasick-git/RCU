@@ -36,9 +36,9 @@ class BaseMenuGui : public BaseGui
 
     public:
         // u8 dockedHighestAllowedRefreshRate = 60;
-        RyazhaClkContext* context;
+        RClkContext* context;
         std::uint64_t lastContextUpdate;
-        RyazhaClkConfigValueList configList;
+        RClkConfigValueList configList;
         bool g_hardwareModelCached = false;
         bool g_isMariko = false;
         bool g_isAula = false;

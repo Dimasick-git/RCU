@@ -30,6 +30,7 @@
 #include "fatal_gui.h"
 #include "app_profile_gui.h"
 #include "global_override_gui.h"
+#include "living_ladder_gui.h"
 #include "misc_gui.h"
 
 void MainGui::listUI()
@@ -59,6 +60,17 @@ void MainGui::listUI()
     });
     this->listElement->addItem(appProfileItem);
 
+    tsl::elm::ListItem* ryazhaAutoItem = new tsl::elm::ListItem("Ryazha-Auto (VRR)");
+    ryazhaAutoItem->setClickListener([this](u64 keys) {
+        if((keys & HidNpadButton_A) == HidNpadButton_A && this->context)
+        {
+            tsl::changeTo<LivingLadderGui>();
+            return true;
+        }
+
+        return false;
+    });
+    this->listElement->addItem(ryazhaAutoItem);
 
     tsl::elm::ListItem* globalProfileItem = new tsl::elm::ListItem("Edit Global Profile");
     globalProfileItem->setClickListener([this](u64 keys) {

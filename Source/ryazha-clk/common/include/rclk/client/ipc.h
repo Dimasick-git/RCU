@@ -31,6 +31,7 @@
 #include "../config.h"
 #include "../board.h"
 #include "../ipc.h"
+#include "../auto_ryazha.h"
 
 bool rclkIpcRunning();
 Result rclkIpcInitialize(void);
@@ -38,20 +39,22 @@ void rclkIpcExit(void);
 
 Result rclkIpcGetAPIVersion(u32* out_ver);
 Result rclkIpcGetVersionString(char* out, size_t len);
-Result rclkIpcGetCurrentContext(RyazhaClkContext* out_context);
+Result rclkIpcGetCurrentContext(RClkContext* out_context);
 Result rclkIpcGetProfileCount(u64 tid, u8* out_count);
 Result rclkIpcSetEnabled(bool enabled);
 Result rclkIpcExitCmd();
-Result rclkIpcSetOverride(RyazhaClkModule module, u32 hz);
-Result rclkIpcGetProfiles(u64 tid, RyazhaClkTitleProfileList* out_profiles);
-Result rclkIpcSetProfiles(u64 tid, RyazhaClkTitleProfileList* profiles);
-Result rclkIpcGetConfigValues(RyazhaClkConfigValueList* out_configValues);
-Result rclkIpcSetConfigValues(RyazhaClkConfigValueList* configValues);
-Result rclkIpcGetFreqList(RyazhaClkModule module, u32* list, u32 maxCount, u32* outCount);
-Result hocClkIpcSetKipData();
-Result hocClkIpcGetKipData();
+Result rclkIpcSetOverride(RClkModule module, u32 hz);
+Result rclkIpcGetProfiles(u64 tid, RClkTitleProfileList* out_profiles);
+Result rclkIpcSetProfiles(u64 tid, RClkTitleProfileList* profiles);
+Result rclkIpcGetConfigValues(RClkConfigValueList* out_configValues);
+Result rclkIpcSetConfigValues(RClkConfigValueList* configValues);
+Result rclkIpcGetFreqList(RClkModule module, u32* list, u32 maxCount, u32* outCount);
+Result rclkIpcSetKipData();
+Result rclkIpcGetKipData();
+Result rclkIpcGetLadderConfig(RClkLadderConfig* out_config);
+Result rclkIpcSetLadderConfig(RClkLadderConfig* config);
 
-static inline Result rclkIpcRemoveOverride(RyazhaClkModule module)
+static inline Result rclkIpcRemoveOverride(RClkModule module)
 {
     return rclkIpcSetOverride(module, 0);
 }

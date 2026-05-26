@@ -30,24 +30,24 @@
 
 namespace board {
 
-    const char *GetModuleName(RyazhaClkModule module, bool pretty) {
-        ASSERT_ENUM_VALID(RyazhaClkModule, module);
-        return hocclkFormatModule(module, pretty);
+    const char *GetModuleName(RClkModule module, bool pretty) {
+        ASSERT_ENUM_VALID(RClkModule, module);
+        return rclkFormatModule(module, pretty);
     }
 
     const char *GetProfileName(RyazhaClkProfile profile, bool pretty) {
         ASSERT_ENUM_VALID(RyazhaClkProfile, profile);
-        return hocclkFormatProfile(profile, pretty);
+        return rclkFormatProfile(profile, pretty);
     }
 
     const char *GetThermalSensorName(RyazhaClkThermalSensor sensor, bool pretty) {
         ASSERT_ENUM_VALID(RyazhaClkThermalSensor, sensor);
-        return hocclkFormatThermalSensor(sensor, pretty);
+        return rclkFormatThermalSensor(sensor, pretty);
     }
 
     const char *GetPowerSensorName(RyazhaClkPowerSensor sensor, bool pretty) {
         ASSERT_ENUM_VALID(RyazhaClkPowerSensor, sensor);
-        return hocclkFormatPowerSensor(sensor, pretty);
+        return rclkFormatPowerSensor(sensor, pretty);
     }
 
 }

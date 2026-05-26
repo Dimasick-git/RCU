@@ -27,7 +27,7 @@
 
 // This workaround *may* not be nessasary, but it seems to help with reducing stutter
 static void kipDataThreadFunc(void*) {
-    hocClkIpcSetKipData();
+    rclkIpcSetKipData();
 }
 
 static Thread s_kipThread;
@@ -65,7 +65,7 @@ class ExperimentalSettingsSubMenuGui;
 
 MiscGui::MiscGui()
 {
-    this->configList = new RyazhaClkConfigValueList {};
+    this->configList = new RClkConfigValueList {};
 }
 
 MiscGui::~MiscGui()
@@ -86,8 +86,8 @@ MiscGui::~MiscGui()
     this->configRanges.clear();
 }
 
-void MiscGui::addConfigToggle(RyazhaClkConfigValue configVal, const char* altName, bool kip) {
-    const char* configName = altName ? altName : hocclkFormatConfigValue(configVal, true);
+void MiscGui::addConfigToggle(RClkConfigValue configVal, const char* altName, bool kip) {
+    const char* configName = altName ? altName : rclkFormatConfigValue(configVal, true);
     auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
 
     struct YAwareToggle : tsl::elm::ToggleListItem {
@@ -122,7 +122,7 @@ void MiscGui::addConfigToggle(RyazhaClkConfigValue configVal, const char* altNam
     this->configToggles[configVal] = toggle;
 }
 
-void MiscGui::addConfigTrackbar(RyazhaClkConfigValue configVal, const char* altName, const ValueRange& range, bool kip) {
+void MiscGui::addConfigTrackbar(RClkConfigValue configVal, const char* altName, const ValueRange& range, bool kip) {
     auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
     struct IndexedBar : tsl::elm::NamedStepTrackBar {
         std::vector<std::string> m_info;
@@ -150,7 +150,7 @@ void MiscGui::addConfigTrackbar(RyazhaClkConfigValue configVal, const char* altN
             return tsl::elm::NamedStepTrackBar::handleInput(keysDown, keysHeld, touchPos, leftJoyStick, rightJoyStick);
         }
     };
-    const char* name = altName ? altName : hocclkFormatConfigValue(configVal, true);
+    const char* name = altName ? altName : rclkFormatConfigValue(configVal, true);
     auto* bar = new IndexedBar(name, range, name, std::move(infoStrings));
     u32 cur = (u32)this->configList->values[configVal];
     u16 curStep = 0;
@@ -166,10 +166,10 @@ void MiscGui::addConfigTrackbar(RyazhaClkConfigValue configVal, const char* altN
     this->listElement->addItem(bar);
 }
 
-void MiscGui::addMappedConfigTrackbar(RyazhaClkConfigValue configVal, const char* altName,
+void MiscGui::addMappedConfigTrackbar(RClkConfigValue configVal, const char* altName,
                                        std::vector<u32> vals,
                                        std::initializer_list<std::string> names, bool kip) {
-    const char* name = altName ? altName : hocclkFormatConfigValue(configVal, true);
+    const char* name = altName ? altName : rclkFormatConfigValue(configVal, true);
     auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
 
     struct YAwareTrackBar : tsl::elm::NamedStepTrackBar {
@@ -206,7 +206,7 @@ void MiscGui::addMappedConfigTrackbar(RyazhaClkConfigValue configVal, const char
 }
 
 
-void MiscGui::addConfigButton(RyazhaClkConfigValue configVal,
+void MiscGui::addConfigButton(RClkConfigValue configVal,
     const char* altName,
     const ValueRange& range,
     const std::string& categoryName,
@@ -216,7 +216,7 @@ void MiscGui::addConfigButton(RyazhaClkConfigValue configVal,
     bool showDefaultValue,
     bool kip)
 {
-    const char* configName = altName ? altName : hocclkFormatConfigValue(configVal, true);
+    const char* configName = altName ? altName : rclkFormatConfigValue(configVal, true);
     auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
 
     tsl::elm::ListItem* listItem = new tsl::elm::ListItem(configName);
@@ -330,7 +330,7 @@ void MiscGui::addConfigButton(RyazhaClkConfigValue configVal,
     this->configNamedValues[configVal] = namedValues;
 }
 
-void MiscGui::addConfigButtonS(RyazhaClkConfigValue configVal,
+void MiscGui::addConfigButtonS(RClkConfigValue configVal,
     const char* altName,
     const ValueRange& range,
     const std::string& categoryName,
@@ -341,7 +341,7 @@ void MiscGui::addConfigButtonS(RyazhaClkConfigValue configVal,
     const char* subText,
     bool kip)
 {
-    const char* configName = altName ? altName : hocclkFormatConfigValue(configVal, true);
+    const char* configName = altName ? altName : rclkFormatConfigValue(configVal, true);
     auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
     tsl::elm::ListItem* listItem = new tsl::elm::ListItem("");
     if (!kip)
@@ -466,12 +466,12 @@ void MiscGui::updateConfigToggles() {
     }
 }
 
-void MiscGui::addFreqButton(RyazhaClkConfigValue configVal,
+void MiscGui::addFreqButton(RClkConfigValue configVal,
                             const char* altName,
-                            RyazhaClkModule module,
+                            RClkModule module,
                             const std::map<uint32_t, std::string>& labels)
 {
-    const char* configName = altName ? altName : hocclkFormatConfigValue(configVal, true);
+    const char* configName = altName ? altName : rclkFormatConfigValue(configVal, true);
     auto infoStrings = ConfigInfoStrings(configVal, IsMariko(), IsHoag());
 
     tsl::elm::ListItem* listItem = new tsl::elm::ListItem(configName);
@@ -636,7 +636,7 @@ void MiscGui::listUI()
     displaySubMenu->setValue(R_ARROW);
     this->listElement->addItem(displaySubMenu);
 
-    if(this->configList->values[RyazhaClkConfigValue_EnableExperimentalSettings]) {
+    if(this->configList->values[RClkConfigValue_EnableExperimentalSettings]) {
         tsl::elm::ListItem* experimentalSubMenu = new tsl::elm::ListItem("Experimental Settings");
         experimentalSubMenu->setClickListener([](u64 keys) {
             if (keys & HidNpadButton_A) {
@@ -668,7 +668,7 @@ protected:
         };
 
         if(IsMariko()) {
-            addConfigButton(RyazhaClkConfigValue_RAMVoltDisplayMode, "RAM Voltage Display Mode", ValueRange(0, 12, 1, "", 0), "RAM Voltage Display Mode", &thresholdsDisabled, {}, ramVoltDispModes, false);
+            addConfigButton(RClkConfigValue_RAMVoltDisplayMode, "RAM Voltage Display Mode", ValueRange(0, 12, 1, "", 0), "RAM Voltage Display Mode", &thresholdsDisabled, {}, ramVoltDispModes, false);
         }
 
         std::vector<NamedValue> RamDisplayUnitValues = {
@@ -677,7 +677,7 @@ protected:
             NamedValue("MHz and MT/s", RamDisplayUnit_MHzMTs),
         };
         addConfigButton(
-            RyazhaClkConfigValue_RamDisplayUnit,
+            RClkConfigValue_RamDisplayUnit,
             "RAM Display Unit",
             ValueRange(0, 0, 2, "", 0),
             "RAM Display Unit",
@@ -689,7 +689,7 @@ protected:
         );
 
         addConfigButton(
-            RyazhaClkConfigValue_PollingIntervalMs,
+            RClkConfigValue_PollingIntervalMs,
             "Polling Interval",
             ValueRange(50, 1000, 50, "ms", 1),
             "Polling Interval",
@@ -707,7 +707,7 @@ protected:
         exSetWarning->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 90);
         this->listElement->addItem(exSetWarning);
 
-        addConfigToggle(RyazhaClkConfigValue_EnableExperimentalSettings, nullptr);
+        addConfigToggle(RClkConfigValue_EnableExperimentalSettings, nullptr);
     }
 };
 
@@ -722,15 +722,15 @@ protected:
         this->listElement->addItem(new tsl::elm::CategoryHeader("Experimental Settings"));
         ValueThresholds thresholdsDisabled(0, 0);
         if(IsMariko()) {
-            addConfigToggle(RyazhaClkConfigValue_MarikoMiddleFreqs, nullptr, true);
+            addConfigToggle(RClkConfigValue_MarikoMiddleFreqs, nullptr, true);
         }
-        addConfigToggle(RyazhaClkConfigValue_LiveCpuUv, nullptr);
+        addConfigToggle(RClkConfigValue_LiveCpuUv, nullptr);
         std::vector<NamedValue> gpuSchedMethodValues = {
             NamedValue("INI", GpuSchedulingOverrideMethod_Ini),
             NamedValue("NV Service", GpuSchedulingOverrideMethod_NvService),
         };
         addConfigButton(
-            RyazhaClkConfigValue_GPUSchedulingMethod,
+            RClkConfigValue_GPUSchedulingMethod,
             "GPU Scheduling Override Method",
             ValueRange(0, 0, 1, "", 0),
             "GPU Scheduling Override Method",
@@ -746,7 +746,7 @@ protected:
             NamedValue("Actmon", MemoryFrequencyMeasurementMode_Actmon),
         };
         addConfigButton(
-            RyazhaClkConfigValue_MemoryFrequencyMeasurementMode,
+            RClkConfigValue_MemoryFrequencyMeasurementMode,
             "Memory Frequency Measurement Mode",
             ValueRange(0, 0, 1, "", 0),
             "Memory Frequency Measurement Mode",
@@ -781,7 +781,7 @@ protected:
                 ValueThresholds chargerThresholds(2048, 2049);
 
                 addConfigButton(
-                    RyazhaClkConfigValue_BatteryChargeCurrent,
+                    RClkConfigValue_BatteryChargeCurrent,
                     "Charge Current Override",
                     ValueRange(0, 0, 1, "", 0),
                     "Charge Current Override",
@@ -806,7 +806,7 @@ protected:
             ValueThresholds chargerThresholds(1664, 1793);
 
             addConfigButton(
-                RyazhaClkConfigValue_BatteryChargeCurrent,
+                RClkConfigValue_BatteryChargeCurrent,
                 "Charge Current Override",
                 ValueRange(0, 0, 1, "", 0),
                 "Charge Current Override",
@@ -832,7 +832,7 @@ protected:
             };
 
             addConfigButton(
-                RyazhaClkConfigValue_AulaDisplayColorPreset,
+                RClkConfigValue_AulaDisplayColorPreset,
                 "Display Color Preset",
                 ValueRange(0, 1, 1, "", 0),
                 "Display Color Preset",
@@ -868,7 +868,7 @@ protected:
         };
 
         addConfigButton(
-            RyazhaClkConfigValue_CpuGovernorMinimumFreq,
+            RClkConfigValue_CpuGovernorMinimumFreq,
             "CPU Governor Minimum Frequency",
             ValueRange(0, 0, 1, "", 0),
             "CPU Governor Minimum Frequency",
@@ -897,7 +897,7 @@ protected:
             return;
 
         this->listElement->addItem(new tsl::elm::CategoryHeader("Display Settings"));
-        addConfigToggle(RyazhaClkConfigValue_OverwriteRefreshRate, nullptr);
+        addConfigToggle(RClkConfigValue_OverwriteRefreshRate, nullptr);
         if(!this->context->isUsingRetroSuper) {
             tsl::elm::CustomDrawer* warningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
                 renderer->drawString("\uE150 Usage of unsafe display", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
@@ -910,7 +910,7 @@ protected:
             this->listElement->addItem(warningText);
             ValueThresholds displayThresholds(60, 65);
             addConfigButton(
-                RyazhaClkConfigValue_MaxDisplayClockH,
+                RClkConfigValue_MaxDisplayClockH,
                 "Max Handheld Display Hz",
                 ValueRange(60, IsAula() ? 65 : 75, 1, " Hz", 1),
                 "Display Clock",
@@ -930,7 +930,7 @@ protected:
             warningTextDV->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 110);
             this->listElement->addItem(warningTextDV);
             addConfigButton(
-                RyazhaClkConfigValue_DisplayVoltage,
+                RClkConfigValue_DisplayVoltage,
                 "Display Voltage",
                 ValueRange(800, 1200, 25, " mV", 1),
                 "Display Voltage",
@@ -952,9 +952,9 @@ protected:
         Result rc = rclkIpcGetConfigValues(this->configList);
         if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("rclkIpcGetConfigValues", rc); return; }
         this->listElement->addItem(new tsl::elm::CategoryHeader("Safety Settings"));
-        addConfigToggle(RyazhaClkConfigValue_UncappedClocks, nullptr);
-        addConfigToggle(RyazhaClkConfigValue_ThermalThrottle, nullptr);
-        addConfigToggle(RyazhaClkConfigValue_HandheldTDP, nullptr);
+        addConfigToggle(RClkConfigValue_UncappedClocks, nullptr);
+        addConfigToggle(RClkConfigValue_ThermalThrottle, nullptr);
+        addConfigToggle(RClkConfigValue_HandheldTDP, nullptr);
 
         #if IS_MINIMAL == 0
             std::map<uint32_t, std::string> labels_pwr_l = {
@@ -964,7 +964,7 @@ protected:
             if(IsHoag()) {
                 ValueThresholds tdpThresholdsLite(6400, 7500);
                 addConfigButton(
-                    RyazhaClkConfigValue_LiteTDPLimit,
+                    RClkConfigValue_LiteTDPLimit,
                     "TDP Threshold",
                     ValueRange(4000, 8000, 100, "mW", 1),
                     "Power",
@@ -974,7 +974,7 @@ protected:
             } else {
                 ValueThresholds tdpThresholds(9600, 11000);
                 addConfigButton(
-                    RyazhaClkConfigValue_HandheldTDPLimit,
+                    RClkConfigValue_HandheldTDPLimit,
                     "TDP Threshold",
                     ValueRange(8000, 12000, 100, "mW", 1),
                     "Power",
@@ -984,7 +984,7 @@ protected:
 
             ValueThresholds throttleThresholds(70, 80);
             addConfigButton(
-                RyazhaClkConfigValue_ThermalThrottleThreshold,
+                RClkConfigValue_ThermalThrottleThreshold,
                 "Thermal Throttle Limit",
                 ValueRange(50, 85, 1, "°C", 1),
                 "Temp",
@@ -1106,7 +1106,7 @@ protected:
         }
 
         std::vector<NamedValue> emcMaxClock = { };
-        RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[RyazhaClkConfigValue_RamDisplayUnit];
+        RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[RClkConfigValue_RamDisplayUnit];
 
         if (IsErista()) {
             emcMaxClock = {
@@ -1324,7 +1324,7 @@ protected:
             // NamedValue("3466MHz (Needs ridiculous Speedo/PLL)", 3466000),
             // NamedValue("3500MHz (Needs ridiculous Speedo/PLL)", 3500000),
         };
-        RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[RyazhaClkConfigValue_RamDisplayUnit];
+        RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[RClkConfigValue_RamDisplayUnit];
 
         for (size_t i = 1; i < timingTbreakFreqs.size(); ++i) {
             auto &nv = timingTbreakFreqs[i];
@@ -1336,7 +1336,7 @@ protected:
         if(IsMariko()) {
             // tBreak / low-high timing graph (live, reads config each frame)
             {
-                RyazhaClkConfigValueList* cfgPtr = this->configList;
+                RClkConfigValueList* cfgPtr = this->configList;
                 auto* tbreakGraph = new tsl::elm::CustomDrawer(
                     [cfgPtr](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
                         const s32      t6  = (s32)cfgPtr->values[KipConfigValue_t6_tRTW];
@@ -1485,7 +1485,7 @@ public:
 
 protected:
 
-    void normalizeLatencies(const RyazhaClkConfigValue keysArr[4]) {
+    void normalizeLatencies(const RClkConfigValue keysArr[4]) {
         uint32_t maxClock = IsMariko() ? (uint32_t)this->configList->values[KipConfigValue_marikoEmcMaxClock] : (uint32_t)this->configList->values[KipConfigValue_eristaEmcMaxClock];
         uint32_t vals[4];
 
@@ -1528,7 +1528,7 @@ protected:
         }
 
         uint32_t maxClock = IsMariko() ? (uint32_t)this->configList->values[KipConfigValue_marikoEmcMaxClock] : (uint32_t)this->configList->values[KipConfigValue_eristaEmcMaxClock];
-        RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[RyazhaClkConfigValue_RamDisplayUnit];
+        RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[RClkConfigValue_RamDisplayUnit];
 
         static std::vector<uint32_t> kFreqOptions = { };
         if (IsMariko()) {
@@ -1553,13 +1553,13 @@ protected:
             };
         }
 
-        static const RyazhaClkConfigValue kLatencyRKeys[4] = {
+        static const RClkConfigValue kLatencyRKeys[4] = {
             KipConfigValue_read_latency_1333,
             KipConfigValue_read_latency_1600,
             KipConfigValue_read_latency_1866,
             KipConfigValue_read_latency_2133,
         };
-        static const RyazhaClkConfigValue kLatencyWKeys[4] = {
+        static const RClkConfigValue kLatencyWKeys[4] = {
             KipConfigValue_write_latency_1333,
             KipConfigValue_write_latency_1600,
             KipConfigValue_write_latency_1866,
@@ -1591,8 +1591,8 @@ protected:
             return formatMemClockKhzLabel(rawVal, unit);
         };
 
-        auto addLatencyRow = [&](const char* label, int tierIdx, const RyazhaClkConfigValue keysArr[4]) {
-            RyazhaClkConfigValue thisKey = keysArr[tierIdx];
+        auto addLatencyRow = [&](const char* label, int tierIdx, const RClkConfigValue keysArr[4]) {
+            RClkConfigValue thisKey = keysArr[tierIdx];
             uint32_t currentVal = (uint32_t)this->configList->values[thisKey];
 
             tsl::elm::ListItem* item = new tsl::elm::ListItem(label);
@@ -1612,7 +1612,7 @@ protected:
                     vals[i] = (uint32_t)this->configList->values[keysArr[i]];
 
                 uint32_t maxClock = IsMariko() ? (uint32_t)this->configList->values[KipConfigValue_marikoEmcMaxClock] : (uint32_t)this->configList->values[KipConfigValue_eristaEmcMaxClock];
-                RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[RyazhaClkConfigValue_RamDisplayUnit];
+                RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[RClkConfigValue_RamDisplayUnit];
 
                 auto resolveVal = [maxClock](uint32_t v) -> uint32_t {
                     return (v == 0xFFFFFFFFu) ? maxClock : v;
@@ -1730,16 +1730,16 @@ protected:
         };
 
         {
-            RyazhaClkConfigValueList* cfgPtr = this->configList;
+            RClkConfigValueList* cfgPtr = this->configList;
             bool mariko = IsMariko();
 
             auto* graph = new tsl::elm::CustomDrawer(
                 [cfgPtr, mariko](tsl::gfx::Renderer* renderer, s32 x, s32 y, s32 w, s32 h) {
-                    static const RyazhaClkConfigValue kR[4] = {
+                    static const RClkConfigValue kR[4] = {
                         KipConfigValue_read_latency_1333,  KipConfigValue_read_latency_1600,
                         KipConfigValue_read_latency_1866,  KipConfigValue_read_latency_2133,
                     };
-                    static const RyazhaClkConfigValue kW[4] = {
+                    static const RClkConfigValue kW[4] = {
                         KipConfigValue_write_latency_1333, KipConfigValue_write_latency_1600,
                         KipConfigValue_write_latency_1866, KipConfigValue_write_latency_2133,
                     };
@@ -2106,7 +2106,7 @@ protected:
             };
             ValueThresholds eCpuMaxClockThresholds(1785, 2091);
             addConfigButton(
-                RyazhaClkConfigValue_EristaMaxCpuClock,
+                RClkConfigValue_EristaMaxCpuClock,
                 "CPU Max Clock",
                 ValueRange(0, 0, 1, "", 1),
                 "CPU Max Clock",
@@ -2136,7 +2136,7 @@ protected:
                 true
             );
         }
-        addConfigToggle(RyazhaClkConfigValue_OverwriteBoostMode, nullptr);
+        addConfigToggle(RClkConfigValue_OverwriteBoostMode, nullptr);
 
     }
 };
@@ -2224,9 +2224,9 @@ protected:
             // tsl::elm::ListItem* vminCalcBtn = new tsl::elm::ListItem("Calculate GPU Vmin");
             // vminCalcBtn->setClickListener([this](u64 keys) {
             //     if (keys & HidNpadButton_A) {
-            //         Result rc = hocClkIpcCalculateGpuVmin();
+            //         Result rc = rclkIpcCalculateGpuVmin();
             //         if (R_FAILED(rc)) {
-            //             FatalGui::openWithResultCode("hocClkIpcCalculateGpuVmin", rc);
+            //             FatalGui::openWithResultCode("rclkIpcCalculateGpuVmin", rc);
             //             return false;
             //         }
             //         return true;
@@ -2282,7 +2282,7 @@ protected:
         };
 
         addConfigButton(
-            RyazhaClkConfigValue_GPUScheduling,
+            RClkConfigValue_GPUScheduling,
             "GPU Scheduling Override",
             ValueRange(0, 0, 1, "", 0),
             "GPU Scheduling Override",
@@ -2324,7 +2324,7 @@ protected:
             };
 
             addConfigButton(
-                RyazhaClkConfigValue_DVFSMode,
+                RClkConfigValue_DVFSMode,
                 "GPU DVFS Mode",
                 ValueRange(0, 0, 1, "", 0),
                 "GPU DVFS Mode",
@@ -2334,7 +2334,7 @@ protected:
                 false
             );
 
-            addConfigButton(RyazhaClkConfigValue_DVFSOffset, "GPU DVFS Offset", ValueRange(0, 12, 1, "", 0), "GPU DVFS Offset", &thresholdsDisabled, {}, dvfsOffset, false);
+            addConfigButton(RClkConfigValue_DVFSOffset, "GPU DVFS Offset", ValueRange(0, 12, 1, "", 0), "GPU DVFS Offset", &thresholdsDisabled, {}, dvfsOffset, false);
         }
 
         tsl::elm::ListItem* customTableSubmenu = new tsl::elm::ListItem("GPU Voltage Table");
@@ -2620,8 +2620,8 @@ void MiscGui::refresh() {
         updateConfigToggles();
 
         // relabel when display unit changes
-        RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[RyazhaClkConfigValue_RamDisplayUnit];
-        constexpr RyazhaClkConfigValue emcKeys[] = {
+        RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[RClkConfigValue_RamDisplayUnit];
+        constexpr RClkConfigValue emcKeys[] = {
             KipConfigValue_marikoEmcMaxClock,
             KipConfigValue_eristaEmcMaxClock,
         };

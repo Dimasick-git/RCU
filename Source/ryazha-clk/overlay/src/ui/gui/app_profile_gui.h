@@ -32,10 +32,10 @@ class AppProfileGui : public BaseMenuGui
 {
     protected:
         std::uint64_t applicationId;
-        RyazhaClkTitleProfileList* profileList;
-        void openFreqChoiceGui(tsl::elm::ListItem* listItem, RyazhaClkProfile profile, RyazhaClkModule module);
-        void addModuleListItem(RyazhaClkProfile profile, RyazhaClkModule module);
-        void addModuleListItemToggle(RyazhaClkProfile profile, RyazhaClkModule module);
+        RClkTitleProfileList* profileList;
+        void openFreqChoiceGui(tsl::elm::ListItem* listItem, RyazhaClkProfile profile, RClkModule module);
+        void addModuleListItem(RyazhaClkProfile profile, RClkModule module);
+        void addModuleListItemToggle(RyazhaClkProfile profile, RClkModule module);
         void openValueChoiceGui(
             tsl::elm::ListItem* listItem,
             std::uint32_t currentValue,
@@ -57,7 +57,7 @@ class AppProfileGui : public BaseMenuGui
         );
         void addModuleListItemValue(
             RyazhaClkProfile profile,
-            RyazhaClkModule module,
+            RClkModule module,
             const std::string& categoryName,
             std::uint32_t min,
             std::uint32_t max,
@@ -72,7 +72,7 @@ class AppProfileGui : public BaseMenuGui
         void addGovernorSection(RyazhaClkProfile profile);
         void addProfileUI(RyazhaClkProfile profile);
     public:
-        AppProfileGui(std::uint64_t applicationId, RyazhaClkTitleProfileList* profileList);
+        AppProfileGui(std::uint64_t applicationId, RClkTitleProfileList* profileList);
         ~AppProfileGui();
         void listUI() override;
         static void changeTo(std::uint64_t applicationId);

@@ -48,6 +48,7 @@ extern "C" {
 #include "rclk/apm.h"
 #include "rclk/config.h"
 #include "rclk/errors.h"
+#include "rclk/auto_ryazha.h"
 #include "rclk/result.hpp"
 
 #ifdef __cplusplus

@@ -102,7 +102,7 @@ namespace fileUtils {
         va_end(args);
     }
 
-    void WriteContextToCsv(const RyazhaClkContext* context) {
+    void WriteContextToCsv(const RClkContext* context) {
         std::scoped_lock lock{g_csv_mutex};
 
         FILE* file = fopen(FILE_CONTEXT_CSV_PATH, "a");
@@ -112,20 +112,20 @@ namespace fileUtils {
             if (!ftell(file)) {
                 fprintf(file, "timestamp,profile,app_tid");
 
-                for (unsigned int module = 0; module < RyazhaClkModule_EnumMax; module++) {
-                    fprintf(file, ",%s_hz", hocclkFormatModule((RyazhaClkModule)module, false));
+                for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
+                    fprintf(file, ",%s_hz", rclkFormatModule((RClkModule)module, false));
                 }
 
                 for (unsigned int sensor = 0; sensor < RyazhaClkThermalSensor_EnumMax; sensor++) {
-                    fprintf(file, ",%s_milliC", hocclkFormatThermalSensor((RyazhaClkThermalSensor)sensor, false));
+                    fprintf(file, ",%s_milliC", rclkFormatThermalSensor((RyazhaClkThermalSensor)sensor, false));
                 }
 
-                for (unsigned int module = 0; module < RyazhaClkModule_EnumMax; module++) {
-                    fprintf(file, ",%s_real_hz", hocclkFormatModule((RyazhaClkModule)module, false));
+                for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
+                    fprintf(file, ",%s_real_hz", rclkFormatModule((RClkModule)module, false));
                 }
 
                 for (unsigned int sensor = 0; sensor < RyazhaClkPowerSensor_EnumMax; sensor++) {
-                    fprintf(file, ",%s_mw", hocclkFormatPowerSensor((RyazhaClkPowerSensor)sensor, false));
+                    fprintf(file, ",%s_mw", rclkFormatPowerSensor((RyazhaClkPowerSensor)sensor, false));
                 }
 
                 fprintf(file, "\n");
@@ -134,9 +134,9 @@ namespace fileUtils {
             struct timespec now;
             clock_gettime(CLOCK_REALTIME, &now);
 
-            fprintf(file, "%ld%03ld,%s,%016lx", now.tv_sec, now.tv_nsec / 1000000UL, hocclkFormatProfile(context->profile, false), context->applicationId);
+            fprintf(file, "%ld%03ld,%s,%016lx", now.tv_sec, now.tv_nsec / 1000000UL, rclkFormatProfile(context->profile, false), context->applicationId);
 
-            for (unsigned int module = 0; module < RyazhaClkModule_EnumMax; module++) {
+            for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
                 fprintf(file, ",%d", context->freqs[module]);
             }
 
@@ -144,7 +144,7 @@ namespace fileUtils {
                 fprintf(file, ",%d", context->temps[sensor]);
             }
 
-            for (unsigned int module = 0; module < RyazhaClkModule_EnumMax; module++) {
+            for (unsigned int module = 0; module < RClkModule_EnumMax; module++) {
                 fprintf(file, ",%d", context->realFreqs[module]);
             }
 

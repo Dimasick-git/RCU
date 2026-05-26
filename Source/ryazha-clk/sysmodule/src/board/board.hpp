@@ -43,14 +43,14 @@ namespace board {
     extern u64 clkVirtAddr, dsiVirtAddr, apbVirtAddr, fuseVirtAddr;
     extern RyazhaClkSocType gSocType;
     extern u8 gDramID;
-    extern RyazhaClkConsoleType gConsoleType;
+    extern RClkConsoleType gConsoleType;
     extern FuseData fuseData;
     extern u8 speedoBracket;
     
     void Initialize();
     void Exit();
     RyazhaClkSocType GetSocType();
-    RyazhaClkConsoleType GetConsoleType();
+    RClkConsoleType GetConsoleType();
     u8 GetDramID();
     u8 GetGpuSpeedoBracket();
     bool IsDram8GB();

@@ -31,8 +31,8 @@ APP_TITLE	:=	Ryazha-CLK Overlay
 NO_ICON		:=	1
 
 
-# This location should reflect where you place the libultrahand directory (lib can vary between projects).
-include ${TOPDIR}/lib/libultrahand/ultrahand.mk
+# This location should reflect where you place the libryazhahand directory (lib can vary between projects).
+include ${TOPDIR}/lib/libryazhahand/ultrahand.mk
 
 
 #---------------------------------------------------------------------------------
