@@ -31,6 +31,7 @@
 #include "../config.h"
 #include "../board.h"
 #include "../ipc.h"
+#include "../auto_ryazha.h"
 
 bool rclkIpcRunning();
 Result rclkIpcInitialize(void);
@@ -50,6 +51,8 @@ Result rclkIpcSetConfigValues(RyazhaClkConfigValueList* configValues);
 Result rclkIpcGetFreqList(RyazhaClkModule module, u32* list, u32 maxCount, u32* outCount);
 Result rclkIpcSetKipData();
 Result rclkIpcGetKipData();
+Result rclkIpcGetLadderConfig(RClkLadderConfig* out_config);
+Result rclkIpcSetLadderConfig(RClkLadderConfig* config);
 
 static inline Result rclkIpcRemoveOverride(RyazhaClkModule module)
 {

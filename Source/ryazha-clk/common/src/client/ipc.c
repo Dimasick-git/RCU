@@ -167,3 +167,19 @@ Result rclkIpcGetKipData()
     u32 temp = 0;
     return serviceDispatchIn(&g_rclkSrv, RClkIpcCmd_GetKipData, temp);
 }
+
+Result rclkIpcGetLadderConfig(RClkLadderConfig* out_config)
+{
+    return serviceDispatch(&g_rclkSrv, RClkIpcCmd_GetLadderConfig,
+        .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out },
+        .buffers = {{out_config, sizeof(RClkLadderConfig)}},
+    );
+}
+
+Result rclkIpcSetLadderConfig(RClkLadderConfig* config)
+{
+    return serviceDispatch(&g_rclkSrv, RClkIpcCmd_SetLadderConfig,
+        .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_In },
+        .buffers = {{config, sizeof(RClkLadderConfig)}},
+    );
+}

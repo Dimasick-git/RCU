@@ -34,22 +34,24 @@
 #define RCLK_IPC_API_VERSION 2
 #define RCLK_IPC_SERVICE_NAME "rclk:clk"
 
-enum RyazhaClkIpcCmd
+enum RClkIpcCmd
 {
-    RyazhaClkIpcCmd_GetApiVersion = 0,
-    RyazhaClkIpcCmd_GetVersionString = 1,
-    RyazhaClkIpcCmd_GetCurrentContext = 2,
-    RyazhaClkIpcCmd_Exit = 3,
-    RyazhaClkIpcCmd_GetProfileCount = 4,
-    RyazhaClkIpcCmd_GetProfiles = 5,
-    RyazhaClkIpcCmd_SetProfiles = 6,
-    RyazhaClkIpcCmd_SetEnabled = 7,
-    RyazhaClkIpcCmd_SetOverride = 8,
-    RyazhaClkIpcCmd_GetConfigValues = 9,
-    RyazhaClkIpcCmd_SetConfigValues = 10,
-    RyazhaClkIpcCmd_GetFreqList = 11,
-    RyazhaClkIpcCmd_SetKipData = 12,
-    RyazhaClkIpcCmd_GetKipData = 13,
+    RClkIpcCmd_GetApiVersion = 0,
+    RClkIpcCmd_GetVersionString = 1,
+    RClkIpcCmd_GetCurrentContext = 2,
+    RClkIpcCmd_Exit = 3,
+    RClkIpcCmd_GetProfileCount = 4,
+    RClkIpcCmd_GetProfiles = 5,
+    RClkIpcCmd_SetProfiles = 6,
+    RClkIpcCmd_SetEnabled = 7,
+    RClkIpcCmd_SetOverride = 8,
+    RClkIpcCmd_GetConfigValues = 9,
+    RClkIpcCmd_SetConfigValues = 10,
+    RClkIpcCmd_GetFreqList = 11,
+    RClkIpcCmd_SetKipData = 12,
+    RClkIpcCmd_GetKipData = 13,
+    RClkIpcCmd_GetLadderConfig = 14,
+    RClkIpcCmd_SetLadderConfig = 15,
 };
 
 
