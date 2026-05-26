@@ -101,8 +101,8 @@ CONTENT_REPLACEMENTS: list[tuple[str, str]] = [
     # artifacts
     (r"\bhoc-clk\.nsp\b", "ryazha-clk.nsp"),
     (r"\bhoc-clk\.ovl\b", "ryazha-clk.ovl"),
-    (r"\bhoc-clk\.kip\b", "rcu.kip"),
-    (r"\bhoc\.kip\b",     "rcu.kip"),
+    (r"\bhoc-clk\.kip\b", "loader.kip"),
+    (r"\bhoc\.kip\b",     "loader.kip"),
     (r"\bhoc-clk\.nro\b", "ryazha-clk.nro"),
     (r"\bhoc-clk\.elf\b", "ryazha-clk.elf"),
 

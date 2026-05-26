@@ -31,21 +31,27 @@ namespace kip {
 
     bool kipAvailable = false;
 
-    // Auto-probe пути к KIP. Старые пакеты (Switchcraft, hoc-clk) ставили
-    // loader.kip / hoc.kip. RCU собирает rcu.kip. Если юзер обновился с
-    // legacy установки, на boot Atmosphere грузит loader.kip, а мы писали
-    // только в rcu.kip -- настройки "не применялись". Теперь пишем в тот
-    // файл, который реально лежит на SD (и существенно -- который Atmosphere
-    // загрузит при следующем boot).
+    // Auto-probe пути к KIP. Канонический файл -- loader.kip: это
+    // имя ожидает Hekate (kip1=atmosphere/kips/loader.kip), и таким
+    // же образом исторически ставили Switchcraft, hoc-clk, sys-clk-OC.
+    // RCU тоже теперь собирает loader.kip. На clean install ТОЛЬКО
+    // loader.kip существует и грузится бутлоадером -- если писать в
+    // rcu.kip, патчи лоадера не применяются после reboot (юзер видит
+    // "настройки в Кипе не применились").
+    //
+    // rcu.kip / hoc.kip оставлены как legacy fallback'и для тех, кто
+    // ставил старые сборки RCU или hoc-clk поверх -- мы продолжаем
+    // писать в файл, который их Hekate реально грузит.
     static const char* ProbeKipPath()
     {
         static const char* cached = nullptr;
         if (cached) return cached;
-        // Order matters: rcu.kip (наш канонический) первый, потом legacy.
+        // Order matters: loader.kip (canonical, что грузит Hekate) первый,
+        // затем legacy имена для совместимости со старыми установками.
         static constexpr const char* kCandidates[] = {
+            "sdmc:/atmosphere/kips/loader.kip",
             "sdmc:/atmosphere/kips/rcu.kip",
             "sdmc:/atmosphere/kips/hoc.kip",
-            "sdmc:/atmosphere/kips/loader.kip",
         };
         for (const char* p : kCandidates) {
             FILE* fp = fopen(p, "r");
@@ -56,7 +62,8 @@ namespace kip {
                 return cached;
             }
         }
-        // Ничего не нашли -- по умолчанию rcu.kip (для записи нового файла).
+        // Ничего не нашли -- defaultим на loader.kip (для записи нового
+        // файла, который реально подхватит бутлоадер).
         cached = kCandidates[0];
         fileUtils::LogLine("[kip] No KIP found, defaulting to: %s", cached);
         return cached;
