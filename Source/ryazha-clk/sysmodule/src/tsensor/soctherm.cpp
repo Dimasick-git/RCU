@@ -21,7 +21,7 @@
  */
 
 #include <switch.h>
-#include <rclk.h>
+#include <hocclk.h>
 #include "../board/board.hpp"
 #include "../file/file_utils.hpp"
 #include "../mapping/mem_map.hpp"
@@ -483,7 +483,7 @@ namespace tsensor {
         temps.gpu  = TranslateTemp(ReadReg(socthermVa, SENSOR_TEMP1) & SENSOR_TEMP1_GPU_TEMP_MASK);
         temps.pllx = TranslateTemp(ReadReg(socthermVa, SENSOR_TEMP2) & SENSOR_TEMP2_PLLX_TEMP_MASK);
 
-        if (board::GetSocType() == RyazhaClkSocType_Erista) {
+        if (board::GetSocType() == HocClkSocType_Erista) {
             temps.mem = TranslateTemp(ReadReg(socthermVa, SENSOR_TEMP2) >> 16);
         } else {
             temps.mem = -1;
@@ -491,7 +491,7 @@ namespace tsensor {
     }
 
     void InitializeSoctherm() {
-        isMariko = board::GetSocType() == RyazhaClkSocType_Mariko;
+        isMariko = board::GetSocType() == HocClkSocType_Mariko;
 
         constexpr u64 SocthermPa = 0x700E2000, FusePa = 0x7000F000, CarPa = 0x60006000;
         R_UNLESS(MapAddress(socthermVa, SocthermPa, "soctherm"));

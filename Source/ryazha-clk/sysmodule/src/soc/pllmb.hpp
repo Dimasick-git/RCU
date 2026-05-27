@@ -20,7 +20,7 @@
 #pragma once
 #include <cstdint>
 #include <switch.h>
-#include <rclk.h>
+#include <hocclk.h>
 #include "../board/board.hpp"
 #include <registers.h>
 namespace pllmb {

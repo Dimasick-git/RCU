@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include "ult_ext.h"
 #include "value_choice_gui.h"
 #include "../format.h"
 #include "fatal_gui.h"

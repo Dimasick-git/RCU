@@ -27,7 +27,7 @@
 #pragma once
 
 #include <switch.h>
-#include <rclk.h>
+#include <hocclk.h>
 #include <pwm.h>
 
 namespace board {

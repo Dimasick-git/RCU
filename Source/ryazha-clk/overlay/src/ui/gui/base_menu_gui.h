@@ -36,9 +36,9 @@ class BaseMenuGui : public BaseGui
 
     public:
         // u8 dockedHighestAllowedRefreshRate = 60;
-        RClkContext* context;
+        HocClkContext* context;
         std::uint64_t lastContextUpdate;
-        RClkConfigValueList configList;
+        HocClkConfigValueList configList;
         bool g_hardwareModelCached = false;
         bool g_isMariko = false;
         bool g_isAula = false;
@@ -84,8 +84,9 @@ class BaseMenuGui : public BaseGui
         tsl::elm::Element* baseUI() override;
         void refresh() override;
         virtual void listUI() = 0;
+        u16 headerHeight() const override { return HOC_BOX_BOTTOM + 9; }
 
     private:
         char displayStrings[48][32];  // Pre-formatted display strings
-        tsl::Color tempColors[RyazhaClkThermalSensor_EnumMax];  // Pre-computed temperature colors
+        tsl::Color tempColors[HocClkThermalSensor_EnumMax];  // Pre-computed temperature colors
 };

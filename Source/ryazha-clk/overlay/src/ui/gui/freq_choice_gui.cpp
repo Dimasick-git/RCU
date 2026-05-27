@@ -25,6 +25,7 @@
  */
 
 
+#include "ult_ext.h"
 #include "freq_choice_gui.h"
 
 #include "../format.h"
@@ -33,7 +34,7 @@
 FreqChoiceGui::FreqChoiceGui(std::uint32_t selectedHz,
                              std::uint32_t* hzList,
                              std::uint32_t hzCount,
-                             RClkModule module,
+                             HocClkModule module,
                              FreqChoiceListener listener,
                              bool checkMax,
                              std::map<uint32_t, std::string> labels)
@@ -45,7 +46,7 @@ FreqChoiceGui::FreqChoiceGui(std::uint32_t selectedHz,
     this->listener = listener;
     this->checkMax = checkMax;
     this->labels = labels;
-    this->configList = new RClkConfigValueList {};
+    this->configList = new HocClkConfigValueList {};
 }
 
 FreqChoiceGui::~FreqChoiceGui()
@@ -56,8 +57,8 @@ FreqChoiceGui::~FreqChoiceGui()
 tsl::elm::ListItem* FreqChoiceGui::createFreqListItem(std::uint32_t hz, bool selected, int safety)
 {
     std::string text;
-    if(module == RClkModule_MEM)
-        text = formatListFreqHzMem(hz, (RamDisplayUnit)this->configList->values[RClkConfigValue_RamDisplayUnit]);
+    if(module == HocClkModule_MEM)
+        text = formatListFreqHzMem(hz, (RamDisplayUnit)this->configList->values[HocClkConfigValue_RamDisplayUnit]);
     else
         text = formatListFreqHz(hz);
 
@@ -110,10 +111,10 @@ tsl::elm::ListItem* FreqChoiceGui::createFreqListItem(std::uint32_t hz, bool sel
 
 void FreqChoiceGui::listUI()
 {
-    rclkIpcGetConfigValues(this->configList);
+    hocclkIpcGetConfigValues(this->configList);
 
     // Header based on CPU/GPU/MEM module
-    std::string moduleName = rclkFormatModule(this->module, false);
+    std::string moduleName = hocclkFormatModule(this->module, false);
     this->listElement->addItem(new tsl::elm::CategoryHeader(moduleName));
 
     // Default option
@@ -127,27 +128,27 @@ void FreqChoiceGui::listUI()
 
         // if (checkMax && IsMariko()) {
         //     if (moduleName == "cpu" &&
-        //         this->configList->values[RClkConfigValue_MarikoMaxCpuClock] < mhz)
+        //         this->configList->values[HocClkConfigValue_MarikoMaxCpuClock] < mhz)
         //         continue;
 
         //     // if (moduleName == "gpu" &&
-        //     //     this->configList->values[RClkConfigValue_MarikoMaxGpuClock] < mhz)
+        //     //     this->configList->values[HocClkConfigValue_MarikoMaxGpuClock] < mhz)
         //     //     continue;
 
         //     // if (moduleName == "mem" &&
-        //     //     this->configList->values[RClkConfigValue_MarikoMaxMemClock] < mhz)
+        //     //     this->configList->values[HocClkConfigValue_MarikoMaxMemClock] < mhz)
         //     //     continue;
 
         if (checkMax && IsErista())
-            if (moduleName == "cpu" && this->configList->values[RClkConfigValue_EristaMaxCpuClock] < mhz)
+            if (moduleName == "cpu" && this->configList->values[HocClkConfigValue_EristaMaxCpuClock] < mhz)
                 continue;
 
         //     // if (moduleName == "gpu" &&
-        //     //     this->configList->values[RClkConfigValue_EristaMaxGpuClock] < mhz)
+        //     //     this->configList->values[HocClkConfigValue_EristaMaxGpuClock] < mhz)
         //     //     continue;
 
         //     // if (moduleName == "mem" &&
-        //     //     this->configList->values[RClkConfigValue_EristaMaxMemClock] < mhz)
+        //     //     this->configList->values[HocClkConfigValue_EristaMaxMemClock] < mhz)
         //     //     continue;
         // }
 

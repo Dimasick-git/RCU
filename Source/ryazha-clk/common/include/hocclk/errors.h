@@ -27,48 +27,13 @@
 
 #pragma once
 
-#include <stdint.h>
-#include "board.h"
-#include "clock_manager.h"
+#define HOCCLK_ERROR_MODULE 388
+#define HOCCLK_ERROR(desc) ((HOCCLK_ERROR_MODULE & 0x1FF) | (HocClkError_##desc & 0x1FFF)<<9)
 
-#define RCLK_IPC_API_VERSION 2
-#define RCLK_IPC_SERVICE_NAME "rclk:clk"
-
-enum RClkIpcCmd
+typedef enum
 {
-    RClkIpcCmd_GetApiVersion = 0,
-    RClkIpcCmd_GetVersionString = 1,
-    RClkIpcCmd_GetCurrentContext = 2,
-    RClkIpcCmd_Exit = 3,
-    RClkIpcCmd_GetProfileCount = 4,
-    RClkIpcCmd_GetProfiles = 5,
-    RClkIpcCmd_SetProfiles = 6,
-    RClkIpcCmd_SetEnabled = 7,
-    RClkIpcCmd_SetOverride = 8,
-    RClkIpcCmd_GetConfigValues = 9,
-    RClkIpcCmd_SetConfigValues = 10,
-    RClkIpcCmd_GetFreqList = 11,
-    RClkIpcCmd_SetKipData = 12,
-    RClkIpcCmd_GetKipData = 13,
-    RClkIpcCmd_GetLadderConfig = 14,
-    RClkIpcCmd_SetLadderConfig = 15,
-};
-
-
-typedef struct
-{
-    uint64_t tid;
-    RClkTitleProfileList profiles;
-} RClkIpc_SetProfiles_Args;
-
-typedef struct
-{
-    RClkModule module;
-    uint32_t hz;
-} RClkIpc_SetOverride_Args;
-
-typedef struct
-{
-    RClkModule module;
-    uint32_t maxCount;
-} RClkIpc_GetFreqList_Args;
+    HocClkError_Generic = 0,
+    HocClkError_ConfigNotLoaded = 1,
+    HocClkError_ConfigSaveFailed = 2,
+    // HocClkError_SocThermFail = 3,
+} HocClkError;

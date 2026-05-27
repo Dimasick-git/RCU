@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_, Horizon OC, and Ryazha-CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -41,7 +41,7 @@ class AppOverlay : public tsl::Overlay
         //}
 
         virtual void exitServices() override {
-            rclkIpcExit();
+            hocclkIpcExit();
         }
 
         virtual std::unique_ptr<tsl::Gui> loadInitialGui() override
@@ -51,10 +51,10 @@ class AppOverlay : public tsl::Overlay
 
             tsl::hlp::ScopeGuard smGuard([] { smExit(); });
 
-            if(!rclkIpcRunning())
+            if(!hocclkIpcRunning())
             {
                 return initially<FatalGui>(
-                    "ryazha-clk is not running.\n\n"
+                    "hoc-clk is not running.\n\n"
                     "\n"
                     "Please make sure it is correctly\n\n"
                     "installed and enabled.",
@@ -62,10 +62,10 @@ class AppOverlay : public tsl::Overlay
                 );
             }
 
-            if(R_FAILED(rclkIpcInitialize()) || R_FAILED(rclkIpcGetAPIVersion(&apiVersion)))
+            if(R_FAILED(hocclkIpcInitialize()) || R_FAILED(hocclkIpcGetAPIVersion(&apiVersion)))
             {
                 return initially<FatalGui>(
-                    "Could not connect to ryazha-clk.\n\n"
+                    "Could not connect to hoc-clk.\n\n"
                     "\n"
                     "Please make sure it is correctly\n\n"
                     "installed and enabled.",
@@ -73,11 +73,11 @@ class AppOverlay : public tsl::Overlay
                 );
             }
 
-            if(RCLK_IPC_API_VERSION != apiVersion)
+            if(HOCCLK_IPC_API_VERSION != apiVersion)
             {
                 return initially<FatalGui>(
                     "Overlay not compatible with\n\n"
-                    "the running ryazha-clk version.\n\n"
+                    "the running hoc-clk version.\n\n"
                     "\n"
                     "Please make sure everything is\n\n"
                     "installed and up to date.",

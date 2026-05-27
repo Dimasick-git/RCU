@@ -24,7 +24,7 @@
  * --------------------------------------------------------------------------
  */
 
-#include <rclk.h>
+#include <hocclk.h>
 #include <switch.h>
 #include "../hos/apm_ext.h"
 #include <i2c.h>
@@ -45,7 +45,7 @@
 
 namespace board {
 
-    s32 GetTemperatureMilli(RyazhaClkThermalSensor sensor) {
+    s32 GetTemperatureMilli(HocClkThermalSensor sensor) {
         s32 millis = 0;
         BatteryChargeInfo info;
 
@@ -53,15 +53,15 @@ namespace board {
         tsensor::ReadTSensors(temps);
 
         switch(sensor) {
-            case RyazhaClkThermalSensor_SOC: {
+            case HocClkThermalSensor_SOC: {
                 millis = tmp451TempSoc();
                 break;
             }
-            case RyazhaClkThermalSensor_PCB: {
+            case HocClkThermalSensor_PCB: {
                 millis = tmp451TempPcb();
                 break;
             }
-            case RyazhaClkThermalSensor_Skin: {
+            case HocClkThermalSensor_Skin: {
                 if (HOSSVC_HAS_TC) {
                     Result rc;
                     rc = tcGetSkinTemperatureMilliC(&millis);
@@ -69,59 +69,59 @@ namespace board {
                 }
                 break;
             }
-            case RyazhaClkThermalSensor_Battery: {
+            case HocClkThermalSensor_Battery: {
                 batteryInfoGetChargeInfo(&info);
                 millis = batteryInfoGetTemperatureMiliCelsius(&info);
                 break;
             }
-            case RyazhaClkThermalSensor_PMIC: {
+            case HocClkThermalSensor_PMIC: {
                 millis = 50000;
                 break;
             }
-            case RyazhaClkThermalSensor_CPU: {
+            case HocClkThermalSensor_CPU: {
                 millis = temps.cpu;
                 break;
             }
-            case RyazhaClkThermalSensor_GPU: {
+            case HocClkThermalSensor_GPU: {
                 millis = temps.gpu;
                 break;
             }
-            case RyazhaClkThermalSensor_MEM: {
-                if (board::GetSocType() == RyazhaClkSocType_Mariko && tsensor::IsInitialized() && tsensor::ReadAotag() > 0) {
+            case HocClkThermalSensor_MEM: {
+                if (board::GetSocType() == HocClkSocType_Mariko && tsensor::IsInitialized() && tsensor::ReadAotag() > 0) {
                     millis = (temps.pllx * 0.10f) + (tsensor::ReadAotag() * 0.90f);
                 } else {
-                    millis = board::GetSocType() == RyazhaClkSocType_Mariko ? temps.pllx : temps.mem;
+                    millis = board::GetSocType() == HocClkSocType_Mariko ? temps.pllx : temps.mem;
                 }
                 break;
             }
-            case RyazhaClkThermalSensor_PLLX: {
+            case HocClkThermalSensor_PLLX: {
                 millis = temps.pllx;
                 break;
             }
-            case RyazhaClkThermalSensor_BQ24193: {
+            case HocClkThermalSensor_BQ24193: {
                 millis = bq24193::getBQTemp();
                 break;
             }
-            case RyazhaClkThermalSensor_AO: {
+            case HocClkThermalSensor_AO: {
                 millis = tsensor::ReadAotag();
                 break;
             }
             default: {
-                ASSERT_ENUM_VALID(RyazhaClkThermalSensor, sensor);
+                ASSERT_ENUM_VALID(HocClkThermalSensor, sensor);
             }
         }
 
         return std::max(0, millis);
     }
 
-    s32 GetPowerMw(RyazhaClkPowerSensor sensor) {
+    s32 GetPowerMw(HocClkPowerSensor sensor) {
         switch (sensor) {
-            case RyazhaClkPowerSensor_Now:
+            case HocClkPowerSensor_Now:
                 return max17050PowerNow();
-            case RyazhaClkPowerSensor_Avg:
+            case HocClkPowerSensor_Avg:
                 return max17050PowerAvg();
             default:
-                ASSERT_ENUM_VALID(RyazhaClkPowerSensor, sensor);
+                ASSERT_ENUM_VALID(HocClkPowerSensor, sensor);
         }
 
         return 0;

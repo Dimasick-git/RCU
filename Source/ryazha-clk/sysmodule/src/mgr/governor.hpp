@@ -16,7 +16,7 @@
  */
 
 #include <switch.h>
-#include <rclk.h>
+#include <hocclk.h>
 #include "../board/board.hpp"
 #include "clock_manager.hpp"
 #include <cstring>

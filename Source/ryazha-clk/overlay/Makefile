@@ -22,7 +22,7 @@ BUILD		:=	build
 OUTDIR		:=	out
 RESOURCES	:=	res
 SOURCES		:=	src src/ui/gui src/ui/elements ../common/src ../common/src/client
-DATA		:=	data
+DATA		:=	data ../assets
 INCLUDES	:=	../common/include
 EXEFS_SRC	:=	exefs_src
 IS_MINIMAL	:=	0
@@ -153,8 +153,8 @@ all: $(OUTPUT).ovl
 $(OUTPUT).ovl: $(OUTPUT).elf $(OUTPUT).nacp
 	@elf2nro $< $@ --nacp=$(OUTPUT).nacp
 	@echo "built ... $(notdir $(OUTPUT).ovl)"
-	@printf 'RYZH' >> $@
-	@printf "Ryazhahand signature has been added.\n"
+	@printf 'ULTR' >> $@
+	@printf "Ultrahand signature has been added.\n"
 
 $(OUTPUT).elf: $(OFILES)
 
@@ -162,6 +162,11 @@ $(OUTPUT).elf: $(OFILES)
 # you need a rule like this for each extension you use as binary data
 #---------------------------------------------------------------------------------
 %.bin.o	:	%.bin
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	@$(bin2o)
+
+%.rgba.o	:	%.rgba
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	@$(bin2o)

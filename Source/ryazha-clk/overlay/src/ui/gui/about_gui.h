@@ -12,31 +12,30 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
  */
- 
-/* --------------------------------------------------------------------------
- * "THE BEER-WARE LICENSE" (Revision 42):
- * <p-sam@d3vs.net>, <natinusala@gmail.com>, <m4x@m4xw.net>
- * wrote this file. As long as you retain this notice you can do whatever you
- * want with this stuff. If you meet any of us some day, and you think this
- * stuff is worth it, you can buy us a beer in return.  - The sys-clk authors
- * --------------------------------------------------------------------------
- */
-
 
 #pragma once
+#include "../../ipc.h"
+#include "base_menu_gui.h"
+#include "freq_choice_gui.h"
+#include "value_choice_gui.h"
+#include "fatal_gui.h"
+#include <map>
+#include <vector>
 
-#if defined(__cplusplus)
-#include "cpp_util.hpp"
-
-extern "C"
+class AboutGui : public BaseMenuGui
 {
-#endif
+protected:
+    char strings[32][32];
 
-#include <hocclk.h>
-#include <hocclk/client/ipc.h>
+public:
+    AboutGui();
+    ~AboutGui();
 
-#if defined(__cplusplus)
-}
-#endif
+    void listUI() override;
+    void update() override;
+    void refresh() override;
+
+private:
+    std::string formatRamModule();
+};

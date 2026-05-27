@@ -34,6 +34,8 @@ class MainGui : public BaseMenuGui
     public:
         MainGui() {}
         ~MainGui() {}
+        tsl::elm::Element* baseUI() override;
         void listUI() override;
         void refresh() override;
+        u16 headerHeight() const override { return HOC_HEADER_HEIGHT - 25; }
 };

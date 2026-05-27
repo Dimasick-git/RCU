@@ -27,7 +27,7 @@
 #pragma once
 
 #include <switch.h>
-#include <rclk.h>
+#include <hocclk.h>
 #include "board_fuse.hpp"
 #include "board_load.hpp"
 #include "board_name.hpp"
@@ -41,16 +41,16 @@
 
 namespace board {
     extern u64 clkVirtAddr, dsiVirtAddr, apbVirtAddr, fuseVirtAddr;
-    extern RyazhaClkSocType gSocType;
+    extern HocClkSocType gSocType;
     extern u8 gDramID;
-    extern RClkConsoleType gConsoleType;
+    extern HocClkConsoleType gConsoleType;
     extern FuseData fuseData;
     extern u8 speedoBracket;
     
     void Initialize();
     void Exit();
-    RyazhaClkSocType GetSocType();
-    RClkConsoleType GetConsoleType();
+    HocClkSocType GetSocType();
+    HocClkConsoleType GetConsoleType();
     u8 GetDramID();
     u8 GetGpuSpeedoBracket();
     bool IsDram8GB();

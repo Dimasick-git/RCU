@@ -19,27 +19,48 @@
 #include <fuse.h>
 #include "board_fuse.hpp"
 #include <cstring>
+#include "board.hpp"
 
 namespace board {
 
     void SetGpuBracket(u16 speedo, u8 &gpuBracket) {
-        if (speedo <= 1624) {
-            gpuBracket = 0;
-            return;
-        }
+        if(GetSocType() == HocClkSocType_Mariko) {
+            if (speedo <= 1624) {
+                gpuBracket = 0;
+                return;
+            }
 
-        if (speedo <= 1689) {
-            gpuBracket = 1;
-            return;
-        }
+            if (speedo <= 1689) {
+                gpuBracket = 1;
+                return;
+            }
 
-        if (speedo <= 1753) {
-            gpuBracket = 2;
-            return;
-        }
+            if (speedo <= 1753) {
+                gpuBracket = 2;
+                return;
+            }
 
-        /* >= 1754 */
-        gpuBracket = 3;
+            /* >= 1754 */
+            gpuBracket = 3;
+        } else {
+            switch(speedo) {
+                case 1850 ... 1925:
+                    gpuBracket = 0;
+                    break;
+                case 1926 ... 2025:
+                    gpuBracket = 1;
+                    break;
+                case 2026 ... 2100:
+                    gpuBracket = 2;
+                    break;
+                case 2101 ... 2200:
+                    gpuBracket = 3;
+                    break;
+                default:
+                    gpuBracket = 0;
+                    break;
+            }
+        }
     }
 
     void ReadFuses(FuseData &speedo, u64 fuseVa) {

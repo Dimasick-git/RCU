@@ -31,7 +31,7 @@
 #include <tmp451.h>
 #include <ipc_server.h>
 #include <lockable_mutex.h>
-#include <rclk.h>
+#include <hocclk.h>
 #include <switch.h>
 #include <pwm.h>
 #include <registers.h>
@@ -53,9 +53,9 @@ namespace board {
 
     u64 clkVirtAddr, dsiVirtAddr, apbVirtAddr, fuseVirtAddr;
 
-    RyazhaClkSocType gSocType;
+    HocClkSocType gSocType;
     u8 gDramID;
-    RClkConsoleType gConsoleType = RClkConsoleType_Icosa;
+    HocClkConsoleType gConsoleType = HocClkConsoleType_Icosa;
     FuseData fuseData;
     u8 speedoBracket;
     PwmChannelSession iCon;
@@ -75,33 +75,32 @@ namespace board {
 
         u32 hidrev = *(u32*)(apbVirtAddr + APB_MISC_GP_HIDREV);
         if (((hidrev >> 4) & 0xF) >= GP_HIDREV_MAJOR_T210B01) {
-            gSocType = RyazhaClkSocType_Mariko;
-            CacheGpuVoltTable();
+            gSocType = HocClkSocType_Mariko;
         } else {
-            gSocType = RyazhaClkSocType_Erista;
+            gSocType = HocClkSocType_Erista;
         }
 
         u32 odm4 = *(u32*)(fuseVirtAddr + FUSE_OFFSET + FUSE_RESERVED_ODMX(4));
 
-        if (gSocType == RyazhaClkSocType_Mariko) {
+        if (gSocType == HocClkSocType_Mariko) {
             switch ((odm4 & 0xF0000) >> 16) {
                 case 2:
-                    gConsoleType = RClkConsoleType_Hoag;
+                    gConsoleType = HocClkConsoleType_Hoag;
                     break;
                 case 4:
-                    gConsoleType = RClkConsoleType_Aula;
+                    gConsoleType = HocClkConsoleType_Aula;
                     break;
                 case 1:
                 default:
-                    gConsoleType = RClkConsoleType_Iowa;
+                    gConsoleType = HocClkConsoleType_Iowa;
             }
         } else {
-            gConsoleType = RClkConsoleType_Icosa;
+            gConsoleType = HocClkConsoleType_Icosa;
         }
 
         gDramID = (odm4 & 0xF8) >> 3;
         // Get extended dram id info.
-        if (gSocType == RyazhaClkSocType_Mariko) {
+        if (gSocType == HocClkSocType_Mariko) {
             gDramID |= (odm4 & 0x7000) >> 7;
         }
     }
@@ -180,7 +179,7 @@ namespace board {
         svcCallSecureMonitor(&args);
 
         if (args.X[1] != PMC_BASE) { // if param 1 is identical read failed
-            tsensor::InitializeAotag(GetSocType() == RyazhaClkSocType_Mariko);
+            tsensor::InitializeAotag(GetSocType() == HocClkSocType_Mariko);
         }
 
         Result pwmCheck = 1;
@@ -190,10 +189,11 @@ namespace board {
 
         StartMiscThread(pwmCheck, &iCon);
 
-        display::DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = (GetConsoleType() == RClkConsoleType_Hoag), .isRetroSUPER = integrations::GetRETROSuperStatus()};
+        display::DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = (GetConsoleType() == HocClkConsoleType_Hoag), .isRetroSUPER = integrations::GetRETROSuperStatus()};
         display::Initialize(&cfg);
 
         CacheDfllData();
+        CacheGpuVoltTable();
     }
 
     void Exit() {
@@ -225,11 +225,11 @@ namespace board {
         nvExit();
     }
 
-    RyazhaClkSocType GetSocType() {
+    HocClkSocType GetSocType() {
         return gSocType;
     }
 
-    RClkConsoleType GetConsoleType() {
+    HocClkConsoleType GetConsoleType() {
         return gConsoleType;
     }
 
@@ -253,7 +253,7 @@ namespace board {
 
     /* TODO: Put this into a different file. */
     void SetDisplayRefreshDockedState(bool docked) {
-        if (GetConsoleType() != RClkConsoleType_Hoag) {
+        if (GetConsoleType() != HocClkConsoleType_Hoag) {
             display::SetDockedState(docked);
         }
     }

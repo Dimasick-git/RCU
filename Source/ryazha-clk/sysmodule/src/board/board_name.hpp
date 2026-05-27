@@ -26,13 +26,13 @@
 
 #pragma once
 #include <switch.h>
-#include <rclk.h>
+#include <hocclk.h>
 
 namespace board {
 
-    const char *GetModuleName(RClkModule module, bool pretty);
-    const char *GetProfileName(RyazhaClkProfile profile, bool pretty);
-    const char *GetThermalSensorName(RyazhaClkThermalSensor sensor, bool pretty);
-    const char *GetPowerSensorName(RyazhaClkPowerSensor sensor, bool pretty);
+    const char *GetModuleName(HocClkModule module, bool pretty);
+    const char *GetProfileName(HocClkProfile profile, bool pretty);
+    const char *GetThermalSensorName(HocClkThermalSensor sensor, bool pretty);
+    const char *GetPowerSensorName(HocClkPowerSensor sensor, bool pretty);
 
 }

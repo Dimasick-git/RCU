@@ -30,7 +30,7 @@
 #include <cstdio>
 #include <string>
 #include <cstdint>
-#include <rclk/board.h>
+#include <hocclk/board.h>
 
 #define FREQ_DEFAULT_TEXT "Do not override"
 

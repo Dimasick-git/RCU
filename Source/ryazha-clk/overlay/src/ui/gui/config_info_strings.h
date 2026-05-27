@@ -20,4 +20,4 @@
 #include <vector>
 #include <string>
 
-std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, bool isHoag);
+std::vector<std::string> ConfigInfoStrings(HocClkConfigValue val, bool isMariko, bool isHoag);

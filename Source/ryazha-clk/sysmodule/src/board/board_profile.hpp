@@ -25,10 +25,10 @@
  */
 
 #pragma once
-#include <rclk.h>
+#include <hocclk.h>
 
 namespace board {
 
-    RyazhaClkProfile GetProfile();
+    HocClkProfile GetProfile();
 
 }

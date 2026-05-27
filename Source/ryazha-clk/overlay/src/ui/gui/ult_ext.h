@@ -17,6 +17,28 @@
 
 #pragma once
 #include <tesla.hpp>
+#include "../elements/base_frame.h"
+
+class TopAnchoredList : public tsl::elm::List {
+public:
+    TopAnchoredList() { m_hasSetInitialFocusHack = true; }
+};
+class BoxClippedList : public tsl::elm::List {
+public:
+    void draw(tsl::gfx::Renderer* renderer) override {
+        renderer->enableScissoring(0, HOC_BOX_BOTTOM, tsl::cfg::FramebufferWidth, tsl::cfg::FramebufferHeight - HOC_BOX_BOTTOM);
+        tsl::elm::List::draw(renderer);
+        renderer->disableScissoring();
+    }
+};
+
+class CompactCategoryHeader : public tsl::elm::CategoryHeader {
+public:
+    CompactCategoryHeader(const std::string& text) : tsl::elm::CategoryHeader(text) {}
+    void layout(u16 parentX, u16 parentY, u16 parentWidth, u16 parentHeight) override {
+        this->setBoundaries(this->getX(), this->getY(), this->getWidth(), 33);
+    }
+};
 
 class ImageElement : public tsl::elm::ListItem {
 private:

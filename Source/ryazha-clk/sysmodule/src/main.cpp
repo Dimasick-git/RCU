@@ -166,7 +166,7 @@ int main(int argc, char** argv)
     processManagement::Exit();
     board::Exit();
     config::Exit();
-    fileUtils::LogLine("Exiting ryazha-clk");
+    fileUtils::LogLine("Exiting hoc-clk");
     svcSleepThread(1000000ULL);
     fileUtils::Exit();
 

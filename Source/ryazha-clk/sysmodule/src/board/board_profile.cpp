@@ -25,7 +25,7 @@
  */
 
 #include <switch.h>
-#include <rclk.h>
+#include <hocclk.h>
 #include "../hos/apm_ext.h"
 #include <i2c.h>
 #include <t210.h>
@@ -37,13 +37,13 @@
 
 namespace board {
 
-    RyazhaClkProfile GetProfile() {
+    HocClkProfile GetProfile() {
         u32 mode = 0;
         Result rc = apmExtGetPerformanceMode(&mode);
         ASSERT_RESULT_OK(rc, "apmExtGetPerformanceMode");
 
         if (mode) {
-            return RyazhaClkProfile_Docked;
+            return HocClkProfile_Docked;
         }
 
         PsmChargerType chargerType;
@@ -52,12 +52,12 @@ namespace board {
         ASSERT_RESULT_OK(rc, "psmGetChargerType");
 
         if (chargerType == PsmChargerType_EnoughPower) {
-            return RyazhaClkProfile_HandheldChargingOfficial;
+            return HocClkProfile_HandheldChargingOfficial;
         } else if (chargerType == PsmChargerType_LowPower) {
-            return RyazhaClkProfile_HandheldChargingUSB;
+            return HocClkProfile_HandheldChargingUSB;
         }
 
-        return RyazhaClkProfile_Handheld;
+        return HocClkProfile_Handheld;
     }
 
 }

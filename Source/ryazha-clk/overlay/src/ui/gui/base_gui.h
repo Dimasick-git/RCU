@@ -28,6 +28,7 @@
 #pragma once
 
 #include <tesla.hpp>
+#include "../elements/base_frame.h"
 #include <fstream>
 #include <vector>
 #include <string>
@@ -46,6 +47,7 @@ class BaseGui : public tsl::Gui
         tsl::elm::Element* createUI() override;
         virtual tsl::elm::Element* baseUI() = 0;
         virtual void refresh() {}
+        virtual u16 headerHeight() const { return HOC_HEADER_HEIGHT; }
     private:
 };
 

@@ -27,34 +27,46 @@
 
 #pragma once
 
-#include "types.h"
-#include "../config.h"
-#include "../board.h"
-#include "../ipc.h"
-#include "../auto_ryazha.h"
+#include <stdint.h>
+#include "board.h"
+#include "clock_manager.h"
 
-bool rclkIpcRunning();
-Result rclkIpcInitialize(void);
-void rclkIpcExit(void);
+#define HOCCLK_IPC_API_VERSION 2
+#define HOCCLK_IPC_SERVICE_NAME "hoc:clk"
 
-Result rclkIpcGetAPIVersion(u32* out_ver);
-Result rclkIpcGetVersionString(char* out, size_t len);
-Result rclkIpcGetCurrentContext(RClkContext* out_context);
-Result rclkIpcGetProfileCount(u64 tid, u8* out_count);
-Result rclkIpcSetEnabled(bool enabled);
-Result rclkIpcExitCmd();
-Result rclkIpcSetOverride(RClkModule module, u32 hz);
-Result rclkIpcGetProfiles(u64 tid, RClkTitleProfileList* out_profiles);
-Result rclkIpcSetProfiles(u64 tid, RClkTitleProfileList* profiles);
-Result rclkIpcGetConfigValues(RClkConfigValueList* out_configValues);
-Result rclkIpcSetConfigValues(RClkConfigValueList* configValues);
-Result rclkIpcGetFreqList(RClkModule module, u32* list, u32 maxCount, u32* outCount);
-Result rclkIpcSetKipData();
-Result rclkIpcGetKipData();
-Result rclkIpcGetLadderConfig(RClkLadderConfig* out_config);
-Result rclkIpcSetLadderConfig(RClkLadderConfig* config);
-
-static inline Result rclkIpcRemoveOverride(RClkModule module)
+enum HocClkIpcCmd
 {
-    return rclkIpcSetOverride(module, 0);
-}
+    HocClkIpcCmd_GetApiVersion = 0,
+    HocClkIpcCmd_GetVersionString = 1,
+    HocClkIpcCmd_GetCurrentContext = 2,
+    HocClkIpcCmd_Exit = 3,
+    HocClkIpcCmd_GetProfileCount = 4,
+    HocClkIpcCmd_GetProfiles = 5,
+    HocClkIpcCmd_SetProfiles = 6,
+    HocClkIpcCmd_SetEnabled = 7,
+    HocClkIpcCmd_SetOverride = 8,
+    HocClkIpcCmd_GetConfigValues = 9,
+    HocClkIpcCmd_SetConfigValues = 10,
+    HocClkIpcCmd_GetFreqList = 11,
+    HocClkIpcCmd_SetKipData = 12,
+    HocClkIpcCmd_GetKipData = 13,
+};
+
+
+typedef struct
+{
+    uint64_t tid;
+    HocClkTitleProfileList profiles;
+} HocClkIpc_SetProfiles_Args;
+
+typedef struct
+{
+    HocClkModule module;
+    uint32_t hz;
+} HocClkIpc_SetOverride_Args;
+
+typedef struct
+{
+    HocClkModule module;
+    uint32_t maxCount;
+} HocClkIpc_GetFreqList_Args;

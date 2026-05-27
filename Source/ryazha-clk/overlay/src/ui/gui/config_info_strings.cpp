@@ -18,18 +18,18 @@
 
 #include "config_info_strings.h"
 
-std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, bool isHoag)
+std::vector<std::string> ConfigInfoStrings(HocClkConfigValue val, bool isMariko, bool isHoag)
 {
     switch (val)
     {
-        case RClkConfigValue_PollingIntervalMs:
+        case HocClkConfigValue_PollingIntervalMs:
             return {
                 "The interval (in milliseconds) where clocks are applied, temperatures and voltages are polled and logs are written (if enabled).",
                 "Higher values may cause more delay between changing a setting and it taking effect, and lower values may increase sysmodule memory usage",
                 "Default: 300ms"
             };
 
-        case RClkConfigValue_RamDisplayUnit:
+        case HocClkConfigValue_RamDisplayUnit:
             return {
                 "The unit used when displaying RAM frequency values.",
                 "Options:",
@@ -39,7 +39,7 @@ std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, b
                 "Default: MHz"
             };
 
-        case RClkConfigValue_RAMVoltDisplayMode:
+        case HocClkConfigValue_RAMVoltDisplayMode:
             return {
                 "The method used to display RAM voltage values.",
                 "Options:",
@@ -48,25 +48,25 @@ std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, b
                 "Default: VDD2"
             };
 
-        case RClkConfigValue_EnableExperimentalSettings:
+        case HocClkConfigValue_EnableExperimentalSettings:
             return {
                 "When enabled, shows settings that are still being tested and may be unstable or not work at all.",
                 "Use with caution and report any issues to the developers."
             };
 
-        case RClkConfigValue_MarikoMiddleFreqs:
+        case HocClkConfigValue_MarikoMiddleFreqs:
             return {
                 "Allows usage of frequencies stepped by 38.4MHz instead of 76.8MHz below 1228MHz GPU clock",
                 "Default: OFF"
             };
 
-        case RClkConfigValue_LiveCpuUv:
+        case HocClkConfigValue_LiveCpuUv:
             return {
                 "Allows changing CPU undervolt settings without a reboot",
                 "Default: OFF"
             };
 
-        case RClkConfigValue_GPUSchedulingMethod:
+        case HocClkConfigValue_GPUSchedulingMethod:
             return {
                 "Method used for GPU scheduling override",
                 "Options:",
@@ -75,7 +75,7 @@ std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, b
                 "Default: INI"
             };
 
-        case RClkConfigValue_MemoryFrequencyMeasurementMode:
+        case HocClkConfigValue_MemoryFrequencyMeasurementMode:
             return {
                 "How the RAM real frequency is measured",
                 "Options:",
@@ -84,13 +84,13 @@ std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, b
                 "Default: PLL"
             };
 
-        case RClkConfigValue_BatteryChargeCurrent:
+        case HocClkConfigValue_BatteryChargeCurrent:
             return {
                 "Overrides the charge current to the battery. Use with caution!",
                 isHoag ? "Default: 1664 mA" : "2048 mA"
             };
 
-        case RClkConfigValue_AulaDisplayColorPreset:
+        case HocClkConfigValue_AulaDisplayColorPreset:
             return {
                 "Current display color preset. Default is Basic",
                 "Options:",
@@ -102,13 +102,13 @@ std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, b
                 "Default: Do not override"
             };
 
-        case RClkConfigValue_CpuGovernorMinimumFreq:
+        case HocClkConfigValue_CpuGovernorMinimumFreq:
             return {
                 "The minimum frequency that the CPU governor will allow.",
                 "Default: 612MHz"
             };
 
-        case RClkConfigValue_OverwriteRefreshRate:
+        case HocClkConfigValue_OverwriteRefreshRate:
             return {
                 "Controls the availability of display refresh rate features.",
                 "When enabled, allows changing the display refresh rate and using display refresh rate related features.",
@@ -116,21 +116,21 @@ std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, b
                 "Default: OFF"
             };
 
-        case RClkConfigValue_MaxDisplayClockH:
+        case HocClkConfigValue_MaxDisplayClockH:
             return {
                 "The maximum display clock frequency in handheld mode (in Hz).",
                 "Warning: Changing this value may cause instability or display damage.",
                 "Default: 60 Hz"
             };
 
-        case RClkConfigValue_DisplayVoltage:
+        case HocClkConfigValue_DisplayVoltage:
             return {
                 "The voltage supplied to the display panel (in mV).",
                 "Warning: Changing this value may cause instability.",
                 "Default: 1200mV"
             };
 
-        case RClkConfigValue_UncappedClocks:
+        case HocClkConfigValue_UncappedClocks:
             if(isMariko) {
                 return {
                     "When enabled, disables clock cappings",
@@ -164,26 +164,26 @@ std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, b
                 };
             }
 
-        case RClkConfigValue_ThermalThrottle:
+        case HocClkConfigValue_ThermalThrottle:
             return {
                 "If enabled, Resets to stock clocks after the threshold is applied",
                 "Default: ON",
             };
 
-        case RClkConfigValue_HandheldTDP:
+        case HocClkConfigValue_HandheldTDP:
             return {
                 "If enabled, Resets to stock clocks when power consumption is above the threshold in handheld mode",
                 "Default: ON",
             };
 
-        case RClkConfigValue_HandheldTDPLimit:
-        case RClkConfigValue_LiteTDPLimit:
+        case HocClkConfigValue_HandheldTDPLimit:
+        case HocClkConfigValue_LiteTDPLimit:
             return {
                 "The power consumption threshold (in mW) for resetting to stock clocks in handheld mode when Handheld TDP is enabled.",
                 isHoag ? "Default: 6400mW" : "Default: 9600mW"
             };
 
-        case RClkConfigValue_ThermalThrottleThreshold:
+        case HocClkConfigValue_ThermalThrottleThreshold:
             return {
                 "The temperature threshold (in °C) for resetting to stock clocks when Thermal Throttle is enabled.",
                 "Default: 70°C"
@@ -437,7 +437,7 @@ std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, b
                 "Default: 1235 mV"
             };
 
-        case RClkConfigValue_EristaMaxCpuClock:
+        case HocClkConfigValue_EristaMaxCpuClock:
             return {
                 "The maximum available CPU clock",
                 "Default: 1785 MHz"
@@ -449,7 +449,7 @@ std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, b
                 "Default: 1785 MHz"
             };
 
-        case RClkConfigValue_OverwriteBoostMode:
+        case HocClkConfigValue_OverwriteBoostMode:
             return {
                 "If enabled, profiles can override the boost mode setting",
                 "Default: OFF"
@@ -478,7 +478,7 @@ std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, b
                 "Default: 800 mV"
             };
 
-        case RClkConfigValue_DVFSMode:
+        case HocClkConfigValue_DVFSMode:
             return {
                 "The mode used for GPU DVFS",
                 "Adjusts GPU vmin when RAM clock is changed due to a higher requirement",
@@ -488,7 +488,7 @@ std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, b
                 "Default: PCV Hijack"
             };
 
-        case RClkConfigValue_DVFSOffset:
+        case HocClkConfigValue_DVFSOffset:
             return {
                 "The offset added/subtracted to the GPU vmin when the RAM clock is changed due to a higher requirement in PCV Hijack mode",
                 "Default: 0 mV (Disabled)"
@@ -516,7 +516,7 @@ std::vector<std::string> ConfigInfoStrings(RClkConfigValue val, bool isMariko, b
                 "Default: 0 mV (Disabled)"
             };
 
-        case RClkConfigValue_GPUScheduling:
+        case HocClkConfigValue_GPUScheduling:
             return {
                 "The scheduling method used for GPU clocks",
                 "Options:",

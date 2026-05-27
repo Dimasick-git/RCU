@@ -27,13 +27,31 @@
 
 #pragma once
 
-#define RCLK_ERROR_MODULE 388
-#define RCLK_ERROR(desc) ((RCLK_ERROR_MODULE & 0x1FF) | (RyazhaClkError_##desc & 0x1FFF)<<9)
+#include "types.h"
+#include "../config.h"
+#include "../board.h"
+#include "../ipc.h"
 
-typedef enum
+bool hocclkIpcRunning();
+Result hocclkIpcInitialize(void);
+void hocclkIpcExit(void);
+
+Result hocclkIpcGetAPIVersion(u32* out_ver);
+Result hocclkIpcGetVersionString(char* out, size_t len);
+Result hocclkIpcGetCurrentContext(HocClkContext* out_context);
+Result hocclkIpcGetProfileCount(u64 tid, u8* out_count);
+Result hocclkIpcSetEnabled(bool enabled);
+Result hocclkIpcExitCmd();
+Result hocclkIpcSetOverride(HocClkModule module, u32 hz);
+Result hocclkIpcGetProfiles(u64 tid, HocClkTitleProfileList* out_profiles);
+Result hocclkIpcSetProfiles(u64 tid, HocClkTitleProfileList* profiles);
+Result hocclkIpcGetConfigValues(HocClkConfigValueList* out_configValues);
+Result hocclkIpcSetConfigValues(HocClkConfigValueList* configValues);
+Result hocclkIpcGetFreqList(HocClkModule module, u32* list, u32 maxCount, u32* outCount);
+Result hocClkIpcSetKipData();
+Result hocClkIpcGetKipData();
+
+static inline Result hocclkIpcRemoveOverride(HocClkModule module)
 {
-    RyazhaClkError_Generic = 0,
-    RyazhaClkError_ConfigNotLoaded = 1,
-    RyazhaClkError_ConfigSaveFailed = 2,
-    // RyazhaClkError_SocThermFail = 3,
-} RyazhaClkError;
+    return hocclkIpcSetOverride(module, 0);
+}

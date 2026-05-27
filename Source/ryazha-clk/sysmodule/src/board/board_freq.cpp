@@ -25,7 +25,7 @@
  */
 
 #include <switch.h>
-#include <rclk.h>
+#include <hocclk.h>
 #include "../hos/apm_ext.h"
 #include <i2c.h>
 #include "../i2c/i2cDrv.h"
@@ -45,24 +45,24 @@
 namespace board {
     #define MIDDLE_FREQ_TABLE_START_POINT 1228800000
     static u32 currentInjectedHz = 0;
-    PcvModule GetPcvModule(RClkModule rclkModule) {
-        switch (rclkModule) {
-            case RClkModule_CPU:
+    PcvModule GetPcvModule(HocClkModule hocclkModule) {
+        switch (hocclkModule) {
+            case HocClkModule_CPU:
                 return PcvModule_CpuBus;
-            case RClkModule_GPU:
+            case HocClkModule_GPU:
                 return PcvModule_GPU;
-            case RClkModule_MEM:
+            case HocClkModule_MEM:
                 return PcvModule_EMC;
             default:
-                ASSERT_ENUM_VALID(RClkModule, rclkModule);
+                ASSERT_ENUM_VALID(HocClkModule, hocclkModule);
         }
 
         return static_cast<PcvModule>(0);
     }
 
-    PcvModuleId GetPcvModuleId(RClkModule rclkModule) {
+    PcvModuleId GetPcvModuleId(HocClkModule hocclkModule) {
         PcvModuleId pcvModuleId;
-        Result rc = pcvGetModuleId(&pcvModuleId, GetPcvModule(rclkModule));
+        Result rc = pcvGetModuleId(&pcvModuleId, GetPcvModule(hocclkModule));
         ASSERT_RESULT_OK(rc, "pcvGetModuleId");
 
         return pcvModuleId;
@@ -78,17 +78,17 @@ namespace board {
 
     void HandleCpuUv()
     {
-        if (board::GetSocType() == RyazhaClkSocType_Erista)
+        if (board::GetSocType() == HocClkSocType_Erista)
             board::SetDfllTunings(config::GetConfigValue(KipConfigValue_eristaCpuUV), 0, 1581000000); // Erista tbreak is always 1581MHz
         else
             board::SetDfllTunings(config::GetConfigValue(KipConfigValue_marikoCpuUVLow), config::GetConfigValue(KipConfigValue_marikoCpuUVHigh), board::CalculateTbreak(config::GetConfigValue(KipConfigValue_tableConf)));
     }
 
-    void SetHz(RClkModule module, u32 hz) {
+    void SetHz(HocClkModule module, u32 hz) {
         Result rc = 0;
-        bool usesGovenor = module > RClkModule_MEM;
+        bool usesGovenor = module > HocClkModule_MEM;
 
-        if (module == RClkModule_Display) {
+        if (module == HocClkModule_Display) {
             display::SetRate(hz);
             return;
         }
@@ -97,11 +97,11 @@ namespace board {
             return;
         }
 
-        bool useGm20b = (module == RClkModule_GPU) && (GetSocType() == RyazhaClkSocType_Mariko) && (hz % 38400000 == 0) && (hz % 76800000 != 0) && hz < MIDDLE_FREQ_TABLE_START_POINT;
+        bool useGm20b = (module == HocClkModule_GPU) && (GetSocType() == HocClkSocType_Mariko) && (hz % 38400000 == 0) && (hz % 76800000 != 0) && hz < MIDDLE_FREQ_TABLE_START_POINT;
 
         u32 pcvHz = useGm20b ? ((hz + 76800000 - 1) / 76800000) * 76800000 : hz;
 
-        if (module == RClkModule_GPU)
+        if (module == HocClkModule_GPU)
             currentInjectedHz = 0;
 
         if (HOSSVC_HAS_CLKRST) {
@@ -111,7 +111,7 @@ namespace board {
             ClkrstSetHz(session, pcvHz);
 
             /* Voltage bug workaround. */
-            if (module == RClkModule_CPU) {
+            if (module == HocClkModule_CPU) {
                 svcSleepThread(300'000);
                 ClkrstSetHz(session, pcvHz);
             }
@@ -120,12 +120,12 @@ namespace board {
         } else {
             PcvSetHz(GetPcvModule(module), pcvHz);
 
-            if (module == RClkModule_CPU) {
+            if (module == HocClkModule_CPU) {
                 svcSleepThread(300'000);
                 PcvSetHz(GetPcvModule(module), pcvHz);
             }
         }
-        if(config::GetConfigValue(RClkConfigValue_LiveCpuUv) && module == RClkModule_CPU) {
+        if(config::GetConfigValue(HocClkConfigValue_LiveCpuUv) && module == HocClkModule_CPU) {
             HandleCpuUv();
         }
         if (useGm20b) {
@@ -139,15 +139,15 @@ namespace board {
         return hz;
     }
 
-    u32 GetHz(RClkModule module) {
+    u32 GetHz(HocClkModule module) {
         Result rc = 0;
         u32 hz = 0;
 
-        if (module == RClkModule_Display) {
+        if (module == HocClkModule_Display) {
             return GetDisplayRate(hz);
         }
 
-        if (module == RClkModule_GPU && currentInjectedHz != 0) {
+        if (module == HocClkModule_GPU && currentInjectedHz != 0) {
             return currentInjectedHz;
         }
 
@@ -169,25 +169,25 @@ namespace board {
         return hz;
     }
 
-    u32 GetRealHz(RClkModule module) {
+    u32 GetRealHz(HocClkModule module) {
         u32 hz = 0;
         switch (module) {
-            case RClkModule_CPU:
+            case HocClkModule_CPU:
                 return t210ClkCpuFreq();
-            case RClkModule_GPU:
+            case HocClkModule_GPU:
                 return t210ClkGpuFreq();
-            case RClkModule_MEM:
-                return config::GetConfigValue(RClkConfigValue_MemoryFrequencyMeasurementMode) == MemoryFrequencyMeasurementMode_PLL ? pllmb::getRamClockRatePLLMB() : t210ClkMemFreq();
-            case RClkModule_Display:
+            case HocClkModule_MEM:
+                return config::GetConfigValue(HocClkConfigValue_MemoryFrequencyMeasurementMode) == MemoryFrequencyMeasurementMode_PLL ? pllmb::getRamClockRatePLLMB() : t210ClkMemFreq();
+            case HocClkModule_Display:
                 return GetDisplayRate(hz);
             default:
-                ASSERT_ENUM_VALID(RClkModule, module);
+                ASSERT_ENUM_VALID(HocClkModule, module);
         }
 
         return 0;
     }
 
-    void GetFreqList(RClkModule module, u32 *outList, u32 maxCount, u32 *outCount) {
+    void GetFreqList(HocClkModule module, u32 *outList, u32 maxCount, u32 *outCount) {
         Result rc = 0;
         PcvClockRatesListType type;
         s32 tmpInMaxCount = maxCount;
@@ -217,7 +217,7 @@ namespace board {
     }
 
     u32 GetHighestDockedDisplayRate() {
-        if (GetConsoleType() != RClkConsoleType_Hoag) {
+        if (GetConsoleType() != HocClkConsoleType_Hoag) {
             return display::GetDockedHighestAllowed();
         }
 
@@ -231,10 +231,10 @@ namespace board {
             rc = apmExtGetCurrentPerformanceConfiguration(&confId);
             ASSERT_RESULT_OK(rc, "apmExtGetCurrentPerformanceConfiguration");
 
-            RClkApmConfiguration* apmConfiguration = nullptr;
-            for (size_t i = 0; rclk_g_apm_configurations[i].id; ++i) {
-                if(rclk_g_apm_configurations[i].id == confId) {
-                    apmConfiguration = &rclk_g_apm_configurations[i];
+            HocClkApmConfiguration* apmConfiguration = nullptr;
+            for (size_t i = 0; hocclk_g_apm_configurations[i].id; ++i) {
+                if(hocclk_g_apm_configurations[i].id == confId) {
+                    apmConfiguration = &hocclk_g_apm_configurations[i];
                     break;
                 }
             }
@@ -243,9 +243,9 @@ namespace board {
                 ERROR_THROW("Unknown apm configuration: %x", confId);
             }
 
-            SetHz(RClkModule_CPU, apmConfiguration->cpu_hz);
-            SetHz(RClkModule_GPU, apmConfiguration->gpu_hz);
-            SetHz(RClkModule_MEM, apmConfiguration->mem_hz);
+            SetHz(HocClkModule_CPU, apmConfiguration->cpu_hz);
+            SetHz(HocClkModule_GPU, apmConfiguration->gpu_hz);
+            SetHz(HocClkModule_MEM, apmConfiguration->mem_hz);
         } else {
             u32 mode = 0;
             rc = apmExtGetPerformanceMode(&mode);

@@ -25,7 +25,7 @@
  */
 
 #include <switch.h>
-#include <rclk.h>
+#include <hocclk.h>
 #include "../hos/apm_ext.h"
 #include <i2c.h>
 #include <t210.h>
@@ -110,32 +110,32 @@ namespace board {
         return std::round(std::max({cpuUsage0, cpuUsage1, cpuUsage2}));
     }
 
-    u32 GetPartLoad(RyazhaClkPartLoad loadSource) {
+    u32 GetPartLoad(HocClkPartLoad loadSource) {
         switch(loadSource) {
-            case RyazhaClkPartLoad_EMC:
+            case HocClkPartLoad_EMC:
                 return t210EmcLoadAll();
-            case RyazhaClkPartLoad_EMCCpu:
+            case HocClkPartLoad_EMCCpu:
                 return t210EmcLoadCpu();
-            case RyazhaClkPartLoad_GPU:
+            case HocClkPartLoad_GPU:
                 return gpuLoad;
-            case RyazhaClkPartLoad_CPUMax:
+            case HocClkPartLoad_CPUMax:
                 return GetMaxCpuLoad();
-            case RyazhaClkPartLoad_BAT:
+            case HocClkPartLoad_BAT:
                 BatteryChargeInfo info;
                 batteryInfoGetChargeInfo(&info);
                 return info.RawBatteryCharge;
-            case RyazhaClkPartLoad_FAN:
+            case HocClkPartLoad_FAN:
                 return GetFanLevel();
-            case RyazhaClkPartLoad_RamBWAll:
+            case HocClkPartLoad_RamBWAll:
                 return t210EmcBwAll();
-            case RyazhaClkPartLoad_RamBWCpu:
+            case HocClkPartLoad_RamBWCpu:
                 return t210EmcBwCpu();
-            case RyazhaClkPartLoad_RamBWGpu:
+            case HocClkPartLoad_RamBWGpu:
                 return t210EmcBwGpu();
-            case RyazhaClkPartLoad_RamBWPeak:
+            case HocClkPartLoad_RamBWPeak:
                 return t210EmcBwPeak();
             default:
-                ASSERT_ENUM_VALID(RyazhaClkPartLoad, loadSource);
+                ASSERT_ENUM_VALID(HocClkPartLoad, loadSource);
         }
         return 0;
     }

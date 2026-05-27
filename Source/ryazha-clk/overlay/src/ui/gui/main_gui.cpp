@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Souldbminer, Lightos_, Horizon OC, and Ryazha-CLK Contributors
+ * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -30,17 +30,25 @@
 #include "fatal_gui.h"
 #include "app_profile_gui.h"
 #include "global_override_gui.h"
-#include "living_ladder_gui.h"
 #include "misc_gui.h"
+#include "about_gui.h"
+#include "ult_ext.h"
+
+tsl::elm::Element* MainGui::baseUI() {
+    auto* list = new BoxClippedList();
+    this->listElement = list;
+    this->listUI();
+    return list;
+}
 
 void MainGui::listUI()
 {
     // this->enabledToggle = new tsl::elm::ToggleListItem("Enable", false);
     // enabledToggle->setStateChangedListener([this](bool state) {
-    //     Result rc = rclkIpcSetEnabled(state);
+    //     Result rc = hocclkIpcSetEnabled(state);
     //     if(R_FAILED(rc))
     //     {
-    //         FatalGui::openWithResultCode("rclkIpcSetEnabled", rc);
+    //         FatalGui::openWithResultCode("hocclkIpcSetEnabled", rc);
     //     }
 
     //     this->lastContextUpdate = armGetSystemTick();
@@ -60,23 +68,12 @@ void MainGui::listUI()
     });
     this->listElement->addItem(appProfileItem);
 
-    tsl::elm::ListItem* ryazhaAutoItem = new tsl::elm::ListItem("Ryazha-Auto (VRR)");
-    ryazhaAutoItem->setClickListener([this](u64 keys) {
-        if((keys & HidNpadButton_A) == HidNpadButton_A && this->context)
-        {
-            tsl::changeTo<LivingLadderGui>();
-            return true;
-        }
-
-        return false;
-    });
-    this->listElement->addItem(ryazhaAutoItem);
 
     tsl::elm::ListItem* globalProfileItem = new tsl::elm::ListItem("Edit Global Profile");
     globalProfileItem->setClickListener([this](u64 keys) {
         if((keys & HidNpadButton_A) == HidNpadButton_A && this->context)
         {
-            AppProfileGui::changeTo(RCLK_GLOBAL_PROFILE_TID);
+            AppProfileGui::changeTo(HOCCLK_GLOBAL_PROFILE_TID);
             return true;
         }
 
@@ -109,6 +106,18 @@ void MainGui::listUI()
         return false;
     });
     this->listElement->addItem(miscItem);
+
+    tsl::elm::ListItem* aboutItem = new tsl::elm::ListItem("About");
+    aboutItem->setClickListener([this](u64 keys) {
+        if((keys & HidNpadButton_A) == HidNpadButton_A && this->context)
+        {
+            tsl::changeTo<AboutGui>();
+            return true;
+        }
+
+        return false;
+    });
+    this->listElement->addItem(aboutItem);
 
 }
 

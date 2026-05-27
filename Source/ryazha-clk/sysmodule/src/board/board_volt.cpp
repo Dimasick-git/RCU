@@ -18,7 +18,7 @@
  */
 
 #include <switch.h>
-#include <rclk.h>
+#include <hocclk.h>
 #include <memmem.h>
 #include <registers.h>
 #include <cstring>
@@ -94,11 +94,11 @@ namespace board {
         Result rc = QueryMemoryMapping(&cldvfs, CLDVFS_REGION_BASE, CLDVFS_REGION_SIZE);
         ASSERT_RESULT_OK(rc, "QueryMemoryMapping (cldvfs)");
 
-        if (GetSocType() == RyazhaClkSocType_Erista) {
+        if (GetSocType() == HocClkSocType_Erista) {
             cachedTune.tune0Low = *reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE0_0);
             cachedTune.tune1Low = *reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE1_0);
         } else {
-            SetHz(RClkModule_CPU, 1785000000);
+            SetHz(HocClkModule_CPU, 1785000000);
             cachedTune.tune0High = *reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE0_0);
             ResetToStockCpu();
         }
@@ -108,8 +108,8 @@ namespace board {
     void SetDfllTunings(u32 levelLow, u32 levelHigh, u32 tbreakPoint) {
         u32* tune0_ptr = reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE0_0);
         u32* tune1_ptr = reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE1_0);
-        if (GetSocType() == RyazhaClkSocType_Mariko) {
-            if (GetHz(RClkModule_CPU) < tbreakPoint && (levelLow || levelHigh)) {
+        if (GetSocType() == HocClkSocType_Mariko) {
+            if (GetHz(HocClkModule_CPU) < tbreakPoint && (levelLow || levelHigh)) {
                 if (levelLow) {
                     *tune0_ptr = marikoCpuUvLow[levelLow-1].tune0_low;
                     *tune1_ptr = marikoCpuUvLow[levelLow-1].tune1_low;
@@ -126,17 +126,17 @@ namespace board {
                 }
                 return;
             }
-            if (GetHz(RClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
+            if (GetHz(HocClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
                 *tune0_ptr = 0xCFFF;
                 *tune1_ptr = 0xFF072201;
                 return;
-            } else if (GetHz(RClkModule_CPU) >= tbreakPoint || (!levelHigh)) {
+            } else if (GetHz(HocClkModule_CPU) >= tbreakPoint || (!levelHigh)) {
                 *tune0_ptr = cachedTune.tune0High; // per console?
                 *tune1_ptr = 0xFFF7FF3F;
                 return;
             }
         } else {
-            // if (GetHz(RClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
+            // if (GetHz(HocClkModule_CPU) < tbreakPoint || (!levelLow)) { // account for tbreak
             //     *tune0_ptr = cachedTune.tune0Low; // I think each erista has a different tune0/tune1?
             //     *tune1_ptr = cachedTune.tune1Low;
             //     return;
@@ -158,7 +158,7 @@ namespace board {
     };
     */
     u32 CalculateTbreak(u32 table) {
-        if (GetSocType() == RyazhaClkSocType_Erista) {
+        if (GetSocType() == HocClkSocType_Erista) {
             return 1581000000;
         } else {
             switch (table) {
@@ -215,19 +215,19 @@ namespace board {
    /*
     Note: I think Nintendo's I2C driver (or my driver, but it looks correct to me)
    */
-    u32 GetVoltage(RyazhaClkVoltage voltage) {
+    u32 GetVoltage(HocClkVoltage voltage) {
         u32 out = 0;
         BatteryChargeInfo info;
         RgltrSession s;
         switch (voltage) {
-            case RyazhaClkVoltage_SOC:
+            case HocClkVoltage_SOC:
                 out = I2c_BuckConverter_GetUvOut(&I2c_SOC);
                 break;
-            case RyazhaClkVoltage_EMCVDD2:
+            case HocClkVoltage_EMCVDD2:
                 out = I2c_BuckConverter_GetUvOut(&I2c_VDD2);
                 break;
-            case RyazhaClkVoltage_CPU:
-                if(GetSocType() == RyazhaClkSocType_Mariko) {
+            case HocClkVoltage_CPU:
+                if(GetSocType() == HocClkSocType_Mariko) {
                     out = I2c_BuckConverter_GetUvOut(&I2c_Mariko_CPU);
                 } else {
                     rgltrOpenSession(&s, PcvPowerDomainId_Max77621_Cpu);
@@ -235,8 +235,8 @@ namespace board {
                     rgltrCloseSession(&s);
                 }
                 break;
-            case RyazhaClkVoltage_GPU:
-                if(GetSocType() == RyazhaClkSocType_Mariko) {
+            case HocClkVoltage_GPU:
+                if(GetSocType() == HocClkSocType_Mariko) {
                     out = I2c_BuckConverter_GetUvOut(&I2c_Mariko_GPU);
                 } else {
                     rgltrOpenSession(&s, PcvPowerDomainId_Max77621_Gpu);
@@ -244,22 +244,22 @@ namespace board {
                     rgltrCloseSession(&s);
                 }               
                 break;
-            case RyazhaClkVoltage_EMCVDDQ:
-                if(GetSocType() == RyazhaClkSocType_Mariko) {
+            case HocClkVoltage_EMCVDDQ:
+                if(GetSocType() == HocClkSocType_Mariko) {
                     out = I2c_BuckConverter_GetUvOut(&I2c_Mariko_DRAM_VDDQ);
                 } else {
                     out = I2c_BuckConverter_GetUvOut(&I2c_VDD2);
                 }
                 break;
-            case RyazhaClkVoltage_Display:
+            case HocClkVoltage_Display:
                 out = I2c_BuckConverter_GetUvOut(&I2c_Display);
                 break;
-            case RyazhaClkVoltage_Battery:
+            case HocClkVoltage_Battery:
                 batteryInfoGetChargeInfo(&info);
                 out = info.VoltageAvg;
                 break;
             default:
-                ASSERT_ENUM_VALID(RyazhaClkVoltage, voltage);
+                ASSERT_ENUM_VALID(HocClkVoltage, voltage);
         }
 
         return out > 0 ? out : 0;
@@ -358,8 +358,8 @@ namespace board {
                     continue;
                 }
 
-                /* Assuming mariko. */
-                const u32 vmax = 800;
+                /* 800mV on Mariko, 950mV on Erista. */
+                u32 vmax = GetSocType() == HocClkSocType_Mariko ? 800 : 950;
                 constexpr u32 GpuVoltageTableOffset = 312;
                 if (!std::memcmp(&buffer[index + GpuVoltageTableOffset], &vmax, sizeof(vmax))) {
                     std::memcpy(voltData.voltTable, &buffer[index + GpuVoltageTableOffset], sizeof(voltData.voltTable));
@@ -378,7 +378,7 @@ namespace board {
                 }
 
                 for(int i = 0; i < (int)std::size(voltData.voltTable); ++i) {
-                    fileUtils::LogLine("[dvfs] gpu volt %d: %u mV", i, voltData.voltTable[i]);
+                    fileUtils::LogLine("[dvfs] gpu volt %d: %u mV", i, voltData.voltTable[0][i]);
                 }
                 return;
             }
@@ -421,42 +421,65 @@ namespace board {
     }
 
     u32 GetMinimumGpuVmin(u32 freqMhz, u32 bracket) {
-        static const u32 ramTable[][22] = {
-            { 2133, 2200, 2266, 2300, 2366, 2400, 2433, 2466, 2533, 2566, 2600, 2633, 2700, 2733, 2766, 2833, 2866, 2900, 2933, 3033, 3066, 3100, }, // Bracket 0
-            { 2300, 2366, 2433, 2466, 2533, 2566, 2633, 2700, 2733, 2800, 2833, 2900, 2933, 2966, 3033, 3066, 3100, 3133, 3166, 3200, 3233, 3266, }, // Bracket 1
-            { 2433, 2466, 2533, 2566, 2600, 2666, 2766, 2800, 2833, 2866, 2933, 2966, 3033, 3066, 3100, 3133, 3166, 3200, 3233, 3300, 3333, 3366, }, // Bracket 2
-            { 2500, 2533, 2600, 2633, 2666, 2733, 2800, 2866, 2900, 2966, 3033, 3100, 3166, 3200, 3233, 3266, 3300, 3333, 3366, 3400, 3400, 3400, }, // Bracket 3
-        };
+        u32 baseVolt = 800;
+        if(GetSocType() == HocClkSocType_Mariko) {
+            static const u32 ramTable[][22] = {
+                { 2133, 2200, 2266, 2300, 2366, 2400, 2433, 2466, 2533, 2566, 2600, 2633, 2700, 2733, 2766, 2833, 2866, 2900, 2933, 3033, 3066, 3100, }, // Bracket 0
+                { 2300, 2366, 2433, 2466, 2533, 2566, 2633, 2700, 2733, 2800, 2833, 2900, 2933, 2966, 3033, 3066, 3100, 3133, 3166, 3200, 3233, 3266, }, // Bracket 1
+                { 2433, 2466, 2533, 2566, 2600, 2666, 2766, 2800, 2833, 2866, 2933, 2966, 3033, 3066, 3100, 3133, 3166, 3200, 3233, 3300, 3333, 3366, }, // Bracket 2
+                { 2500, 2533, 2600, 2633, 2666, 2733, 2800, 2866, 2900, 2966, 3033, 3100, 3166, 3200, 3233, 3266, 3300, 3333, 3366, 3400, 3400, 3400, }, // Bracket 3
+            };
 
-        static const u32 gpuVoltArray[] = { 590, 600, 610, 620, 630, 640, 650, 660, 670, 680, 690, 700, 710, 720, 730, 740, 750, 760, 770, 780, 790, 800, };
+            static const u32 gpuVoltArray[] = { 590, 600, 610, 620, 630, 640, 650, 660, 670, 680, 690, 700, 710, 720, 730, 740, 750, 760, 770, 780, 790, 800, };
 
-        if (freqMhz <= 1600) return 0; // DVFS doesnt work below 1600MHz, it will just use vMin
-        if (bracket >= std::size(ramTable)) bracket = 0;
+            if (freqMhz <= 1600) return 0; // DVFS doesnt work below 1600MHz, it will just use vMin
+            if (bracket >= std::size(ramTable)) bracket = 0;
 
-        u32 bracketStart = ramTable[bracket][0];
+            u32 bracketStart = ramTable[bracket][0];
+            
         
-    
-        u32 rampStartVolt = (bracket == 0) ? 535 : 525; // Do not touch!
-        u32 rampSpan = 590 - rampStartVolt; 
+            u32 rampStartVolt = (bracket == 0) ? 535 : 525; // Do not touch!
+            u32 rampSpan = 590 - rampStartVolt; 
 
 
-        if (freqMhz >= 1633 && freqMhz < bracketStart) {
-            u32 raw = rampStartVolt + ((freqMhz - 1633) * rampSpan) / (bracketStart - 1633);
-            u32 volt = ((raw + 2) / 5) * 5;
-            if (volt < rampStartVolt) volt = rampStartVolt;
-            if (volt > 590) volt = 590;
-            return volt;
-        }
+            if (freqMhz >= 1633 && freqMhz < bracketStart) {
+                u32 raw = rampStartVolt + ((freqMhz - 1633) * rampSpan) / (bracketStart - 1633);
+                u32 volt = ((raw + 2) / 5) * 5;
+                if (volt < rampStartVolt) volt = rampStartVolt;
+                if (volt > 590) volt = 590;
+                return volt;
+            }
 
 
-        u32 baseVolt = gpuVoltArray[std::size(gpuVoltArray) - 1];
-        for (u32 i = 0; i < std::size(gpuVoltArray); ++i) {
-            if (freqMhz <= ramTable[bracket][i]) {
-                baseVolt = gpuVoltArray[i];
-                break;
+            baseVolt = gpuVoltArray[std::size(gpuVoltArray) - 1];
+            for (u32 i = 0; i < std::size(gpuVoltArray); ++i) {
+                if (freqMhz <= ramTable[bracket][i]) {
+                    baseVolt = gpuVoltArray[i];
+                    break;
+                }
+            }
+        } else {
+            struct DvfsEntry { u32 freq; u32 volt; };
+            static const DvfsEntry ramTable[][19] = {
+                { {1733,725}, {1800,730}, {1866,735}, {1920,740}, {1958,745}, {1996,750}, {2035,755}, {2073,760}, {2112,765}, {2131,770}, {2150,775}, {2169,780}, {2188,785}, {2227,790}, {2265,795}, {2304,800}, {2342,805}, {2380,810}, {2400,815} }, // Bracket 0
+                { {1733,715}, {1800,720}, {1866,725}, {1920,730}, {1958,735}, {1996,740}, {2035,745}, {2073,750}, {2112,755}, {2131,760}, {2150,765}, {2169,770}, {2188,775}, {2227,780}, {2265,785}, {2304,790}, {2342,795}, {2380,800}, {2400,805} }, // Bracket 1
+                { {1733,705}, {1800,710}, {1866,715}, {1920,720}, {1958,725}, {1996,730}, {2035,735}, {2073,740}, {2112,745}, {2131,750}, {2150,755}, {2169,760}, {2188,765}, {2227,770}, {2265,775}, {2304,780}, {2342,785}, {2380,790}, {2400,795} }, // Bracket 2
+                { {1733,695}, {1800,700}, {1866,705}, {1920,710}, {1958,715}, {1996,720}, {2035,725}, {2073,730}, {2112,735}, {2131,740}, {2150,745}, {2169,750}, {2188,755}, {2227,760}, {2265,765}, {2304,770}, {2342,775}, {2380,780}, {2400,785} }, // Bracket 3
+            };
+
+            if (freqMhz <= 1600) return 0; // DVFS doesnt work below 1600MHz, it will just use vMin
+            if (bracket >= std::size(ramTable)) bracket = 0;
+
+            const auto& entries = ramTable[bracket];
+            baseVolt = entries[std::size(entries) - 1].volt;
+            for (const auto& entry : entries) {
+                if (freqMhz <= entry.freq) {
+                    baseVolt = entry.volt;
+                    break;
+                }
             }
         }
-
+        
         return baseVolt;
     }
 }
