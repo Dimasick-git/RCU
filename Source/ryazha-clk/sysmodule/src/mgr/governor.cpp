@@ -255,7 +255,7 @@ namespace governor {
                                 clockManager::gContext.stable.freqs[HocClkModule_Display] = fps;
                                 clockManager::gContext.stable.realFreqs[HocClkModule_Display] = fps;
                             } else {
-                                for (u32 i = 0; i < 10; i++) {
+                                for (u32 i = 1; i < 10; i++) {
                                     u32 compareHz = fps * i;
                                     if (compareHz >= minDisplay && compareHz <= maxDisplay) {
                                         board::SetHz(HocClkModule_Display, compareHz);

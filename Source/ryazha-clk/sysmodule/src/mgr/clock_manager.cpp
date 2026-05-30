@@ -40,7 +40,6 @@
 #include "../file/config.hpp"
 #include "../hos/integrations.hpp"
 #include "../util/lockable_mutex.h"
-#include "../file/kip.hpp"
 #include "governor.hpp"
 #include "../display/aula.hpp"
 #include "../soc/gm20b.hpp"

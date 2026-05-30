@@ -8,7 +8,7 @@
 
 RCU — утилита для управления частотами Nintendo Switch (CPU, GPU, RAM, частота экрана) под Atmosphere CFW. Состоит из двух частей:
 
-- **sysmodule** `ryazha-clk.nsp` — фоновый сервис, применяющий частоты. Title ID `00FF0000636C6BFF`. Регистрирует IPC-сервис `rclk:clk` для overlay'я. Содержит автономный ladder-поток Ryazha-Авто, регулирующий CPU/GPU/RAM по FPS, и VRR-Авто, подстраивающий частоту экрана под игру.
+- **sysmodule** `ryazha-clk.nsp` — фоновый сервис, применяющий частоты. Title ID `00FF0000636C6BFF`. Регистрирует IPC-сервис `hoc:clk` для overlay'я. Содержит автономный ladder-поток Ryazha-Авто, регулирующий CPU/GPU/RAM по FPS, и VRR-Авто, подстраивающий частоту экрана под игру.
 - **overlay** `ryazha-clk.ovl` — Tesla-меню. Per-app профили, временные переопределения, настройки. Открывается через любой Ultrahand-совместимый лаунчер (`nx-ovlloader`).
 
 ## Состав фич
@@ -19,7 +19,7 @@ RCU — утилита для управления частотами Nintendo S
 - Ryazha-Авто: автономный ladder CPU/GPU/RAM с FPS-аware подстройкой, TDP-кэпом, термальным троттлингом. Конфиг в `/config/ryazha-clk/ryazha-auto.ini`.
 - VRR-Авто: governor-режим, при котором sysmodule сам поднимает Smart VRR для приложения. Доступен 4-м пунктом в Governor (Do Not Override / Disabled / Enabled / VRR-Auto).
 - 15 локалей (ru, en, uk, de, es, fr, it, nl, pl, pt, ja, ko, zh-cn, zh-tw, jp).
-- IPC API v3 для overlay'я: `rclkIpcGetCurrentContext`, `rclkIpcSetProfiles`, `rclkIpcSetOverride`, `rclkIpcGet/SetLadderConfig`, `rclkIpcGet/SetConfigValues`.
+- IPC API v2 для overlay'я: `rclkIpcGetCurrentContext`, `rclkIpcSetProfiles`, `rclkIpcSetOverride`, `rclkIpcGet/SetLadderConfig`, `rclkIpcGet/SetConfigValues`.
 
 ## Установка
 
@@ -74,7 +74,7 @@ CI workflow: `.github/workflows/build.yml`. Релизные артефакты 
 overlay (ryazha-clk.ovl)
   └─ Tesla GUI (libryazhahand submodule)
      └─ IPC client (common/src/client/ipc.c)
-        ↓ rclk:clk service (8-char limit)
+        ↓ hoc:clk service (8-char limit)
 sysmodule (ryazha-clk.nsp)
   ├─ clockManager (Tick loop, applies profile freqs)
   ├─ ipcService (request dispatcher, RClkIpcCmd_* enum)
